@@ -47,11 +47,28 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DAL\AccessType.cs" />
+    <Compile Include="DAL\Authentication.cs" />
+    <Compile Include="DAL\Column.cs" />
+    <Compile Include="DAL\Device.cs" />
+    <Compile Include="DAL\DeviceType.cs" />
+    <Compile Include="DAL\Fingerprint.cs" />
+    <Compile Include="DAL\GrantedAccess.cs" />
+    <Compile Include="DAL\GrantedUser.cs" />
+    <Compile Include="DAL\GrantType.cs" />
+    <Compile Include="DAL\Inventory.cs" />
+    <Compile Include="DAL\InventoryProduct.cs" />
+    <Compile Include="DAL\Product.cs" />
+    <Compile Include="DAL\RfidTag.cs" />
+    <Compile Include="DAL\SmartDrawerDatabaseContext.cs" />
+    <Compile Include="DAL\SmartDrawerDatabaseInitializer.cs" />
+    <Compile Include="DAL\UserRank.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
