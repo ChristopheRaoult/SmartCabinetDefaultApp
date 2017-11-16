@@ -63,6 +63,7 @@
     <Compile Include="DAL\SmartDrawerDatabaseContext.cs" />
     <Compile Include="DAL\SmartDrawerDatabaseInitializer.cs" />
     <Compile Include="DAL\UserRank.cs" />
+    <Compile Include="PasswordHashing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

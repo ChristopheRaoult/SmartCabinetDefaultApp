@@ -24,7 +24,7 @@ namespace SmartDrawerDatabase.DAL
         [StringLength(20)]
         public string Login { get; set; }
         [Required]
-        [StringLength(20)]
+        [StringLength(128)]
         public string Password { get; set; }
         public string BadgeNumber { get; set; }
         [Required]

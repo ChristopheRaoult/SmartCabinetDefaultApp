@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SmartDrawerDatabase.DAL;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +24,19 @@ namespace SmartDrawerWpfApp
         public MainWindow()
         {
             InitializeComponent();
+        }
+
+        private void Window_Loaded(object sender, RoutedEventArgs e)
+        {
+            using (var ctx = new SmartDrawerDatabaseContext())
+            {
+                GrantedUser adminUser = ctx.GrantedUsers.SingleOrDefault(au => au.UserRankId == 1);
+                if (adminUser != null)
+                    if (SmartDrawerDatabase.PasswordHashing.Sha256Of("Rfid123456") == adminUser.Password)
+                        MessageBox.Show("Login : " + adminUser.Login + "\r\nPassword : Rfid123456");
+                    else
+                        MessageBox.Show("Login : " + adminUser.Login + "\r\nPassword : Wrong Password");
+            }
         }
     }
 }

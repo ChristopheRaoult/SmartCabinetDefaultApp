@@ -101,5 +101,11 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\SmartDrawerDatabase\SmartDrawerDatabase.csproj">
+      <Project>{a0c0bf39-ccab-4698-9949-75a7b8c46618}</Project>
+      <Name>SmartDrawerDatabase</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

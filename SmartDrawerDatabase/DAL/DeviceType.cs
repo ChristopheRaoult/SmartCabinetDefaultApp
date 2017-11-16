@@ -18,6 +18,8 @@ namespace SmartDrawerDatabase.DAL
 
         [Key]
         public int DeviceTypeId { get; set; }
+        [Required]
+        public int HardwareIndex { get; set; }
         [Required][StringLength(20)]
         public string Type { get; set; }
 

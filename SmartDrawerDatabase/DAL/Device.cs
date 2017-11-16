@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace SmartDrawerDatabase.DAL
 {
-    [Table("Product")]
+    [Table("Device")]
     public class Device
     {
         public Device()
