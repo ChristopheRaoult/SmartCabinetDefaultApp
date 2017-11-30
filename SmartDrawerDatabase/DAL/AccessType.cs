@@ -11,6 +11,10 @@ namespace SmartDrawerDatabase.DAL
     [Table("AccessType")]
     public class AccessType
     {
+        public const string Manual = "MANUAL";
+        public const string Badge = "BADGE";
+        public const string Fingerprint = "FINGERPRINT";
+
         public AccessType()
         {
             this.Inventories = new HashSet<Inventory>();

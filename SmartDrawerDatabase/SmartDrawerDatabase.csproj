@@ -48,18 +48,24 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DAL\AccessType.cs" />
+    <Compile Include="DAL\AccessTypeExtension.cs" />
     <Compile Include="DAL\Authentication.cs" />
     <Compile Include="DAL\Column.cs" />
     <Compile Include="DAL\Device.cs" />
+    <Compile Include="DAL\DeviceExtension.cs" />
     <Compile Include="DAL\DeviceType.cs" />
+    <Compile Include="DAL\Exceptions\NonexistentConstantException.cs" />
     <Compile Include="DAL\Fingerprint.cs" />
     <Compile Include="DAL\GrantedAccess.cs" />
     <Compile Include="DAL\GrantedUser.cs" />
+    <Compile Include="DAL\GrantedUserExtension.cs" />
     <Compile Include="DAL\GrantType.cs" />
     <Compile Include="DAL\Inventory.cs" />
     <Compile Include="DAL\InventoryProduct.cs" />
     <Compile Include="DAL\Product.cs" />
+    <Compile Include="DAL\ProductExtension.cs" />
     <Compile Include="DAL\RfidTag.cs" />
+    <Compile Include="DAL\RfidTagExtension.cs" />
     <Compile Include="DAL\SmartDrawerDatabaseContext.cs" />
     <Compile Include="DAL\SmartDrawerDatabaseInitializer.cs" />
     <Compile Include="DAL\UserRank.cs" />

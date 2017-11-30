@@ -19,6 +19,8 @@ namespace SmartDrawerDatabase.DAL
         public int InventoryId { get; set; }
         [Required]
         public int DeviceId { get; set; }
+        [Required] // 0 if no drawer or drawer index
+        public int DrawerNumber { get; set; }       
         public Nullable<int> GrantedUserId { get; set; }
         [Required]
         public int AccessTypeId { get; set; }
@@ -30,6 +32,8 @@ namespace SmartDrawerDatabase.DAL
         public int TotalRemoved { get; set; }
         [Required]
         public DateTime InventoryDate { get; set; }
+        [MaxLength]
+        public string InventoryStream { get; set; }
 
         public virtual Device Device { get; set; }
         public virtual GrantedUser GrantedUser { get; set; }

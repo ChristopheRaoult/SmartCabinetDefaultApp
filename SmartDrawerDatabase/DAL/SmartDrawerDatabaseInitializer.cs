@@ -7,9 +7,25 @@ using System.Threading.Tasks;
 
 namespace SmartDrawerDatabase.DAL
 {
-    public class SmartDrawerDatabaseInitializer : DropCreateDatabaseIfModelChanges<SmartDrawerDatabaseContext>
+   public class SmartDrawerDatabaseInitializer : DropCreateDatabaseIfModelChanges<SmartDrawerDatabaseContext>
     //public class SmartDrawerDatabaseInitializer : DropCreateDatabaseAlways<SmartDrawerDatabaseContext>
     {
+
+        public override void InitializeDatabase(SmartDrawerDatabaseContext context)
+        {
+            /*if (context.Database.Exists())
+            {
+                context.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction
+                    , string.Format("ALTER DATABASE {0} SET SINGLE_USER WITH ROLLBACK IMMEDIATE", context.Database.Connection.Database));
+
+                // drop the database
+                context.Database.ExecuteSqlCommand(TransactionalBehavior.DoNotEnsureTransaction,
+                    "USE master DROP DATABASE [" + context.Database.Connection.Database + "]");
+            }*/
+
+            base.InitializeDatabase(context);
+        }
+
         protected override void Seed (SmartDrawerDatabaseContext context)
         {
 
@@ -66,8 +82,11 @@ namespace SmartDrawerDatabase.DAL
 
             //seed Admin User
             GrantedUser adminUser = new GrantedUser() { GrantedUserId = 1, Login = "Admin", Password = PasswordHashing.Sha256Of("Rfid123456") , UserRankId = 1 };
-            context.GrantedUsers.Add(adminUser);          
-           
+            context.GrantedUsers.Add(adminUser);
+
+            //see device
+            Device newDev = new Device() { DeviceTypeId = 15 , Name = "Wall Test Lab Paris", SerialNumber = "Wall-V2-0013", RfidSerial = "14100258" };
+            context.Devices.Add(newDev);
 
             base.Seed(context);
         }

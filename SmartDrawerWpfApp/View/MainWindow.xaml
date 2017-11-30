@@ -1,0 +1,459 @@
+﻿<Controls:MetroWindow x:Class="SmartDrawerWpfApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:syncfusion="http://schemas.syncfusion.com/wpf" 
+        xmlns:datapager="clr-namespace:Syncfusion.UI.Xaml.Controls.DataPager;assembly=Syncfusion.SfGrid.WPF"
+                     
+        xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
+        xmlns:local="clr-namespace:SmartDrawerWpfApp"
+        xmlns:cmd="http://www.galasoft.ch/mvvmlight"
+        xmlns:sfHelper="clr-namespace:SmartDrawerWpfApp.StaticHelpers"
+        xmlns:Views="clr-namespace:SmartDrawerWpfApp.View"
+        DataContext="{Binding Main, Source={StaticResource Locator}}"
+        Icon="/SmartDrawerWpfApp;component/Icons/Logo.PNG"
+       
+        mc:Ignorable="d"
+        Title="SmartDrawer Application" MinHeight="850" MinWidth="1366" WindowStartupLocation="CenterScreen" WindowState="Maximized" d:DesignWidth="1160" d:DesignHeight="973.3" >
+
+    <Controls:MetroWindow.RightWindowCommands>
+        <Controls:WindowCommands>
+            <Button Content="Settings" Command="{Binding btSettingCommand}" />
+        </Controls:WindowCommands>
+    </Controls:MetroWindow.RightWindowCommands>
+    <Controls:MetroWindow.Flyouts>
+        <Controls:FlyoutsControl>
+            <Controls:Flyout x:Name="FlyOutCassettePosition"  VerticalAlignment="Top" Position="Bottom" Height ="150" Width="1366"  Theme="Light"  IsOpen="{Binding IsFlyoutCassettePositionOpen}">
+             <Views:UserDrawerSelection x:Name="ucDrawerinfo"></Views:UserDrawerSelection>
+            </Controls:Flyout>
+        </Controls:FlyoutsControl>
+    </Controls:MetroWindow.Flyouts>
+
+    <Grid Name="ParentGrid">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="200" />
+        </Grid.ColumnDefinitions>
+        <!-- Left Main Panel-->
+        <Grid Grid.Row="0" Grid.Column="0">
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="50"></RowDefinition>
+                </Grid.RowDefinitions>
+                <!-- GRID-->
+                <Grid Grid.Row="0" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="75"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="50"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Left" >
+                        <Button  Command="{Binding btLightFilteredTag}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Light Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
+                        <TextBlock  Text="{Binding txtNbSelectedItem}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"  FontSize="25" Foreground="{DynamicResource AccentColorBrush}"/>
+                    </StackPanel>
+                    <syncfusion:SfDataGrid Name="myDatagrid" 
+                                       Grid.Row="1"
+                                       VerticalAlignment="Stretch"  
+                                       HorizontalAlignment="Stretch"
+                                       AutoGenerateColumns="False"                                                                             
+                                       SelectionMode="Multiple"   
+                                       RowSelectionBrush="{DynamicResource AccentColorBrush}"
+                                       AllowDraggingColumns="False"                                           
+                                       AllowEditing="False"
+                                       AllowFiltering="True"
+                                       AllowGrouping="True"  
+                                       ShowGroupDropArea="True" 
+                                       EnableDataVirtualization="True"
+                                       NavigationMode="Row"  
+                                       ShowBusyIndicator="True"
+                                       FontFamily="Verdana" 
+                                       FontSize="18" Loaded="myDatagrid_Loaded"
+                                       ItemsSource="{Binding SourceTable}"
+                                       sfHelper:SfDataGridHelper.SelectedItems="{Binding SelectedItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  >                                              
+                            <syncfusion:SfDataGrid.Columns>
+                            <syncfusion:GridTextColumn  x:Name="ColTagUid"
+                                                         HeaderText="Tag UID"
+                                                         MappingName="UID"
+                                                         IsHidden="true">
+                                
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column1"
+                                                         HeaderText="Column1"
+                                                         MappingName="Column1"
+                                                         IsHidden="True">
+
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column2"
+                                                         HeaderText="Column2"
+                                                         MappingName="Column2"
+                                                        IsHidden="True">
+
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column3"
+                                                         HeaderText="Column3"
+                                                         MappingName="Column3"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column4"
+                                                         HeaderText="Column4"
+                                                         MappingName="Column4"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column5"
+                                                         HeaderText="Column5"
+                                                         MappingName="Column5"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column6"
+                                                         HeaderText="Column6"
+                                                         MappingName="Column6"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column7"
+                                                         HeaderText="Column7"
+                                                         MappingName="Column7"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column8"
+                                                         HeaderText="Column8"
+                                                         MappingName="Column8"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column9"
+                                                         HeaderText="Column9"
+                                                         MappingName="Column9"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column10"
+                                                         HeaderText="Column10"
+                                                         MappingName="Column10"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column11"
+                                                         HeaderText="Column11"
+                                                         MappingName="Column11"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column12"
+                                                         HeaderText="Column12"
+                                                         MappingName="Column12"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column13"
+                                                         HeaderText="Column13"
+                                                         MappingName="Column13"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column14"
+                                                         HeaderText="Column14"
+                                                         MappingName="Column14"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column15"
+                                                         HeaderText="Column15"
+                                                         MappingName="Column15"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column16"
+                                                         HeaderText="Column16"
+                                                         MappingName="Column16"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column17"
+                                                         HeaderText="Column17"
+                                                         MappingName="Column17"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column18"
+                                                         HeaderText="Column18"
+                                                         MappingName="Column18"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column19"
+                                                         HeaderText="Column19"
+                                                         MappingName="Column19"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Drawer"
+                                                         HeaderText="Drawer"
+                                                         MappingName="Drawer"
+                                                        IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                        </syncfusion:SfDataGrid.Columns>
+                     </syncfusion:SfDataGrid>
+                    <!--datapager:SfDataPager x:Name="sfDataPager"   Grid.Row="2"                                  
+                                       Height="60"
+                                       HorizontalAlignment="Right"
+                                       VerticalAlignment="Top"
+                                       AccentBackground="#FF53C3D5"
+                                       AccentForeground="White"
+                                       NumericButtonCount="10"
+                                       Orientation="Horizontal"
+                                       PageSize="16"
+                                       Source="{Binding SourceTable}" /-->                    
+
+                </Grid>
+                <!-- BOTTOM-->
+                <Border Grid.Row="1" Margin="2" Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8">
+                    <Grid>
+                        <StackPanel  Orientation="Horizontal">
+                        <TextBlock   Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="WCF :"   Style="{StaticResource itemTextBlock}"></TextBlock>
+                        <Image Width="18" Height="18" Stretch="Fill" Margin="0,0,0,0">
+                            <Image.Style>
+                                <Style TargetType="{x:Type Image}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding NetworkStatus}" Value="False">
+                                            <Setter Property="Source" Value="/Icons/LedRed.png"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding NetworkStatus}" Value="True">
+                                            <Setter Property="Source" Value="/Icons/LedGreen.png"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock   Text="RFID :"   Margin="20,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"  Style="{StaticResource itemTextBlock}"></TextBlock>
+                        <Image Width="18" Height="18" Stretch="Fill" Margin="10,0,0,0">
+                            <Image.Style>
+                                <Style TargetType="{x:Type Image}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding RfidStatus}" Value="False">
+                                            <Setter Property="Source" Value="/Icons/LedRed.png"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding RfidStatus}" Value="True">
+                                            <Setter Property="Source" Value="/Icons/LedGreen.png"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock   Text="GPIO :" Margin="20,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                        <Image Width="18" Height="18" Stretch="Fill" Margin="10,0,0,0">
+                            <Image.Style>
+                                <Style TargetType="{x:Type Image}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding GpioStatus}" Value="False">
+                                            <Setter Property="Source" Value="/Icons/LedRed.png"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding GpioStatus}" Value="True">
+                                            <Setter Property="Source" Value="/Icons/LedGreen.png"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock    Text="Information : "  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,10,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                    <TextBlock    Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding wallStatus}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>                       
+                </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Controls:ToggleSwitch x:Name="ChkAutoLight"  IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>
+                            <TextBlock  Text="Auto Light Drawer" Margin="2,0,2,0" VerticalAlignment="Center" HorizontalAlignment="Left" FontFamily="Verdana" FontSize="8"></TextBlock>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+        <!-- Right Main Panel-->
+        <Grid Grid.Row="0" Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <!-- Drawer 1 -->
+            <Border Grid.Row="0" Background="White" Margin="2" BorderBrush="Silver" BorderThickness="1" CornerRadius="5,5,5,5">
+            <Grid  Margin="5">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="3*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                  
+                    <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[1]}" Margin="5,0,5,2">
+                        <TextBlock Text="DRAWER 1" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                        <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
+                        <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
+                        <StackPanel Orientation="Horizontal" >
+                            <TextBlock Text="Status : "  Margin="10,5,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <TextBlock Margin="5,3,0,0" Text="{Binding DrawerStatus[1]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" >
+                            <TextBlock Text="Tag(s) : "  Margin="10,10,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <TextBlock Margin="5,-2,0,0" Text="{Binding DrawerTagQty[1]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" FontSize="30" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+            </Border>
+            <!-- Drawer 2 -->
+            <Border Grid.Row="1" Background="White" Margin="2" BorderBrush="Silver" BorderThickness="1" CornerRadius="5,5,5,5">
+                <Grid Margin="5" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="3*"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[2]}" Margin="5,0,5,2">
+                    <TextBlock Text="DRAWER 2" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                </Grid>
+                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                        <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
+                        <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Status : "  Margin="10,5,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,3,0,0" Text="{Binding DrawerStatus[2]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Tag(s) : "  Margin="10,10,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,-2,0,0" Text="{Binding DrawerTagQty[2]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" FontSize="30" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+            </Border>
+            <!-- Drawer 3 -->
+            <Border Grid.Row="2" Background="White" Margin="2" BorderBrush="Silver" BorderThickness="1" CornerRadius="5,5,5,5">
+                <Grid  Margin="5" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="3*"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[3]}" Margin="5,0,5,2">
+                    <TextBlock Text="DRAWER 3" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                </Grid>
+                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                        <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
+                        <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Status : "  Margin="10,5,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,3,0,0" Text="{Binding DrawerStatus[3]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Tag(s) : "  Margin="10,10,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,-2,0,0" Text="{Binding DrawerTagQty[3]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" FontSize="30" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+            </Border>
+            <!-- Drawer 4 -->
+            <Border Grid.Row="3" Background="White" Margin="2" BorderBrush="Silver" BorderThickness="1" CornerRadius="5,5,5,5">
+                <Grid Margin="5" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="3*"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[4]}" Margin="5,0,5,2">
+                    <TextBlock Text="DRAWER 4" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                </Grid>
+                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                        <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
+                        <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Status : "  Margin="10,5,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,3,0,0" Text="{Binding DrawerStatus[4]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Tag(s) : "  Margin="10,10,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,-2,0,0" Text="{Binding DrawerTagQty[4]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" FontSize="30" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+            </Border>
+            <!-- Drawer 5 -->
+            <Border Grid.Row="4" Background="White" Margin="2" BorderBrush="Silver" BorderThickness="1" CornerRadius="5,5,5,5" >
+                <Grid  Margin="5" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="3*"></RowDefinition>
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[5]}" Margin="5,0,5,2">
+                    <TextBlock Text="DRAWER 5" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                </Grid>
+                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                        <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
+                        <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Status : "  Margin="10,5,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,3,0,0" Text="{Binding DrawerStatus[5]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Tag(s) : "  Margin="10,10,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,-2,0,0" Text="{Binding DrawerTagQty[5]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" FontSize="30" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+            </Border>
+            <!-- Drawer 6 -->
+                <Border Grid.Row="5" Background="White" Margin="2" BorderBrush="Silver" BorderThickness="1" CornerRadius="5,5,5,5">
+                    <Grid Margin="5" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="3*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[6]}" Margin="5,0,5,2">
+                    <TextBlock Text="DRAWER 6" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                </Grid>
+                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                        <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
+                        <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Status : "  Margin="10,5,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,3,0,0" Text="{Binding DrawerStatus[6]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Tag(s) : "  Margin="10,10,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,-2,0,0" Text="{Binding DrawerTagQty[6]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" FontSize="30" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+            </Border>
+            <!-- Drawer 7 -->
+                    <Border Grid.Row="6" Background="White" Margin="2" BorderBrush="Silver" BorderThickness="1" CornerRadius="5,5,5,5">
+                        <Grid Margin="5" >
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"></RowDefinition>
+                    <RowDefinition Height="3*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[7]}" Margin="5,0,5,2">
+                    <TextBlock Text="DRAWER 7" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                </Grid>
+                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                        <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
+                        <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Status : "  Margin="10,5,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,3,0,0" Text="{Binding DrawerStatus[7]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" >
+                                <TextBlock Text="Tag(s) : "  Margin="10,10,0,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <TextBlock Margin="5,-2,0,0" Text="{Binding DrawerTagQty[7]}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" FontSize="30" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Controls:MetroWindow>

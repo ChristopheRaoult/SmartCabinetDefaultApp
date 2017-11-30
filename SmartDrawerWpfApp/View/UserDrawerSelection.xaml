@@ -1,0 +1,96 @@
+﻿<UserControl x:Class="SmartDrawerWpfApp.View.UserDrawerSelection"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:SmartDrawerWpfApp.View"
+             mc:Ignorable="d" 
+             d:DesignHeight="170" d:DesignWidth="1300"
+             DataContext="{Binding Main, Source={StaticResource Locator}}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <TextBlock  Grid.Row="0"  Grid.Column="2" Text="Wall Information : "  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,10,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+        <TextBlock    Grid.Row="0"  Grid.Column="3"  Grid.ColumnSpan="3"  Margin="0,0,0,0" VerticalAlignment="Center" Text="{Binding wallStatus}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+        <Grid Grid.Row="1" Grid.Column="0" Grid.RowSpan="2"  Margin="5,20,5,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <TextBlock  Grid.Row="0" Grid.Column="0" Text="Stones(s)" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontSize="20" ></TextBlock>
+            <StackPanel Grid.Row="1" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock   Text="To Pull : "  Foreground="Black" FontSize="20" ></TextBlock>
+                <TextBlock   Text="{Binding TotalCassettesToPull}"  Foreground="Black" FontSize="20" Width="50"></TextBlock>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <TextBlock   Text="Pulled : "  Foreground="Black" FontSize="20" ></TextBlock>
+                <TextBlock   Text="{Binding TotalCassettesPulled}"  Foreground="Black" FontSize="20" Width="50"></TextBlock>
+
+            </StackPanel>
+
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="1" Background="{Binding BrushDrawer[1]}" Margin="5,0,5,0">
+            <TextBlock Text="DRAWER 1" FontSize="20"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="2" Background="{Binding BrushDrawer[2]}" Margin="5,0,5,0">
+            <TextBlock Text="DRAWER 2" FontSize="20"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="3" Background="{Binding BrushDrawer[3]}" Margin="5,0,5,0">
+            <TextBlock Text="DRAWER 3" FontSize="20"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="4" Background="{Binding BrushDrawer[4]}" Margin="5,0,5,0">
+            <TextBlock Text="DRAWER 4" FontSize="20"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="5" Background="{Binding BrushDrawer[5]}" Margin="5,0,5,0">
+            <TextBlock Text="DRAWER 5" FontSize="20"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="6" Background="{Binding BrushDrawer[6]}" Margin="5,0,5,0">
+            <TextBlock Text="DRAWER 6" FontSize="20"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="1" Grid.Column="7" Background="{Binding BrushDrawer[7]}" Margin="5,0,5,0">
+            <TextBlock Text="DRAWER 7" FontSize="20"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+        </Grid>
+
+        <Grid Grid.Row="2" Grid.Column="1" Background="LightGray" Margin="5,0,5,0">
+            <TextBlock  Text="{Binding SelectedCassette.CassetteDrawer1Number}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontSize="40" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="2" Grid.Column="2" Background="LightGray" Margin="5,0,5,0">
+            <TextBlock  Text="{Binding SelectedCassette.CassetteDrawer2Number}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontSize="40" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="2" Grid.Column="3" Background="LightGray" Margin="5,0,5,0">
+            <TextBlock  Text="{Binding SelectedCassette.CassetteDrawer3Number}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontSize="40" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="2" Grid.Column="4" Background="LightGray" Margin="5,0,5,0">
+            <TextBlock  Text="{Binding SelectedCassette.CassetteDrawer4Number}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontSize="40" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="2" Grid.Column="5" Background="LightGray" Margin="5,0,5,0">
+            <TextBlock  Text="{Binding SelectedCassette.CassetteDrawer5Number}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontSize="40" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="2" Grid.Column="6" Background="LightGray" Margin="5,0,5,0">
+            <TextBlock  Text="{Binding SelectedCassette.CassetteDrawer6Number}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontSize="40" ></TextBlock>
+        </Grid>
+        <Grid Grid.Row="2" Grid.Column="7" Background="LightGray" Margin="5,0,5,0">
+            <TextBlock  Text="{Binding SelectedCassette.CassetteDrawer7Number}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" FontSize="40" ></TextBlock>
+        </Grid>
+        <StackPanel Grid.Row="0" Grid.Column="8" Grid.RowSpan="3" Orientation="Vertical">
+            <Button  x:Name="btLightAll"  Margin="5,60,5,5" Height="50" FontSize="15" Command="{Binding LightAllCommand}" Content="{Binding btLightText}"     />
+            <!--Button  Margin="5,5,5,5" Height="50" Content="Remove"  FontSize="15" /-->
+        </StackPanel>
+
+    </Grid>
+</UserControl>
