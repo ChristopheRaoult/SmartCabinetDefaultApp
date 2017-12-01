@@ -107,7 +107,8 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             }
             catch (Exception error )
             {
-                Trace.TraceError("{0} Unable to get data from local DB [Device].", DateTime.Now.ToString("g"));
+                ExceptionMessageBox msg = new ExceptionMessageBox(error, "Error GetDeviceEntity");
+                msg.ShowDialog();          
                 return null;  
             }
         }
@@ -159,7 +160,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         /// <summary>
         /// Local device is not configured in application settings
         /// </summary>
-        public static event DeviceEventHandler DeviceNotInitialized;
+        //public static event DeviceEventHandler DeviceNotInitialized;
 
         /// <summary>
         /// Local device started a scan

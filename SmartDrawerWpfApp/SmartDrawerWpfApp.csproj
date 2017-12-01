@@ -61,6 +61,9 @@
     <Reference Include="Microsoft.Practices.ServiceLocation, Version=1.3.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\CommonServiceLocator.1.3\lib\portable-net4+sl5+netcore45+wpa81+wp8\Microsoft.Practices.ServiceLocation.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json, Version=11.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.11.0.1-beta1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="SDK_SC_RfidReader">
       <HintPath>..\..\..\GIA Project\WallPanelWpfApp-GIATest\SDK_SC_RfidReader\bin\Debug\SDK_SC_RfidReader.dll</HintPath>
     </Reference>
@@ -83,7 +86,12 @@
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Data" />
+    <Reference Include="System.IdentityModel" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
+    <Reference Include="System.ServiceModel" />
+    <Reference Include="System.ServiceModel.Activation" />
+    <Reference Include="System.ServiceModel.Web" />
     <Reference Include="System.Windows.Interactivity, Version=4.5.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\ControlzEx.3.0.2.4\lib\net45\System.Windows.Interactivity.dll</HintPath>
       <Private>True</Private>
@@ -126,6 +134,15 @@
     <Compile Include="View\UserDrawerSelection.xaml.cs">
       <DependentUpon>UserDrawerSelection.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Wcf\JsonProductAddOrUpdate.cs" />
+    <Compile Include="Wcf\JsonProductToStockOut.cs" />
+    <Compile Include="Wcf\JsonProdutToSelect.cs" />
+    <Compile Include="Wcf\MyHostEventArgs.cs" />
+    <Compile Include="Wcf\WallDevice.cs" />
+    <Compile Include="Wcf\SslWallNotificationService.cs" />
+    <Compile Include="Wcf\WcfAuthorizationPolicy.cs" />
+    <Compile Include="Wcf\WcfPrincipal.cs" />
+    <Compile Include="Wcf\WcfUserNamePasswordValidator.cs" />
     <Page Include="Resources\Icons.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

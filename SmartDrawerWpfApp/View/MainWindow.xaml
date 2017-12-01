@@ -54,6 +54,9 @@
                         <Button  Command="{Binding btLightFilteredTag}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Light Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
                         <TextBlock  Text="{Binding txtNbSelectedItem}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"  FontSize="25" Foreground="{DynamicResource AccentColorBrush}"/>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Right" >
+                        <Button  Command="{Binding ResetDeviceCommand}"  Grid.Column="5"  Margin="5,5,5,5"  Height="50" Content=" Reset " VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="15"   />
+                    </StackPanel>
                     <syncfusion:SfDataGrid Name="myDatagrid" 
                                        Grid.Row="1"
                                        VerticalAlignment="Stretch"  

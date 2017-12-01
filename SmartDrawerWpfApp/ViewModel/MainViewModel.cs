@@ -17,6 +17,9 @@ using SDK_SC_RfidReader;
 using System.Collections.Generic;
 using SmartDrawerWpfApp.Model;
 using System.Data;
+using SmartDrawerWpfApp.Wcf;
+using System.ServiceModel;
+using System.IO;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -212,11 +215,8 @@ namespace SmartDrawerWpfApp.ViewModel
                         }
                     }
                 }
-
             }
         }
-
-
         private ObservableCollection<string> _DrawerStatus;
         public ObservableCollection<string> DrawerStatus
         {
@@ -520,7 +520,6 @@ namespace SmartDrawerWpfApp.ViewModel
         public RelayCommand ResetDeviceCommand { get; set; }
         void Reset()
         {
-
             mainview0.Dispatcher.BeginInvoke(new ThreadStart(delegate ()
             {
                 wallStatus = "Devices Released";
@@ -531,8 +530,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 wallStatus = "In Connection";
                 Thread.Sleep(1000);
                 DevicesHandler.TryInitializeLocalDeviceAsync();
-                //TODO
-                //InitWcfService();
+                InitWcfService();
             }));
         }
         public RelayCommand btLightFilteredTag { get; set; }
@@ -758,6 +756,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             startTimer.Stop();
             startTimer.IsEnabled = false;
+            InitWcfService();
 
             // No serial in Configuration - Conenct to get rfid serial
             if (string.IsNullOrEmpty(Properties.Settings.Default.RfidSerial))
@@ -779,7 +778,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 Device mydev = ctx.Devices.GetByRfidSerialNumber(Properties.Settings.Default.RfidSerial);
                 if (mydev == null)
                 {
-                    await mainview0.ShowMessageAsync("Wall Information", "Wall Unknow in Database ! \r\n Please Add it before continue \r\n Application will quit !");
+                    await mainview0.ShowMessageAsync("Wall Information", "Wall Unknow in Database ! \r\n Please Add device " + Properties.Settings.Default.RfidSerial + " it before continue \r\n Application will quit !");
                     Application.Current.Shutdown();
                 }
                 else
@@ -820,9 +819,9 @@ namespace SmartDrawerWpfApp.ViewModel
             }
             else
                 DevicesHandler.GpioCardObject.GetInValues();
-            //TODO
-            /*if (!NetworkStatus)
-                InitWcfService();*/
+           
+            if (!NetworkStatus)
+                InitWcfService();
 
             AutoConnectTimer.IsEnabled = true;
         }
@@ -1045,6 +1044,108 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         #endregion
+        #region WCF Service
+        private ServiceHost host = null;
+        SslWallNotificationService WallService = new SslWallNotificationService();
+       // WebHttpBinding webBinding;
+        private void InitWcfService()
+        {
+            try
+            {
+                if (host != null)
+                {
+                    host.Close();
+                    host = null;
+                }
+
+                WallService.mainview0 = mainview0;
+                host = new ServiceHost(WallService);
+                host.Opened += Host_Opened;
+                host.Closed += Host_Closed;
+                host.Faulted += Host_Faulted;
+                host.Open();
+                WallService = host.SingletonInstance as SslWallNotificationService;
+                if (WallService != null)
+                    WallService.MyHostEvent += Wns_MyHostEvent;
+                wallStatus = "WCF service Initialized at " + host.Description.Endpoints[0].ListenUri;
+
+            }
+            catch (Exception ex)
+            {
+                ExceptionMessageBox msg = new ExceptionMessageBox(ex, "Error Wcf Initialisation");
+                msg.ShowDialog();
+                if (host != null)
+                    host.Abort();
+            }
+        }
+        private void Host_Faulted(object sender, EventArgs e)
+        {
+            NetworkStatus = false;
+        }
+        private void Host_Closed(object sender, EventArgs e)
+        {
+            NetworkStatus = false;
+        }
+        private void Host_Opened(object sender, EventArgs e)
+        {
+            NetworkStatus = true;
+        }
+
+        private void Wns_MyHostEvent(object sender, MyHostEventArgs e)
+        {
+            try
+            {
+                wallStatus = DateTime.Now.ToLongTimeString() + " - " + e.NotificationName + " : " + e.Message;
+
+                if (!Directory.Exists(@"c:/temp/WallPanelLog/"))
+                    Directory.CreateDirectory(@"c:/temp/WallPanelLog/");
+
+                File.AppendAllText(@"c:/temp/WallPanelLog/logService.txt", wallStatus + "\r\n");
+
+                switch (e.NotificationName)
+                {
+                    case "GetWallInfo":
+                        break;
+                    case "UpdateCriteriaNotification":
+                        getCriteria();
+                        break;
+                    case "UpdateUserInfoListNotification":
+                        break;
+                    case "UpdateUserInfoList":                           
+                        break;
+                    case "UpdateCriteria":
+                        if (e.Message != null)
+                        {
+                            getCriteria();
+                        }
+                        break;
+                    case "AddOrUpdateProduct":
+                        getCriteria();
+                        break;
+                    case "StockOutProduct":
+                        getCriteria();
+                        break;
+                    case "SelectProduct":
+                        if (e.Message != null)
+                        {
+                            if (mainview0.myDatagrid.SelectedItems.Count > 0)
+                                LightFilteredTag();
+                            wallStatus = DateTime.Now.ToLongTimeString() + e.Message;
+                        }
+                        break;
+                    //Notification stop scan 
+                    case "StopWallScan":
+                        StopWallScan();
+                        break;
+                }
+            }
+            catch (Exception exp)
+            {
+                File.AppendAllText(@"c:/temp/WallPanelLog/logService.txt", exp.Message + "\r\n");
+            }
+        }
+
+        #endregion
         #region Device
         private void DevicesHandler_GpioConnected(object sender, DrawerEventArgs e)
         {
@@ -1056,6 +1157,7 @@ namespace SmartDrawerWpfApp.ViewModel
             try
             {
                 wallStatus = "Rfid Connected";
+                WallService.myWall.DeviceSerial = e.Serial;
                 
                 for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
                 {
