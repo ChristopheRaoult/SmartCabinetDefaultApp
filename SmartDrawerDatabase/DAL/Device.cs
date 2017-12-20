@@ -10,7 +10,7 @@ namespace SmartDrawerDatabase.DAL
 {
     [Table("Device")]
     public class Device
-    {
+    {        
         public Device()
         {
             this.GrantedAccesses = new HashSet<GrantedAccess>();

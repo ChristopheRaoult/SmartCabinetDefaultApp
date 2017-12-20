@@ -70,7 +70,8 @@ namespace SmartDrawerDatabase.DAL
             defaultGrantTypes.Add(new GrantType() { GrantTypeId = 2, Type = "SLAVE" });
             defaultGrantTypes.Add(new GrantType() { GrantTypeId = 3, Type = "MASTER" });
             defaultGrantTypes.Add(new GrantType() { GrantTypeId = 4, Type = "ALL" });
-
+            foreach (GrantType gt in defaultGrantTypes)
+                context.GrantTypes.Add(gt);
 
             // Seed User Rank
             IList<UserRank> defaultUserRanks = new List<UserRank>();

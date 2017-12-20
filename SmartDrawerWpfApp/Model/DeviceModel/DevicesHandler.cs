@@ -1,6 +1,8 @@
 ﻿using SDK_SC_RfidReader;
+using SecurityModules.FingerprintReader;
 using SmartDrawerDatabase.DAL;
 using SmartDrawerWpfApp.StaticHelpers;
+using SmartDrawerWpfApp.StaticHelpers.Security;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,7 +25,8 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         public static Dictionary<string, int> DeviceList { get; private set; }
 
         public static RfidReader Device;
-        public static ReaderData[] DrawerInventoryData = new ReaderData[NbDrawer + 1];
+        public static FingerprintReader FPReader { get; private set; }
+        public static ReaderData[] DrawerInventoryData = new ReaderData[NbDrawer + 1];        
 
         public static GpioCardLib GpioCardObject = new GpioCardLib();
         //private static clBadgeReader AccessBadgeObject;
@@ -49,7 +52,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             set { _CurrentActiveRfidDrawer = value; }
         }
 
-        public static string LastScanAccessTypeName { get; private set; }
+        public static string LastScanAccessTypeName { get; set; }
 
         private static int _LastDrawerOpened = 0;
         private static int _LastDrawerClosed = 0;
@@ -147,6 +150,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
 
         #region deviceEvent
         public delegate void DeviceEventHandler(object sender, DrawerEventArgs e);
+        public delegate void FpEventHandler(object sender, FingerprintReaderEventArgs args);
         /// <summary>
         /// Local device is instantiated & connected
         /// </summary>
@@ -201,6 +205,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         /// </summary>
         public static event DeviceEventHandler GpioConnected;
         public static event DeviceEventHandler BadgeRead;
+        public static event FpEventHandler FpAuthenticationReceive;
         #endregion
         #region DevicesProperty
 
@@ -306,8 +311,39 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                     FindAndConnectGPIO();
                 //ConnectAccessBadge("COM2");
 
+                // fingerprint reader
+                var fpReadersSerialNumbers = FingerprintReader.GetPluggedReadersSerialNumbers();
+                if (fpReadersSerialNumbers.Count > 0)
+                {
+                    FPReader = new FingerprintReader(fpReadersSerialNumbers.First());
+                    FPReader.StartCapture();
+                    FPReader.FingerprintReaderEvent += FPReader_FingerprintReaderEvent;
+                }
+
             });
         }
+
+        private static void FPReader_FingerprintReaderEvent(object sender, FingerprintReaderEventArgs args)
+        {
+            var fpReader = sender as FingerprintReader;
+            if (fpReader == null)
+            {
+                // cannot happen
+                return;
+            }
+            if (args.EventType != FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete)
+            {
+                return;
+            }
+
+            var handler = FpAuthenticationReceive;
+            if (handler != null)
+            {
+                var evt = new FingerprintReaderEventArgs(args.EventType, args.IsMaster);
+                handler(sender, evt);
+            }          
+        }
+
         public static void FindAndConnectDevice()
         {
 
@@ -326,6 +362,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                         Device = tmpReader;
                         Device.NotifyEvent += Device_NotifyEvent;
                         InitDeviceList(tmpReader.SerialNumber);
+                        LastScanAccessTypeName = AccessType.Manual;
                         FireEvent(DeviceConnected, tmpReader.SerialNumber, 0);
 
                     }
@@ -470,8 +507,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         }
         public static bool IsWallInScan()
         {
-            bool bInScan = false;
-            LastScanAccessTypeName = AccessType.Manual;
+            bool bInScan = false;           
             if (Device != null)
             {
                 if (Device.IsInScan)

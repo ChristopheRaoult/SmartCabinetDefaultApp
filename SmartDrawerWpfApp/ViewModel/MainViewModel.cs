@@ -20,6 +20,12 @@ using System.Data;
 using SmartDrawerWpfApp.Wcf;
 using System.ServiceModel;
 using System.IO;
+using Newtonsoft.Json;
+using Syncfusion.Data;
+using Syncfusion.UI.Xaml.Grid;
+using SmartDrawerWpfApp.StaticHelpers.Security;
+using SmartDrawerWpfApp.Fingerprint;
+using SecurityModules.FingerprintReader;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -47,7 +53,9 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Variables
         private MainWindow mainview0;
+        
         private ProgressDialogController myConTroller = null;
+        private readonly TouchKeyboardProvider _touchKeyboardProvider = new TouchKeyboardProvider();
 
         private DispatcherTimer startTimer;
         private DispatcherTimer AutoConnectTimer;
@@ -78,6 +86,30 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Properties
 
+        string _WallSerial;
+        public string WallSerial
+        {
+            get { return _WallSerial; }
+            set
+            {
+                _WallSerial = value;              
+                RaisePropertyChanged(() => WallSerial);
+            }
+        }
+
+        string _WallName;
+        public string WallName
+        {
+            get
+            {
+                return _WallName;
+            }
+            set
+            {
+                _WallName = value;
+                RaisePropertyChanged(() => WallName);
+            }
+        }
         private string _wallStatus;
         public string wallStatus
         {
@@ -332,9 +364,25 @@ namespace SmartDrawerWpfApp.ViewModel
                 RaisePropertyChanged("SelectedCassette");    
             }
         }
+
+        private string _txtSearchCtrl;
+        public string txtSearchCtrl
+        {
+            get { return _txtSearchCtrl; }
+            set
+            {
+                _txtSearchCtrl = value;
+                RaisePropertyChanged(() => txtSearchCtrl);
+                mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
+                mainview0.myDatagrid.SearchHelper.ClearSearch();                
+                mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
+                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);                
+            }
+        }
+
         #endregion
         #region Datagrid
-      
+
         private ObservableCollection<BaseObject> _data= new ObservableCollection<BaseObject>();
         public ObservableCollection<BaseObject> Data
         {
@@ -344,8 +392,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 _data = value;
                 RaisePropertyChanged(() => Data);
             }
-        }   
-        private ObservableCollection<object> _selectedItems;
+        }
+        private ObservableCollection<object> _selectedItems = new ObservableCollection<object>();
         public ObservableCollection<object> SelectedItems
         {
             get
@@ -362,6 +410,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {
+                    if(mainview0.myDatagrid.View != null)
                     txtNbSelectedItem = string.Format("Stones Selected : {0}", mainview0.myDatagrid.View.Records.Count());
                 }
             }
@@ -379,44 +428,48 @@ namespace SmartDrawerWpfApp.ViewModel
                 RaisePropertyChanged(() => SourceTable);
             }
         }
+        private static Object thisLock = new Object();
         public async void getCriteria()
         {
             try
             {
                 var controller = await mainview0.ShowProgressAsync("Please wait", "Retrieving information from Database");
                 controller.SetIndeterminate();
-                await Task.Run(async () =>
+                await Task.Run( () =>
                 {
-                    Data.Clear();
-                    var ctx = await RemoteDatabase.GetDbContextAsync();
-                    int nbCol = ctx.Columns.Count();
-                    foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
+                    lock (thisLock)
                     {
-                        RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
-                        Product pct = ctx.Products.GetByTagUid(entry.Key);
-                        if (pct != null)
+                        Data.Clear();
+                        var ctx = RemoteDatabase.GetDbContext();
+                        int nbCol = ctx.Columns.Count();
+                        foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
                         {
-                            Data.Add(new BaseObject(pct, entry.Value));
+                            RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
+                            Product pct = ctx.Products.GetByTagUid(entry.Key);
+                            if (pct != null)
+                            {
+                                Data.Add(new BaseObject(pct, entry.Value));
+                            }
+                            else
+                            {
+                                Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
+                                Data.Add(new BaseObject(tmpProd, entry.Value));
+                            }
                         }
-                        else
-                        {
-                            Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
-                            Data.Add(new BaseObject(tmpProd, entry.Value));
-                        }
-                    }
-                    ctx.Database.Connection.Close();
-                    ctx.Dispose();                  
-                });
-                await mainview0.Dispatcher.BeginInvoke(new System.Action(async () =>
-                {
-                    if (Data.Count != 0)
-                        SourceTable = await PopulateDataGrid(Data);
-                    else
-                        SourceTable = null;
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
 
-                    if (_IsFlyoutCassettePositionOpen)
-                        bNeedUpdateCriteria = true;
-                }));
+                        if (Data.Count != 0)
+                            SourceTable = PopulateDataGrid(Data);
+                        else
+                            SourceTable = null;
+
+                        if (_IsFlyoutCassettePositionOpen)
+                            bNeedUpdateCriteria = true;
+                    }
+                    
+                });
+                mainview0.Data = Data;
                 mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
                 await controller.CloseAsync();
             }
@@ -429,33 +482,35 @@ namespace SmartDrawerWpfApp.ViewModel
                 }));
             }
         }
-        public async Task<DataTable> PopulateDataGrid(ObservableCollection<BaseObject> giaData)
+        public DataTable PopulateDataGrid(ObservableCollection<BaseObject> giaData)
         {
-            var ctx = await RemoteDatabase.GetDbContextAsync();
-            int nbCol = ctx.Columns.Count(); 
+            var ctx = RemoteDatabase.GetDbContext();
+            int nbCol = ctx.Columns.Count();
+            ctx.Database.Connection.Close();
+            ctx.Dispose();
 
             DataTable tmpDt = new DataTable();
-            tmpDt.Columns.Add(new DataColumn("UID", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column1", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column2", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column3", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column4", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column5", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column6", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column7", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column8", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column9", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column10", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column11", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column12", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column13", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column14", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column15", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column16", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column17", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column18", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Column19", typeof(string)));
-            tmpDt.Columns.Add(new DataColumn("Drawer", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("UID", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column1", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column2", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column3", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column4", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column5", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column6", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column7", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column8", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column9", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column10", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column11", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column12", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column13", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column14", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column15", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column16", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column17", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column18", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Column19", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("Drawer", typeof(string)));
 
             foreach (BaseObject bo in giaData)
             {
@@ -500,21 +555,34 @@ namespace SmartDrawerWpfApp.ViewModel
         public RelayCommand btSettingCommand { get; set; }
         async void Settings()
         {
-            LoginDialogSettings lds = new LoginDialogSettings();
-            lds.ColorScheme = MetroDialogColorScheme.Theme;
-            lds.InitialUsername = "Admin";
-            LoginDialogData result = await mainview0.ShowLoginAsync("Login", "Enter Password", lds);
-            if (result != null)
-            {
-                var ctx = await RemoteDatabase.GetDbContextAsync();
-                GrantedUser adminUser = ctx.GrantedUsers.GetByLogin(result.Username);
-                if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
-                {
-                    MessageDialogResult messageResult = await mainview0.ShowMessageAsync("Authentication Information", String.Format("Username: {0}\nPassword: {1}", result.Username, result.Password));
-                }
-                ctx.Database.Connection.Close();
-                ctx.Dispose();
 
+            if (GrantedUsersCache.LastAuthenticatedUser != null)
+            {
+                var enrollForm = new EnrollFingersForm(GrantedUsersCache.LastAuthenticatedUser);
+                if (!enrollForm.IsDisposed)
+                {
+                    enrollForm.ShowDialog();
+                    GrantedUsersCache.Reload();
+                    logout();
+                }
+            }
+            else
+            {
+                LoginDialogSettings lds = new LoginDialogSettings();
+                lds.ColorScheme = MetroDialogColorScheme.Theme;
+                lds.InitialUsername = "Admin";
+                LoginDialogData result = await mainview0.ShowLoginAsync("Login", "Enter Password", lds);
+                if (result != null)
+                {
+                    var ctx = await RemoteDatabase.GetDbContextAsync();
+                    GrantedUser adminUser = ctx.GrantedUsers.GetByLogin(result.Username);
+                    if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
+                    {
+                        MessageDialogResult messageResult = await mainview0.ShowMessageAsync("Authentication Information", String.Format("Username: {0}\nPassword: {1}", result.Username, result.Password));
+                    }
+                    ctx.Database.Connection.Close();
+                    ctx.Dispose();
+                }
             }
         }
         public RelayCommand ResetDeviceCommand { get; set; }
@@ -559,9 +627,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 List<string> TmpListCtrlPerDrawer6 = new List<string>(DevicesHandler.GetTagFromDictionnary(6, DevicesHandler.ListTagPerDrawer));
                 List<string> TmpListCtrlPerDrawer7 = new List<string>(DevicesHandler.GetTagFromDictionnary(7, DevicesHandler.ListTagPerDrawer));
 
-                if (_selectedItems!= null &&  _selectedItems.Count > 0)
-                {
-                    foreach (DataRowView item in _selectedItems)
+                if (SelectedItems!= null &&  SelectedItems.Count > 0)
+                {     
+                    foreach (DataRowView item in SelectedItems)
                     {
                         string uid = item.Row.ItemArray[0].ToString();
                         BaseObject theBo = (from c in Data
@@ -629,66 +697,76 @@ namespace SmartDrawerWpfApp.ViewModel
                             }
                         }
                     }
+                    
                 }
                 else
-                {
-                    foreach (BaseObject theBo in _data)
+                {  // filtered records
+                    foreach (RecordEntry re in mainview0.myDatagrid.View.Records)
                     {
-                        _SelectedBaseObjects.Add(theBo);
-                        if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
-                        {
-                            switch (theBo.drawerId)
-                            {
-                                case 1:
-                                    if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                    {
-                                        tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                    }
-                                    break;
-                                case 2:
-                                    if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                    {
-                                        tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                    }
-                                    break;
-                                case 3:
-                                    if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                    {
-                                        tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                    }
-                                    break;
-                                case 4:
-                                    if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                    {
-                                        tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                    }
-                                    break;
-                                case 5:
-                                    if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                    {
-                                        tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                    }
-                                    break;
-                                case 6:
-                                    if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                    {
-                                        tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                    }
-                                    break;
-                                case 7:
-                                    if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                    {
-                                        tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                    }
-                                    break;
+                        DataRowView drv = re.Data as DataRowView;
+                        string uid = drv.Row[0].ToString();
+                        BaseObject theBo = (from c in Data
+                                            where c.Productinfo.RfidTag.TagUid.Equals(uid)
+                                            select c).SingleOrDefault<BaseObject>();
 
+                        if (theBo != null)
+                        {
+                            _SelectedBaseObjects.Add(theBo);
+                            if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
+                            {
+                                switch (theBo.drawerId)
+                                {
+                                    case 1:
+                                        if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                        {
+                                            tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
+                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        }
+                                        break;
+                                    case 2:
+                                        if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                        {
+                                            tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
+                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        }
+                                        break;
+                                    case 3:
+                                        if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                        {
+                                            tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
+                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        }
+                                        break;
+                                    case 4:
+                                        if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                        {
+                                            tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
+                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        }
+                                        break;
+                                    case 5:
+                                        if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                        {
+                                            tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
+                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        }
+                                        break;
+                                    case 6:
+                                        if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                        {
+                                            tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
+                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        }
+                                        break;
+                                    case 7:
+                                        if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                        {
+                                            tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
+                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        }
+                                        break;
+
+                                }
                             }
                         }
                     }
@@ -748,15 +826,66 @@ namespace SmartDrawerWpfApp.ViewModel
                 SelectedItems.Clear();
             }
         }
+        public RelayCommand openKeyboard { get; set; }
+        void openKeyboardFn()
+        {
+            //wallStatus = "txt Got focus";
+            _touchKeyboardProvider.ShowTouchKeyboard();
+            mainview0.TxtCtrlNumber.Focus();
+        }
+        public RelayCommand searchTxtGotCR { get; set; }
+        void searchTxtGotCRfn()
+        {
+            try
+            {
+                if ((Data == null ) || (Data.Count == 0)) return;
 
+                mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
+                mainview0.myDatagrid.SearchHelper.ClearSearch();
+                mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
+                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
+                do
+                {                 
+                    var rowIndex = mainview0.myDatagrid.SearchHelper.CurrentRowColumnIndex.RowIndex;
+                    var record = mainview0.myDatagrid.View.Records[rowIndex-1];
+                    DataRowView drv = record.Data as DataRowView;
+                    mainview0.myDatagrid.SelectedItems.Add(drv);
+                }
+                while (mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl));
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error getting Stone info");
+                exp.ShowDialog();
+            }
+        }
+        public RelayCommand btClearSelection { get; set; }
+        void ClearSelection()
+        {
+            mainview0.myDatagrid.SelectedItems.Clear();
+            mainview0.myDatagrid.SearchHelper.ClearSearch();
+            mainview0.myDatagrid.ScrollInView(new Syncfusion.UI.Xaml.ScrollAxis.RowColumnIndex() { RowIndex = 1, ColumnIndex = 1 });
+        }
+
+        public RelayCommand LogoutCommand { get; set; }
+        public async void logout()
+        {
+            LoggedUser = null;
+            //TODO
+            while (IsOneDrawerOpen())
+                await mainview0.ShowMessageAsync("Error", "Please Close all drawer before Logout");
+
+            DevicesHandler.LockWall();            
+            bLatchUnlocked = false;
+            AutoLockMsg = "Wait User";
+        }
 
         #endregion
         #region timer
         private async void StartTimer_Tick(object sender, EventArgs e)
         {
             startTimer.Stop();
-            startTimer.IsEnabled = false;
-            InitWcfService();
+            startTimer.IsEnabled = false;        
 
             // No serial in Configuration - Conenct to get rfid serial
             if (string.IsNullOrEmpty(Properties.Settings.Default.RfidSerial))
@@ -783,10 +912,14 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {
+                    WallSerial = mydev.SerialNumber;
+                    WallName = mydev.Name;
                     InitValue();
-                }
+                }                
+
                 ctx.Database.Connection.Close();
                 ctx.Dispose();
+               
             }));           
         }
         private void AutoConnectTimer_Tick(object sender, EventArgs e)
@@ -835,7 +968,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     await mainview0.ShowMessageAsync("Error", "Please Close all drawer before Logout");
                 DevicesHandler.LockWall();
                 bLatchUnlocked = false;
-                AutoLockMsg = "Logout";
+                AutoLockMsg = "Wait User";
             }
 
             if (_autoLockCpt > 0)
@@ -898,7 +1031,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
                                 int nbTag = TagToLight.Count;
                                 TotalCassettesPulled += nbTag;
-                                //update reamain tag to light
+                                //update remain tag to light
 
                                 foreach (string uid in TagToLight) // tag to light should contain all removed tags
                                 {
@@ -908,6 +1041,9 @@ namespace SmartDrawerWpfApp.ViewModel
                                         SelectedCassette.ListControlNumber.Remove(uid);
                                     }
                                 }
+                                //TODO ?
+                                //Store removed tag at recheck with user
+
                                 SelectedCassette.CassetteDrawer1Number = SelectedCassette.TagToLight[1].Count;
                                 SelectedCassette.CassetteDrawer2Number = SelectedCassette.TagToLight[2].Count;
                                 SelectedCassette.CassetteDrawer3Number = SelectedCassette.TagToLight[3].Count;
@@ -1068,6 +1204,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 if (WallService != null)
                     WallService.MyHostEvent += Wns_MyHostEvent;
                 wallStatus = "WCF service Initialized at " + host.Description.Endpoints[0].ListenUri;
+                NetworkStatus = true;
 
             }
             catch (Exception ex)
@@ -1121,17 +1258,18 @@ namespace SmartDrawerWpfApp.ViewModel
                         break;
                     case "AddOrUpdateProduct":
                         getCriteria();
+                        Thread.Sleep(500);
                         break;
                     case "StockOutProduct":
                         getCriteria();
                         break;
                     case "SelectProduct":
                         if (e.Message != null)
-                        {
+                        { 
                             if (mainview0.myDatagrid.SelectedItems.Count > 0)
                                 LightFilteredTag();
                             wallStatus = DateTime.Now.ToLongTimeString() + e.Message;
-                        }
+                        }                            
                         break;
                     //Notification stop scan 
                     case "StopWallScan":
@@ -1204,9 +1342,10 @@ namespace SmartDrawerWpfApp.ViewModel
                         }
                     }
                     ctx.Database.Connection.Close();
-                    ctx.Dispose();
-                   
+                    ctx.Dispose();                   
                 }
+                // Load Granted User
+                GrantedUsersCache.Reload();
                 RfidStatus = DevicesHandler.DevicesConnected;
 
             }
@@ -1511,25 +1650,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     exp.ShowDialog();
                 }));
             }
-        }
-        private void DeviceHandler_BadgeRead(object sender, DrawerEventArgs e)
-        {
-            try
-            {
-                LoggedUser = e.Serial;
-                DevicesHandler.UnlockWall();
-                bLatchUnlocked = true;
-                _autoLockCpt = 120;
-            }
-            catch (Exception error)
-            {
-                mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
-                {
-                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in BadgeRead");
-                    exp.ShowDialog();
-                }));
-            }
-        }
+        }      
         public async Task DoConnect()
         {
             await Task.Run(() => DevicesHandler.TryInitializeLocalDeviceAsync());
@@ -1704,10 +1825,13 @@ namespace SmartDrawerWpfApp.ViewModel
             NetworkStatus = false;
             GpioStatus = false;
             RfidStatus = false;
-          
+
+            InitWcfService();
+
             wallStatus = "In Connection";
             btLightText = "Light All";
             txtNbSelectedItem = "Stones Selected : 0";
+            AutoLockMsg = "Wait User";
 
             DrawerStatus = new ObservableCollection<string>();
             DrawerStatus.Add("Index0");
@@ -1736,7 +1860,7 @@ namespace SmartDrawerWpfApp.ViewModel
             DevicesHandler.DrawerOpened += DevicesHandler_DrawerOpened;
             DevicesHandler.DrawerClosed += DevicesHandler_DrawerClosed;
             DevicesHandler.GpioConnected += DevicesHandler_GpioConnected;
-            DevicesHandler.BadgeRead += DeviceHandler_BadgeRead;
+            DevicesHandler.FpAuthenticationReceive += DevicesHandler_FpAuthenticationReceive;
             DevicesHandler.TryInitializeLocalDeviceAsync();
 
             AutoConnectTimer = new DispatcherTimer();
@@ -1754,6 +1878,9 @@ namespace SmartDrawerWpfApp.ViewModel
             ScanTimer.Interval = new TimeSpan(0, 0, 5);
             ScanTimer.Start();
         }
+
+       
+
         private void CountTotalStones()
         {
             WallTotalStones = 0;
@@ -1770,13 +1897,144 @@ namespace SmartDrawerWpfApp.ViewModel
             //Get handle of main window
             mainview0 = System.Windows.Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
             mainview0.Loaded += Mainview0_Loaded;
+            mainview0.NotifyBadgeReaderEvent += Mainview0_NotifyBadgeReaderEvent;
+            mainview0.NotifyM2MCardEvent += Mainview0_NotifyM2MCardEvent;
 
             #region Initialize command
             btSettingCommand = new RelayCommand(() => Settings());
             btLightFilteredTag = new RelayCommand(() => LightFilteredTag());
             LightAllCommand = new RelayCommand(() => LightAll());
-
+            openKeyboard = new RelayCommand(() => openKeyboardFn());
+            searchTxtGotCR = new RelayCommand(() => searchTxtGotCRfn());
+            btClearSelection = new RelayCommand(() => ClearSelection());
+            LogoutCommand = new RelayCommand(() => logout());
             #endregion
+        }
+
+        private void Mainview0_NotifyM2MCardEvent(object sender, string CardID)
+        {
+            txtSearchCtrl = CardID;
+            searchTxtGotCRfn();
+        }
+
+        private void Mainview0_NotifyBadgeReaderEvent(object sender, string badgeID)
+        {
+            LoggedUser = badgeID;
+            foreach (var user in GrantedUsersCache.Cache)
+            {
+                if (badgeID == user.BadgeNumber)
+                {
+                    wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
+                    LoggedUser = user.Login;
+                    var ctx =  RemoteDatabase.GetDbContext();                    
+                    DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
+                    ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
+                    ctx.SaveChanges();
+                    GrantedUsersCache.LastAuthenticatedUser = user;
+                    DevicesHandler.UnlockWall();
+                    AutoLockMsg = "Logout";
+                    bLatchUnlocked = true;
+                    _autoLockCpt = 120;
+                    ctx.Database.Connection.Close();
+                    ctx.Dispose();
+                    return;
+                }
+            }
+            // If here user not found
+            GrantedUsersCache.Reload();
+            //Try redo with updated info
+            foreach (var user in GrantedUsersCache.Cache)
+            {
+                if (badgeID == user.BadgeNumber)
+                {
+                    wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
+                    LoggedUser = user.Login;
+                    var ctx = RemoteDatabase.GetDbContext();
+                    DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
+                    ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
+                    ctx.SaveChanges();
+                    GrantedUsersCache.LastAuthenticatedUser = user;
+                    DevicesHandler.UnlockWall();
+                    AutoLockMsg = "Logout";
+                    bLatchUnlocked = true;
+                    _autoLockCpt = 120;
+                    ctx.Database.Connection.Close();
+                    ctx.Dispose();
+                    return;
+                }
+            }
+            wallStatus = "No Granted User with badge " + badgeID;
+        }
+        private void DevicesHandler_FpAuthenticationReceive(object sender, SecurityModules.FingerprintReader.FingerprintReaderEventArgs args)
+        {
+
+
+            var fpReader = sender as FingerprintReader;
+            if (fpReader == null)
+            {
+                // cannot happen
+                return;
+            }
+            if (args.EventType != FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete)
+            {
+                return;
+            }
+            foreach (var user in GrantedUsersCache.Cache)
+            {
+                foreach (var fp in user.Fingerprints)
+                {
+                    if (fpReader.DoesTemplateMatch(fp.Template))
+                    {
+                        wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
+                        LoggedUser = user.Login;
+                        var ctx = RemoteDatabase.GetDbContext();
+                        DevicesHandler.LastScanAccessTypeName = AccessType.Fingerprint;
+                        ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
+                        ctx.SaveChanges();
+                        GrantedUsersCache.LastAuthenticatedUser = user;
+                        DevicesHandler.UnlockWall();
+                        AutoLockMsg = "Logout";
+                        bLatchUnlocked = true;
+                        _autoLockCpt = 120;
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+                        return;
+                    }
+                }
+            }
+            // If here user not found
+            GrantedUsersCache.Reload();
+            //Try redo with updated info
+            foreach (var user in GrantedUsersCache.Cache)
+            {
+                foreach (var fp in user.Fingerprints)
+                {
+                    if (fpReader.DoesTemplateMatch(fp.Template))
+                    {
+                        wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
+                        LoggedUser = user.Login;
+                        var ctx = RemoteDatabase.GetDbContext();
+                        DevicesHandler.LastScanAccessTypeName = AccessType.Fingerprint;
+                        ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
+                        ctx.SaveChanges();
+                        GrantedUsersCache.LastAuthenticatedUser = user;
+                        DevicesHandler.UnlockWall();
+                        AutoLockMsg = "Logout";
+                        bLatchUnlocked = true;
+                        _autoLockCpt = 120;
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+                        return;
+                    }
+                }
+            }
+            wallStatus = "No Granted User with this fingerprint ";
+
+        }
+
+        ~MainViewModel()
+        {
+           
         }
         private void Mainview0_Loaded(object sender, RoutedEventArgs e)
         {
@@ -1787,6 +2045,8 @@ namespace SmartDrawerWpfApp.ViewModel
             startTimer.Start();
         }
 
+       
+       
         #endregion
     }
 }

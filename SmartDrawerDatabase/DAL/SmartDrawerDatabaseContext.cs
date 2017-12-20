@@ -23,6 +23,11 @@ namespace SmartDrawerDatabase.DAL
             modelBuilder.Entity<RfidTag>()
                 .HasIndex(p => new { p.TagUid })
                 .IsUnique(true);
+
+            modelBuilder.Entity<GrantedUser>()
+                .HasIndex(p => new { p.Login })
+                .IsUnique(true);
+            base.OnModelCreating(modelBuilder);
         }
 
         public override int SaveChanges()

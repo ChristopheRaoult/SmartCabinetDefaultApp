@@ -1,6 +1,7 @@
 ﻿using SDK_SC_RfidReader;
 using SmartDrawerDatabase.DAL;
 using SmartDrawerWpfApp.StaticHelpers;
+using SmartDrawerWpfApp.StaticHelpers.Security;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -50,11 +51,13 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 switch (DevicesHandler.LastScanAccessTypeName)
                 {
                     case AccessType.Badge:
-                        //TODO
+                        newInventoryAccessType = ctx.AccessTypes.Badge();
+                        newInventoryGrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId;
                         break;
 
                     case AccessType.Fingerprint:
-                        //TODO
+                        newInventoryAccessType = ctx.AccessTypes.Fingerprint();
+                        newInventoryGrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId;
                         break;
                     default:
                         newInventoryAccessType = ctx.AccessTypes.Manual();

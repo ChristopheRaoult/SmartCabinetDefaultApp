@@ -16,8 +16,19 @@
         Icon="/SmartDrawerWpfApp;component/Icons/Logo.PNG"
        
         mc:Ignorable="d"
-        Title="SmartDrawer Application" MinHeight="850" MinWidth="1366" WindowStartupLocation="CenterScreen" WindowState="Maximized" d:DesignWidth="1160" d:DesignHeight="973.3" >
+        Title="SmartDrawer Application" MinHeight="850" MinWidth="1366" WindowStartupLocation="CenterScreen" WindowState="Maximized" d:DesignWidth="1160" d:DesignHeight="973.3" PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"  >
 
+    <Controls:MetroWindow.Resources>
+        <Image x:Key="keybImg" Source="/SmartDrawerWpfApp;component/Icons/Keyboard-icon.png" />
+        <Style TargetType="syncfusion:VirtualizingCellsControl" x:Key="alternatingRowStyle">
+            <Setter Property="Background" Value="LightGray"/>
+        </Style>
+        <Style TargetType="syncfusion:GridHeaderCellControl" x:Key="headerStyle">
+        <Setter Property="FontWeight" Value="Bold"/>
+        <Setter Property="FontSize" Value="22"/>
+        <Setter Property="Foreground" Value="DarkBlue"/>
+        </Style>
+    </Controls:MetroWindow.Resources>
     <Controls:MetroWindow.RightWindowCommands>
         <Controls:WindowCommands>
             <Button Content="Settings" Command="{Binding btSettingCommand}" />
@@ -46,23 +57,55 @@
                 <!-- GRID-->
                 <Grid Grid.Row="0" >
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="60"></RowDefinition>
                         <RowDefinition Height="75"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
-                        <RowDefinition Height="50"></RowDefinition>
+                        <RowDefinition Height="5"></RowDefinition>
                     </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Left" >
+                    <StackPanel Orientation="Horizontal">
+                        <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
+                            <TextBlock Margin="10,5,0,0" Text="Wall Serial:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <TextBlock Margin="20,5,0,0" Text="{Binding  WallSerial}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
+                            <TextBlock Margin="10,5,0,0" Text="Wall Location:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <TextBlock Margin="20,5,0,0" Text="{Binding WallName}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                        </StackPanel>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" Width="300">
+                            <StackPanel  Orientation="Vertical">
+                                <TextBlock Margin="10,5,0,0" Text="User Logged:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                                <Button  Command="{Binding LogoutCommand}"  Grid.Column="5" Margin="1,5,1,1" Width="100" Height="30" Content="{Binding AutoLockMsg}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="12"   />
+                            </StackPanel>
+                            <TextBlock Margin="20,5,0,0"  Text="{Binding LoggedUser}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0"  HorizontalAlignment="Left" >
                         <Button  Command="{Binding btLightFilteredTag}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Light Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
                         <TextBlock  Text="{Binding txtNbSelectedItem}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"  FontSize="25" Foreground="{DynamicResource AccentColorBrush}"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Right" >
-                        <Button  Command="{Binding ResetDeviceCommand}"  Grid.Column="5"  Margin="5,5,5,5"  Height="50" Content=" Reset " VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="15"   />
+                    <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0"  HorizontalAlignment="Right" >
+                        <Button  Margin="0,0,5,0" Content="{StaticResource keybImg}" VerticalAlignment="Center"  Command="{Binding openKeyboard}" Style="{DynamicResource MetroCircleButtonStyle}" Height="50" />
+                        <TextBox  x:Name="TxtCtrlNumber" Margin="0,0,0,0"                           
+                          Text="{Binding txtSearchCtrl,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                          Width="405" 
+                          VerticalAlignment="Center" 
+                          HorizontalAlignment="Left"    Focusable="True" IsEnabled="true"  FontSize="30"  MaxLength="12" 
+                          Controls:TextBoxHelper.Watermark="Enter value to search" Controls:TextBoxHelper.ClearTextButton="True" AcceptsReturn="True"  >
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding searchTxtGotCR}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button  Command="{Binding btClearSelection}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Clear Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
                     </StackPanel>
                     <syncfusion:SfDataGrid Name="myDatagrid" 
-                                       Grid.Row="1"
+                                       Grid.Row="2"
+                                       HeaderRowHeight="50"
                                        VerticalAlignment="Stretch"  
                                        HorizontalAlignment="Stretch"
                                        AutoGenerateColumns="False"                                                                             
                                        SelectionMode="Multiple"   
+                                       SelectionUnit="Row"
+                                       SelectionForegroundBrush="DarkBlue"
                                        RowSelectionBrush="{DynamicResource AccentColorBrush}"
                                        AllowDraggingColumns="False"                                           
                                        AllowEditing="False"
@@ -75,8 +118,13 @@
                                        FontFamily="Verdana" 
                                        FontSize="18" Loaded="myDatagrid_Loaded"
                                        ItemsSource="{Binding SourceTable}"
-                                       sfHelper:SfDataGridHelper.SelectedItems="{Binding SelectedItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"  >                                              
-                            <syncfusion:SfDataGrid.Columns>
+                                       SelectedItems="{Binding SelectedItems, Mode=TwoWay}"                                     
+                                       sfHelper:SfDataGridHelper.SelectedItems="{Binding SelectedItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                       AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
+                                       AlternationCount="2"
+                                       HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star">
+
+                        <syncfusion:SfDataGrid.Columns>
                             <syncfusion:GridTextColumn  x:Name="ColTagUid"
                                                          HeaderText="Tag UID"
                                                          MappingName="UID"
@@ -200,10 +248,11 @@
 
                 </Grid>
                 <!-- BOTTOM-->
-                <Border Grid.Row="1" Margin="2" Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8">
+                <Border Grid.Row="2" Margin="2" Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8">
                     <Grid>
                         <StackPanel  Orientation="Horizontal">
-                        <TextBlock   Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="WCF :"   Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <Button  Command="{Binding ResetDeviceCommand}"  Margin="5,5,5,5"   Content=" Reset Device " VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="10"   />
+                            <TextBlock   Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="WCF :"   Style="{StaticResource itemTextBlock}"></TextBlock>
                         <Image Width="18" Height="18" Stretch="Fill" Margin="0,0,0,0">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">

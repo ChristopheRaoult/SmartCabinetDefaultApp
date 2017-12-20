@@ -57,9 +57,11 @@
     <Compile Include="DAL\Exceptions\NonexistentConstantException.cs" />
     <Compile Include="DAL\Fingerprint.cs" />
     <Compile Include="DAL\GrantedAccess.cs" />
+    <Compile Include="DAL\GrantedAccessExtension.cs" />
     <Compile Include="DAL\GrantedUser.cs" />
     <Compile Include="DAL\GrantedUserExtension.cs" />
     <Compile Include="DAL\GrantType.cs" />
+    <Compile Include="DAL\GrantTypeExtension.cs" />
     <Compile Include="DAL\Inventory.cs" />
     <Compile Include="DAL\InventoryProduct.cs" />
     <Compile Include="DAL\Product.cs" />
@@ -69,6 +71,7 @@
     <Compile Include="DAL\SmartDrawerDatabaseContext.cs" />
     <Compile Include="DAL\SmartDrawerDatabaseInitializer.cs" />
     <Compile Include="DAL\UserRank.cs" />
+    <Compile Include="DAL\UserRankExtension.cs" />
     <Compile Include="PasswordHashing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

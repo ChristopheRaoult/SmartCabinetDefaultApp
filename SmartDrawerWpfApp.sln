@@ -1,11 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2005
+VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDrawerWpfApp", "SmartDrawerWpfApp\SmartDrawerWpfApp.csproj", "{881BB30F-C534-4F30-A18F-361C1D7229B9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDrawerDatabase", "SmartDrawerDatabase\SmartDrawerDatabase.csproj", "{A0C0BF39-CCAB-4698-9949-75A7B8C46618}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecurityModules", "SecurityModules\SecurityModules.csproj", "{6286E509-78A0-46EF-9C86-8D1E43683C32}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDrawerAdmin", "SmartDrawerAdmin\SmartDrawerAdmin.csproj", "{542E7D31-BFC1-4293-A516-645E600CAB3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +25,14 @@ Global
 		{A0C0BF39-CCAB-4698-9949-75A7B8C46618}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A0C0BF39-CCAB-4698-9949-75A7B8C46618}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A0C0BF39-CCAB-4698-9949-75A7B8C46618}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6286E509-78A0-46EF-9C86-8D1E43683C32}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6286E509-78A0-46EF-9C86-8D1E43683C32}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6286E509-78A0-46EF-9C86-8D1E43683C32}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6286E509-78A0-46EF-9C86-8D1E43683C32}.Release|Any CPU.Build.0 = Release|Any CPU
+		{542E7D31-BFC1-4293-A516-645E600CAB3A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{542E7D31-BFC1-4293-A516-645E600CAB3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{542E7D31-BFC1-4293-A516-645E600CAB3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{542E7D31-BFC1-4293-A516-645E600CAB3A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

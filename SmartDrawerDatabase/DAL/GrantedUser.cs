@@ -22,13 +22,14 @@ namespace SmartDrawerDatabase.DAL
         public int GrantedUserId { get; set; }
         [Required]
         [StringLength(20)]
-        public string Login { get; set; }
-        [Required]
+        public string Login { get; set; }        
         [StringLength(128)]
         public string Password { get; set; }
         public string BadgeNumber { get; set; }
         [Required]
         public int UserRankId { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
 
         public virtual UserRank UserRank { get; set; }
         public virtual ICollection<GrantedAccess> GrantedAccesses { get; set; }

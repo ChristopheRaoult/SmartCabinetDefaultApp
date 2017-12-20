@@ -11,6 +11,9 @@ namespace SmartDrawerDatabase.DAL
     [Table("UserRank")]
     public class UserRank
     {
+        public const string Administrator = "ADMINISTRATOR";
+        public const string SuperUser = "SUPER_USER";
+        public const string User = "USER";
         public UserRank()
         {
             this.GrantedUsers = new HashSet<GrantedUser>();

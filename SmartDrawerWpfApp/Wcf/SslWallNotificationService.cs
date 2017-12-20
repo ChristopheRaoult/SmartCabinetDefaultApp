@@ -16,6 +16,7 @@ using Syncfusion.Data.Extensions;
 using System.Data;
 using Syncfusion.UI.Xaml.Grid;
 using Syncfusion.UI.Xaml.Grid.Helpers;
+using Syncfusion.Data;
 
 namespace SmartDrawerWpfApp.Wcf
 {
@@ -111,6 +112,8 @@ namespace SmartDrawerWpfApp.Wcf
                             p.ProductInfo17 = jsonProducts.listOfProducts[loop].productInfo[17];
                             p.ProductInfo18 = jsonProducts.listOfProducts[loop].productInfo[18];
                             p.ProductInfo19 = jsonProducts.listOfProducts[loop].productInfo[19];
+                            ctx.Entry(p).State = System.Data.Entity.EntityState.Modified;
+                            nbSuccess++;
                         }
                         else
                         {
@@ -138,10 +141,10 @@ namespace SmartDrawerWpfApp.Wcf
                                 ProductInfo18 = jsonProducts.listOfProducts[loop].productInfo[18],
                                 ProductInfo19 = jsonProducts.listOfProducts[loop].productInfo[19],
                             };
-                            ctx.Products.Add(newProduct);
-                            ctx.SaveChanges();
+                            ctx.Products.Add(newProduct);                            
                             nbSuccess++;
                         }
+                        ctx.SaveChanges();
                     }
                     ctx.Database.Connection.Close();
                     ctx.Dispose();
@@ -236,9 +239,7 @@ namespace SmartDrawerWpfApp.Wcf
                     System.Threading.Thread.Sleep(1000);
                 }
 
-
                 string msg = string.Empty;
-
                 JsonProdutToSelect ListOfTags = JsonConvert.DeserializeObject<JsonProdutToSelect>(res);
                 if (ListOfTags != null)
                 {
@@ -248,21 +249,19 @@ namespace SmartDrawerWpfApp.Wcf
                     if ((mylist != null) && (mylist.Count > 0))
                     {                        
                         mainview0.myDatagrid.SelectedItems.Clear();
-                        if (mainview0.myDatagrid.View.Records.Count() > 0)
+                        if (mainview0.Data != null && mainview0.Data.Count  > 0)
                         {
                             var watch = System.Diagnostics.Stopwatch.StartNew();
                             foreach (string uid in mylist)
-                            {                              
-                                mainview0.myDatagrid.SearchHelper.ClearSearch();
-                                mainview0.myDatagrid.SearchHelper.Search(uid);
-                                var list = mainview0.myDatagrid.SearchHelper.GetSearchRecords();
-                                if (list != null && list.Count > 0)
+                            {    
+                                foreach (RecordEntry re  in mainview0.myDatagrid.View.Records)
                                 {
-                                   int recordIndex =  mainview0.myDatagrid.ResolveToRecordIndex(mainview0.myDatagrid.ResolveToRowIndex(list[0].Record));
-                                    var datarow = mainview0.myDatagrid.GetRowGenerator().Items[recordIndex];
-                                    mainview0.myDatagrid.SelectedItems.Add(datarow);
+                                    DataRowView drv = re.Data as DataRowView;
+                                    if (drv.Row[0].Equals(uid))
+                                         mainview0.myDatagrid.SelectedItems.Add(drv);
                                 }
                             }
+                            mainview0.myDatagrid.View.Refresh();
                             watch.Stop();
                             msg = string.Format(" - {0} Product(s) Selected from {1} in {2} ms", mainview0.myDatagrid.SelectedItems.Count, mylist.Count, watch.ElapsedMilliseconds);
                         }

@@ -1,8 +1,10 @@
 ﻿using MahApps.Metro.Controls;
 using SmartDrawerDatabase.DAL;
+using SmartDrawerWpfApp.Model;
 using SmartDrawerWpfApp.StaticHelpers;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -21,12 +23,17 @@ namespace SmartDrawerWpfApp
     /// <summary>
     /// Logique d'interaction pour MainWindow.xaml
     /// </summary>
+    /// 
+    public delegate void NotifyHandlerBadgeReaderDelegate(Object sender, string badgeID);
+    public delegate void NotifyHandlerM2MCardDelegate(Object sender, string cardID);
     public partial class MainWindow : MetroWindow
     {
+        public ObservableCollection<BaseObject> Data;
+        public event NotifyHandlerBadgeReaderDelegate NotifyBadgeReaderEvent;
+        public event NotifyHandlerBadgeReaderDelegate NotifyM2MCardEvent;
         public MainWindow()
         {
-            InitializeComponent();
-
+            InitializeComponent();    
             if (string.IsNullOrEmpty(Properties.Settings.Default.DbPassword))
             {
                 string pwd = "rfid";
@@ -60,6 +67,64 @@ namespace SmartDrawerWpfApp
                 ExceptionMessageBox exp = new ExceptionMessageBox(err, "Error Datagrid loaded");
                 exp.ShowDialog();
             }
+        }
+
+        private string IncomeMessage = string.Empty;
+        bool IsAccessCardInAccess = false;
+        private bool shiftPressed;          
+        private void ProcessMessage()
+        {
+
+            int frameStart = IncomeMessage.IndexOf("!");
+            int frameEnd = IncomeMessage.IndexOf(";", 0);
+            string message = IncomeMessage.Substring(1, frameEnd - 1);
+            string messageType = message.Substring(0, 4);
+            switch(messageType)
+            {
+                case "CARD":
+                    if (NotifyM2MCardEvent != null) NotifyM2MCardEvent(this, message.Substring(4));                   
+                    break;
+                case "PROX":                  
+                    if (NotifyBadgeReaderEvent != null) NotifyBadgeReaderEvent(this, message.Substring(4));
+                    break;
+            }            
+            
+            IncomeMessage = string.Empty;
+            IsAccessCardInAccess = false;
+        }   
+        private void MetroWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+             if ( (e.Key == Key.Oem8) && (!shiftPressed))     
+                    IsAccessCardInAccess = true;               
+         
+            if (IsAccessCardInAccess)
+            {
+                if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
+                {
+                    shiftPressed = true;
+                }
+                else  if ((e.Key == Key.Oem8) && (!shiftPressed))
+                    IncomeMessage = "!";
+                else if ((e.Key >= Key.D0) && (e.Key <= Key.D9))
+                {
+                    IncomeMessage += ((int)e.Key - (int)Key.D0).ToString();
+                }
+                else if (e.Key == Key.OemPeriod)
+                    IncomeMessage += ";";
+                else
+                    IncomeMessage += e.Key;
+                e.Handled = true;
+
+                if (e.Key == Key.OemPeriod)
+                    ProcessMessage();
+            }  
+        }
+        private void MetroWindow_PreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
+            {
+                shiftPressed = false;
+            }            
         }
     }
 }
