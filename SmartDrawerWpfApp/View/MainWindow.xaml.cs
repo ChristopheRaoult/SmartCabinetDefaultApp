@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -94,16 +95,55 @@ namespace SmartDrawerWpfApp
         }   
         private void MetroWindow_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-             if ( (e.Key == Key.Oem8) && (!shiftPressed))     
-                    IsAccessCardInAccess = true;               
-         
+            if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
+            {
+                shiftPressed = true;
+                return;
+            }
+
+            if (((e.Key == Key.Oem8) && (!shiftPressed)) || ((e.Key == Key.D1) && (shiftPressed)))
+                    IsAccessCardInAccess = true;           
+            if (IsAccessCardInAccess)
+            {               
+                if (((e.Key == Key.Oem8) && (!shiftPressed)) || ((e.Key == Key.D1) && (shiftPressed)))
+                    IncomeMessage = "!";
+                
+                else if ((e.Key >= Key.D0) && (e.Key <= Key.D9))
+                {
+                    IncomeMessage += ((int)e.Key - (int)Key.D0).ToString();
+                }
+                else if ((e.Key == Key.OemPeriod) || (e.Key == Key.Oem1))
+                    IncomeMessage += ";";               
+                else
+                    IncomeMessage += e.Key;
+                e.Handled = true;
+
+                if ((e.Key == Key.OemPeriod) || (e.Key == Key.Oem1))
+                    ProcessMessage();
+                wallInfo.Text = IncomeMessage;
+            }  
+        }
+        private void MetroWindow_PreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
+            {
+               shiftPressed = false;
+            }            
+        }
+
+        private void MetroWindow_KeyDown(object sender, KeyEventArgs e)
+        {
+            wallInfo.Text = "KeyDown : " + e.Key.ToString();
+            if ((e.Key == Key.Oem8) && (!shiftPressed))
+                IsAccessCardInAccess = true;
+
             if (IsAccessCardInAccess)
             {
                 if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
                 {
                     shiftPressed = true;
                 }
-                else  if ((e.Key == Key.Oem8) && (!shiftPressed))
+                else if ((e.Key == Key.Oem8) && (!shiftPressed))
                     IncomeMessage = "!";
                 else if ((e.Key >= Key.D0) && (e.Key <= Key.D9))
                 {
@@ -117,14 +157,15 @@ namespace SmartDrawerWpfApp
 
                 if (e.Key == Key.OemPeriod)
                     ProcessMessage();
-            }  
+            }
         }
-        private void MetroWindow_PreviewKeyUp(object sender, KeyEventArgs e)
+
+        private void MetroWindow_KeyUp(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.LeftShift || e.Key == Key.RightShift)
             {
                 shiftPressed = false;
-            }            
+            }
         }
     }
 }

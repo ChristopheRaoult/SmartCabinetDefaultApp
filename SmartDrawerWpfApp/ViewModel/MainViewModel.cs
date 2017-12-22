@@ -26,6 +26,7 @@ using Syncfusion.UI.Xaml.Grid;
 using SmartDrawerWpfApp.StaticHelpers.Security;
 using SmartDrawerWpfApp.Fingerprint;
 using SecurityModules.FingerprintReader;
+using System.Windows.Input;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -551,6 +552,204 @@ namespace SmartDrawerWpfApp.ViewModel
         }
 
         #endregion
+        #region Selection
+        private ObservableCollection<SelectionViewModel> _selection = new ObservableCollection<SelectionViewModel>();
+        public ObservableCollection<SelectionViewModel> Selection
+        {
+            get { return _selection; }
+            set
+            {
+                _selection = value;
+                RaisePropertyChanged(() => Selection);
+            }
+        }
+
+        private SelectionViewModel _SelectionSelected;
+        public SelectionViewModel SelectionSelected
+        {
+            get { return _SelectionSelected; }
+            set
+            {
+                _SelectionSelected = value;
+                RaisePropertyChanged(() => SelectionSelected);          
+            }
+        }
+
+        public async void getSelection()
+        {
+            var ctx = await  RemoteDatabase.GetDbContextAsync();
+            Selection.Clear();
+            foreach (var sel in ctx.PullItems)
+            {            
+                SelectionViewModel svm = new SelectionViewModel();
+                svm.PullItemId = sel.PullItemId;
+                svm.PullItemDate = sel.PullItemDate.ToShortDateString();
+                svm.Description = sel.Description;
+                if (sel.GrantedUser != null)
+                    svm.User = sel.GrantedUser.FirstName + " " + sel.GrantedUser.LastName;
+                svm.TotalToPull = sel.TotalToPull;
+
+                svm.lstTopull = new List<string>();
+                int nbInDevice = 0;
+
+                foreach (var pit in sel.PullItems)
+                {
+                    if (DevicesHandler.ListTagPerDrawer.ContainsKey(pit.RfidTag.TagUid))
+                    {
+                        svm.lstTopull.Add(pit.RfidTag.TagUid);
+                        nbInDevice++;
+                    }
+                }
+                svm.TotalToPullInDevice = nbInDevice;
+                Selection.Add(svm);
+            }
+
+            ctx.Database.Connection.Close();
+            ctx.Dispose();
+        }
+       
+
+        public RelayCommand btLightFilteredTagSelection { get; set; }
+        private void LightSelectionFromList()
+        {
+            try
+            {
+                if (RfidStatus == false)
+                {
+                    IsFlyoutCassettePositionOpen = false;
+                    return;
+                }
+                CassettesSelection tmpCassette = new CassettesSelection();
+                _SelectedBaseObjects = new List<BaseObject>();
+                tmpCassette.ListControlNumber = new List<string>();
+
+                for (int loop = 0; loop < 8; loop++)
+                    tmpCassette.TagToLight[loop] = new List<string>();
+
+
+                List<string> TmpListCtrlPerDrawer1 = new List<string>(DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer2 = new List<string>(DevicesHandler.GetTagFromDictionnary(2, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer3 = new List<string>(DevicesHandler.GetTagFromDictionnary(3, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer4 = new List<string>(DevicesHandler.GetTagFromDictionnary(4, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer5 = new List<string>(DevicesHandler.GetTagFromDictionnary(5, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer6 = new List<string>(DevicesHandler.GetTagFromDictionnary(6, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer7 = new List<string>(DevicesHandler.GetTagFromDictionnary(7, DevicesHandler.ListTagPerDrawer));
+                foreach (string uid in _SelectionSelected.lstTopull)
+                {
+                    BaseObject theBo = (from c in Data
+                                        where c.Productinfo.RfidTag.TagUid.Equals(uid)
+                                        select c).SingleOrDefault<BaseObject>();
+
+                    if (theBo != null)
+                    {
+                        _SelectedBaseObjects.Add(theBo);
+                        if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
+                        {
+                            switch (theBo.drawerId)
+                            {
+                                case 1:
+                                    if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 2:
+                                    if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 3:
+                                    if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 4:
+                                    if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 5:
+                                    if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 6:
+                                    if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 7:
+                                    if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+
+                            }
+                        }
+                    }
+                }
+
+                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count;
+                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count;
+                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count;
+                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count;
+                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count;
+                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count;
+                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count;
+                tmpCassette.CassetteSelectionTotalNumber = tmpCassette.ListControlNumber.Count;
+
+                if (_SelectedBaseObjects.Count > 0)
+                {
+                    SelectedCassette = tmpCassette;
+                    _previousSelectedCassettes = SelectedCassette;
+                    TotalCassettesToPull = SelectedCassette.CassetteSelectionTotalNumber;
+                    TotalCassettesPulled = 0;
+                    IsFlyoutCassettePositionOpen = true;
+                }
+                else
+                {
+                    IsFlyoutCassettePositionOpen = false;
+                    _InLightProcess = false;
+                }
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error selection");
+                exp.ShowDialog();
+            }
+        }
+        public RelayCommand btRemoveSelection { get; set; }
+        private async  void removeSelection()
+        {
+            if (SelectionSelected != null)
+            {               
+                var ctx = await RemoteDatabase.GetDbContextAsync();
+
+                var sel = ctx.PullItems.Find(SelectionSelected.PullItemId);
+                if (sel != null)
+                    ctx.PullItems.Remove(sel);
+                await ctx.SaveChangesAsync();
+
+                ctx.Database.Connection.Close();
+                ctx.Dispose();
+                getSelection();
+            }
+        }
+
+        #endregion
         #region Command
         public RelayCommand btSettingCommand { get; set; }
         async void Settings()
@@ -866,7 +1065,6 @@ namespace SmartDrawerWpfApp.ViewModel
             mainview0.myDatagrid.SearchHelper.ClearSearch();
             mainview0.myDatagrid.ScrollInView(new Syncfusion.UI.Xaml.ScrollAxis.RowColumnIndex() { RowIndex = 1, ColumnIndex = 1 });
         }
-
         public RelayCommand LogoutCommand { get; set; }
         public async void logout()
         {
@@ -875,7 +1073,7 @@ namespace SmartDrawerWpfApp.ViewModel
             while (IsOneDrawerOpen())
                 await mainview0.ShowMessageAsync("Error", "Please Close all drawer before Logout");
 
-            DevicesHandler.LockWall();            
+            DevicesHandler.LockWall();  
             bLatchUnlocked = false;
             AutoLockMsg = "Wait User";
         }
@@ -1041,9 +1239,25 @@ namespace SmartDrawerWpfApp.ViewModel
                                         SelectedCassette.ListControlNumber.Remove(uid);
                                     }
                                 }
-                                //TODO ?
-                                //Store removed tag at recheck with user
 
+                                //Store removed tag at recheck with user    
+                                ReaderData rd = DevicesHandler.DrawerInventoryData[_bckrecheckLightDrawer];
+                                for(int loop=0 ; loop < TagToLight.Count; loop++ ) // tag to light should contain all removed tags
+                                {
+                                    string uid = TagToLight[loop];
+                                    if (rd.strListTag.Contains(uid))
+                                        rd.strListTag.Remove(uid);
+                                }
+                                DevicesHandler.DrawerInventoryData[_bckrecheckLightDrawer] = rd;
+                                DevicesHandler.DrawerTagQty[_bckrecheckLightDrawer] = rd.strListTag.Count;
+                                DevicesHandler.RemoveTagFromListForDrawer(_bckrecheckLightDrawer);
+
+                                DevicesHandler.AddTagListForDrawer(_bckrecheckLightDrawer, rd.strListTag);
+                                DevicesHandler.UpdateAddedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
+                                DevicesHandler.UpdateremovedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
+                                InventoryHandler.HandleNewScanCompleted(_bckrecheckLightDrawer);
+                                 
+                                //Update GUI INFO 
                                 SelectedCassette.CassetteDrawer1Number = SelectedCassette.TagToLight[1].Count;
                                 SelectedCassette.CassetteDrawer2Number = SelectedCassette.TagToLight[2].Count;
                                 SelectedCassette.CassetteDrawer3Number = SelectedCassette.TagToLight[3].Count;
@@ -1154,6 +1368,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     {
                         bNeedUpdateCriteriaAfterScan = false;                      
                         getCriteria();
+                        getSelection();
                     }
                 }
             }
@@ -1248,7 +1463,8 @@ namespace SmartDrawerWpfApp.ViewModel
                         break;
                     case "UpdateUserInfoListNotification":
                         break;
-                    case "UpdateUserInfoList":                           
+                    case "UpdateUserInfoList":
+                        GrantedUsersCache.Reload();
                         break;
                     case "UpdateCriteria":
                         if (e.Message != null)
@@ -1263,6 +1479,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     case "StockOutProduct":
                         getCriteria();
                         break;
+
                     case "SelectProduct":
                         if (e.Message != null)
                         { 
@@ -1270,6 +1487,10 @@ namespace SmartDrawerWpfApp.ViewModel
                                 LightFilteredTag();
                             wallStatus = DateTime.Now.ToLongTimeString() + e.Message;
                         }                            
+                        break;
+
+                    case "PullItemsRequest":
+                        getSelection();
                         break;
                     //Notification stop scan 
                     case "StopWallScan":
@@ -1908,6 +2129,9 @@ namespace SmartDrawerWpfApp.ViewModel
             searchTxtGotCR = new RelayCommand(() => searchTxtGotCRfn());
             btClearSelection = new RelayCommand(() => ClearSelection());
             LogoutCommand = new RelayCommand(() => logout());
+            btLightFilteredTagSelection = new RelayCommand(() => LightSelectionFromList());
+            btRemoveSelection = new RelayCommand(() => removeSelection());
+
             #endregion
         }
 
@@ -1967,69 +2191,74 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void DevicesHandler_FpAuthenticationReceive(object sender, SecurityModules.FingerprintReader.FingerprintReaderEventArgs args)
         {
-
-
             var fpReader = sender as FingerprintReader;
             if (fpReader == null)
             {
                 // cannot happen
                 return;
             }
-            if (args.EventType != FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete)
+           /* if (args.EventType != FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete)
             {
                 return;
-            }
-            foreach (var user in GrantedUsersCache.Cache)
+            }*/
+            switch (args.EventType)
             {
-                foreach (var fp in user.Fingerprints)
-                {
-                    if (fpReader.DoesTemplateMatch(fp.Template))
+                case FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete:
+                    foreach (var user in GrantedUsersCache.Cache)
                     {
-                        wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
-                        LoggedUser = user.Login;
-                        var ctx = RemoteDatabase.GetDbContext();
-                        DevicesHandler.LastScanAccessTypeName = AccessType.Fingerprint;
-                        ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
-                        ctx.SaveChanges();
-                        GrantedUsersCache.LastAuthenticatedUser = user;
-                        DevicesHandler.UnlockWall();
-                        AutoLockMsg = "Logout";
-                        bLatchUnlocked = true;
-                        _autoLockCpt = 120;
-                        ctx.Database.Connection.Close();
-                        ctx.Dispose();
-                        return;
+                        foreach (var fp in user.Fingerprints)
+                        {
+                            if (fpReader.DoesTemplateMatch(fp.Template))
+                            {
+                                wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
+                                LoggedUser = user.Login;
+                                var ctx = RemoteDatabase.GetDbContext();
+                                DevicesHandler.LastScanAccessTypeName = AccessType.Fingerprint;
+                                ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
+                                ctx.SaveChanges();
+                                GrantedUsersCache.LastAuthenticatedUser = user;
+                                DevicesHandler.UnlockWall();
+                                AutoLockMsg = "Logout";
+                                bLatchUnlocked = true;
+                                _autoLockCpt = 120;
+                                ctx.Database.Connection.Close();
+                                ctx.Dispose();
+                                return;
+                            }
+                        }
                     }
-                }
-            }
-            // If here user not found
-            GrantedUsersCache.Reload();
-            //Try redo with updated info
-            foreach (var user in GrantedUsersCache.Cache)
-            {
-                foreach (var fp in user.Fingerprints)
-                {
-                    if (fpReader.DoesTemplateMatch(fp.Template))
+                    // If here user not found
+                    GrantedUsersCache.Reload();
+                    //Try redo with updated info
+                    foreach (var user in GrantedUsersCache.Cache)
                     {
-                        wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
-                        LoggedUser = user.Login;
-                        var ctx = RemoteDatabase.GetDbContext();
-                        DevicesHandler.LastScanAccessTypeName = AccessType.Fingerprint;
-                        ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
-                        ctx.SaveChanges();
-                        GrantedUsersCache.LastAuthenticatedUser = user;
-                        DevicesHandler.UnlockWall();
-                        AutoLockMsg = "Logout";
-                        bLatchUnlocked = true;
-                        _autoLockCpt = 120;
-                        ctx.Database.Connection.Close();
-                        ctx.Dispose();
-                        return;
+                        foreach (var fp in user.Fingerprints)
+                        {
+                            if (fpReader.DoesTemplateMatch(fp.Template))
+                            {
+                                wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
+                                LoggedUser = user.Login;
+                                var ctx = RemoteDatabase.GetDbContext();
+                                DevicesHandler.LastScanAccessTypeName = AccessType.Fingerprint;
+                                ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
+                                ctx.SaveChanges();
+                                GrantedUsersCache.LastAuthenticatedUser = user;
+                                DevicesHandler.UnlockWall();
+                                AutoLockMsg = "Logout";
+                                bLatchUnlocked = true;
+                                _autoLockCpt = 120;
+                                ctx.Database.Connection.Close();
+                                ctx.Dispose();
+                                return;
+                            }
+                        }
                     }
-                }
-            }
-            wallStatus = "No Granted User with this fingerprint ";
-
+                    wallStatus = "No Granted User with this fingerprint ";
+                    break;
+                default:
+                    wallStatus = args.EventType.ToString();
+                    break;
+            }    
         }
 
         ~MainViewModel()

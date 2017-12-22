@@ -21,7 +21,10 @@
     <Controls:MetroWindow.Resources>
         <Image x:Key="keybImg" Source="/SmartDrawerWpfApp;component/Icons/Keyboard-icon.png" />
         <Style TargetType="syncfusion:VirtualizingCellsControl" x:Key="alternatingRowStyle">
-            <Setter Property="Background" Value="LightGray"/>
+            <Setter Property="Background" Value="WhiteSmoke"/>
+        </Style>
+        <Style x:Key="ListViewStyle" TargetType="{x:Type GridViewColumnHeader}">
+            <Setter Property="HorizontalContentAlignment" Value="Left" />
         </Style>
         <Style TargetType="syncfusion:GridHeaderCellControl" x:Key="headerStyle">
         <Setter Property="FontWeight" Value="Bold"/>
@@ -51,54 +54,119 @@
         <Grid Grid.Row="0" Grid.Column="0">
             <Grid Margin="5">
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="60"></RowDefinition>
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="50"></RowDefinition>
                 </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
+                        <TextBlock Margin="10,5,0,0" Text="Wall Serial:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                        <TextBlock Margin="20,5,0,0" Text="{Binding  WallSerial}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
+                        <TextBlock Margin="10,5,0,0" Text="Wall Location:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                        <TextBlock Margin="20,5,0,0" Text="{Binding WallName}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Width="300">
+                        <StackPanel  Orientation="Vertical">
+                            <TextBlock Margin="10,5,0,0" Text="User Logged:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <Button  Command="{Binding LogoutCommand}"  Grid.Column="5" Margin="1,5,1,1" Width="100" Height="30" Content="{Binding AutoLockMsg}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="12"   />
+                        </StackPanel>
+                        <TextBlock Margin="20,5,0,0"  Text="{Binding LoggedUser}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </StackPanel>
                 <!-- GRID-->
-                <Grid Grid.Row="0" >
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="60"></RowDefinition>
-                        <RowDefinition Height="75"></RowDefinition>
-                        <RowDefinition Height="*"></RowDefinition>
-                        <RowDefinition Height="5"></RowDefinition>
-                    </Grid.RowDefinitions>
-                    <StackPanel Orientation="Horizontal">
-                        <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
-                            <TextBlock Margin="10,5,0,0" Text="Wall Serial:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
-                            <TextBlock Margin="20,5,0,0" Text="{Binding  WallSerial}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
-                            <TextBlock Margin="10,5,0,0" Text="Wall Location:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
-                            <TextBlock Margin="20,5,0,0" Text="{Binding WallName}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
-                        </StackPanel>
-                        <StackPanel Grid.Column="0" Orientation="Horizontal" Width="300">
-                            <StackPanel  Orientation="Vertical">
-                                <TextBlock Margin="10,5,0,0" Text="User Logged:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
-                                <Button  Command="{Binding LogoutCommand}"  Grid.Column="5" Margin="1,5,1,1" Width="100" Height="30" Content="{Binding AutoLockMsg}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="12"   />
+
+                <TabControl Grid.Row="1">                   
+                    
+                    <TabItem Header="Selection List" Width="200">
+                        <Grid Grid.Row="1" >
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="75"></RowDefinition>
+                                <RowDefinition Height="*"></RowDefinition>
+                                <RowDefinition Height="5"></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Left" >
+                                <Button  Command="{Binding btLightFilteredTagSelection}"    Margin="10,5,5,5"  Height="35" Content=" Light Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
+                                <Button  Command="{Binding btRemoveSelection}"   Margin="50,5,5,5"  Height="35" Content=" Remove Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15" PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"   />
+
                             </StackPanel>
-                            <TextBlock Margin="20,5,0,0"  Text="{Binding LoggedUser}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0"  HorizontalAlignment="Left" >
-                        <Button  Command="{Binding btLightFilteredTag}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Light Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
-                        <TextBlock  Text="{Binding txtNbSelectedItem}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"  FontSize="25" Foreground="{DynamicResource AccentColorBrush}"/>
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0"  HorizontalAlignment="Right" >
-                        <Button  Margin="0,0,5,0" Content="{StaticResource keybImg}" VerticalAlignment="Center"  Command="{Binding openKeyboard}" Style="{DynamicResource MetroCircleButtonStyle}" Height="50" />
-                        <TextBox  x:Name="TxtCtrlNumber" Margin="0,0,0,0"                           
+                            <syncfusion:SfDataGrid Name="myDatagridSelection" Grid.Row="1"
+                                                HeaderRowHeight="50"
+                                               RowHeight="40"
+                                       VerticalAlignment="Stretch"  
+                                       HorizontalAlignment="Stretch"
+                                       AutoGenerateColumns="False"                                                                             
+                                       SelectionMode="Single"   
+                                       SelectionUnit="Row"
+                                       SelectionForegroundBrush="DarkBlue"
+                                       RowSelectionBrush="{DynamicResource AccentColorBrush}"
+                                       AllowDraggingColumns="False"                                           
+                                       AllowEditing="False"
+                                       AllowFiltering="False"
+                                       AllowGrouping="False"  
+                                       ShowGroupDropArea="False" 
+                                       EnableDataVirtualization="True"
+                                       NavigationMode="Row"  
+                                       ShowBusyIndicator="True"
+                                       FontFamily="Verdana" 
+                                       FontSize="18" 
+                                       ItemsSource="{Binding Selection}" 
+                                       SelectedItem="{Binding SelectionSelected}"
+                                       AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
+                                       AlternationCount="2"
+                                       HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star">
+                            <syncfusion:SfDataGrid.Columns>
+                                <syncfusion:GridTextColumn  x:Name="ColId"
+                                                         HeaderText="ID"
+                                                         MappingName="PullItemId" TextAlignment="Center" ColumnSizer="Star"/>
+                                <syncfusion:GridTextColumn  x:Name="ColDate"
+                                                         HeaderText="Date"
+                                                         MappingName="PullItemDate" TextAlignment="Center" ColumnSizer="Star"/>
+                                <syncfusion:GridTextColumn  x:Name="ColDescription"
+                                                         HeaderText="Description"
+                                                         MappingName="Description" TextAlignment="Center" ColumnSizer="Star"/>
+                                <syncfusion:GridTextColumn  x:Name="ColUser"
+                                                         HeaderText="User"
+                                                         MappingName="User" TextAlignment="Center" ColumnSizer="Star"/>
+                                <syncfusion:GridTextColumn  x:Name="ColToPull"
+                                                         HeaderText="To Pull"
+                                                         MappingName="TotalToPull" TextAlignment="Center" ColumnSizer="Star"/>
+                                <syncfusion:GridTextColumn  x:Name="ColInDevicel"
+                                                         HeaderText="In Device"
+                                                         MappingName="TotalToPullInDevice" TextAlignment="Center" ColumnSizer="Star"/>                               
+                            </syncfusion:SfDataGrid.Columns>
+                        </syncfusion:SfDataGrid>
+                        </Grid>
+                    </TabItem>
+                    <TabItem Header="Device Content" Width="200">
+                        <Grid Grid.Row="1" >
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="75"></RowDefinition>
+                                <RowDefinition Height="*"></RowDefinition>
+                                <RowDefinition Height="5"></RowDefinition>
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Left" >
+                                <Button  Command="{Binding btLightFilteredTag}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Light Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
+                                <TextBlock  Text="{Binding txtNbSelectedItem}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"  FontSize="25" Foreground="{DynamicResource AccentColorBrush}"/>
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Right" >
+                                <Button  Margin="0,0,5,0" Content="{StaticResource keybImg}" VerticalAlignment="Center"  Command="{Binding openKeyboard}" Style="{DynamicResource MetroCircleButtonStyle}" Height="50" />
+                                <TextBox  x:Name="TxtCtrlNumber" Margin="0,0,0,0"                           
                           Text="{Binding txtSearchCtrl,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                           Width="405" 
                           VerticalAlignment="Center" 
                           HorizontalAlignment="Left"    Focusable="True" IsEnabled="true"  FontSize="30"  MaxLength="12" 
                           Controls:TextBoxHelper.Watermark="Enter value to search" Controls:TextBoxHelper.ClearTextButton="True" AcceptsReturn="True"  >
-                            <TextBox.InputBindings>
-                                <KeyBinding Key="Enter" Command="{Binding searchTxtGotCR}"/>
-                            </TextBox.InputBindings>
-                        </TextBox>
-                        <Button  Command="{Binding btClearSelection}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Clear Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
-                    </StackPanel>
-                    <syncfusion:SfDataGrid Name="myDatagrid" 
-                                       Grid.Row="2"
+                                    <TextBox.InputBindings>
+                                        <KeyBinding Key="Enter" Command="{Binding searchTxtGotCR}"/>
+                                    </TextBox.InputBindings>
+                                </TextBox>
+                                <Button  Command="{Binding btClearSelection}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Clear Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
+                            </StackPanel>
+                            <syncfusion:SfDataGrid Name="myDatagrid" 
+                                       Grid.Row="1"
                                        HeaderRowHeight="50"
                                        VerticalAlignment="Stretch"  
                                        HorizontalAlignment="Stretch"
@@ -124,129 +192,121 @@
                                        AlternationCount="2"
                                        HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star">
 
-                        <syncfusion:SfDataGrid.Columns>
-                            <syncfusion:GridTextColumn  x:Name="ColTagUid"
+                                <syncfusion:SfDataGrid.Columns>
+                                    <syncfusion:GridTextColumn  x:Name="ColTagUid"
                                                          HeaderText="Tag UID"
                                                          MappingName="UID"
                                                          IsHidden="true">
-                                
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column1"
+
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column1"
                                                          HeaderText="Column1"
                                                          MappingName="Column1"
                                                          IsHidden="True">
 
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column2"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column2"
                                                          HeaderText="Column2"
                                                          MappingName="Column2"
                                                         IsHidden="True">
 
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column3"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column3"
                                                          HeaderText="Column3"
                                                          MappingName="Column3"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column4"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column4"
                                                          HeaderText="Column4"
                                                          MappingName="Column4"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column5"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column5"
                                                          HeaderText="Column5"
                                                          MappingName="Column5"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column6"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column6"
                                                          HeaderText="Column6"
                                                          MappingName="Column6"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column7"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column7"
                                                          HeaderText="Column7"
                                                          MappingName="Column7"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column8"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column8"
                                                          HeaderText="Column8"
                                                          MappingName="Column8"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column9"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column9"
                                                          HeaderText="Column9"
                                                          MappingName="Column9"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column10"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column10"
                                                          HeaderText="Column10"
                                                          MappingName="Column10"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column11"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column11"
                                                          HeaderText="Column11"
                                                          MappingName="Column11"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column12"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column12"
                                                          HeaderText="Column12"
                                                          MappingName="Column12"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column13"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column13"
                                                          HeaderText="Column13"
                                                          MappingName="Column13"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column14"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column14"
                                                          HeaderText="Column14"
                                                          MappingName="Column14"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column15"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column15"
                                                          HeaderText="Column15"
                                                          MappingName="Column15"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column16"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column16"
                                                          HeaderText="Column16"
                                                          MappingName="Column16"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column17"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column17"
                                                          HeaderText="Column17"
                                                          MappingName="Column17"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column18"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column18"
                                                          HeaderText="Column18"
                                                          MappingName="Column18"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column19"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Column19"
                                                          HeaderText="Column19"
                                                          MappingName="Column19"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Drawer"
+                                    </syncfusion:GridTextColumn>
+                                    <syncfusion:GridTextColumn  x:Name="Drawer"
                                                          HeaderText="Drawer"
                                                          MappingName="Drawer"
                                                         IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                        </syncfusion:SfDataGrid.Columns>
-                     </syncfusion:SfDataGrid>
-                    <!--datapager:SfDataPager x:Name="sfDataPager"   Grid.Row="2"                                  
-                                       Height="60"
-                                       HorizontalAlignment="Right"
-                                       VerticalAlignment="Top"
-                                       AccentBackground="#FF53C3D5"
-                                       AccentForeground="White"
-                                       NumericButtonCount="10"
-                                       Orientation="Horizontal"
-                                       PageSize="16"
-                                       Source="{Binding SourceTable}" /-->                    
-
-                </Grid>
+                                    </syncfusion:GridTextColumn>
+                                </syncfusion:SfDataGrid.Columns>
+                            </syncfusion:SfDataGrid>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
+                       
                 <!-- BOTTOM-->
                 <Border Grid.Row="2" Margin="2" Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8">
                     <Grid>
@@ -298,7 +358,7 @@
                             </Image.Style>
                         </Image>
                         <TextBlock    Text="Information : "  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,10,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
-                    <TextBlock    Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding wallStatus}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>                       
+                    <TextBlock   x:Name="wallInfo" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding wallStatus}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>                       
                 </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <Controls:ToggleSwitch x:Name="ChkAutoLight"  IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>

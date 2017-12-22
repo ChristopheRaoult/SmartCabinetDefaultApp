@@ -331,10 +331,10 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 // cannot happen
                 return;
             }
-            if (args.EventType != FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete)
+            /*if (args.EventType != FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete)
             {
                 return;
-            }
+            }*/
 
             var handler = FpAuthenticationReceive;
             if (handler != null)

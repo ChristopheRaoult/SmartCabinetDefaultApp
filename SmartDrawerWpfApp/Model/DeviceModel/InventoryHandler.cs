@@ -36,8 +36,10 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 }
 
 
-                //remove previous entry
-                var itemBinding = ctx.Inventories.Where(i => i.DrawerNumber == drawerId && i.DeviceId == _deviceEntity.DeviceId);
+                //remove previous entry Older than 30 days
+                DateTime dtToKeep = DateTime.Now.AddDays(-30.0);
+                var itemBinding = ctx.Inventories.Where(i => i.DrawerNumber == drawerId && i.DeviceId == _deviceEntity.DeviceId && i.InventoryDate < dtToKeep);
+                if (itemBinding != null)
                 foreach (var ib in itemBinding)
                 {                  
                     ctx.Inventories.Remove(ib);                   

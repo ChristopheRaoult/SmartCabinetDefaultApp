@@ -160,13 +160,18 @@
     <Compile Include="StaticHelpers\TagFromTxtBox.cs" />
     <Compile Include="StaticHelpers\TouchKeyboardProvider.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
+    <Compile Include="ViewModel\SelectionViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Compile Include="View\UserDrawerSelection.xaml.cs">
       <DependentUpon>UserDrawerSelection.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Wcf\JsonInventory.cs" />
+    <Compile Include="Wcf\JsonItemToPull.cs" />
     <Compile Include="Wcf\JsonProductAddOrUpdate.cs" />
     <Compile Include="Wcf\JsonProductToStockOut.cs" />
     <Compile Include="Wcf\JsonProdutToSelect.cs" />
+    <Compile Include="Wcf\JsonUser.cs" />
+    <Compile Include="Wcf\JsonUserFingerprint.cs" />
     <Compile Include="Wcf\MyHostEventArgs.cs" />
     <Compile Include="Wcf\WallDevice.cs" />
     <Compile Include="Wcf\SslWallNotificationService.cs" />

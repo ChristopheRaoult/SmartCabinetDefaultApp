@@ -17,6 +17,8 @@ using System.Data;
 using Syncfusion.UI.Xaml.Grid;
 using Syncfusion.UI.Xaml.Grid.Helpers;
 using Syncfusion.Data;
+using System.Data.Entity;
+using SmartDrawerDatabase;
 
 namespace SmartDrawerWpfApp.Wcf
 {
@@ -64,7 +66,7 @@ namespace SmartDrawerWpfApp.Wcf
          BodyStyle = WebMessageBodyStyle.WrappedRequest,
          ResponseFormat = WebMessageFormat.Json)]
         public string AddOrUpdateProduct(Stream streamdata)
-        {            
+        {
             try
             {
                 StreamReader reader = new StreamReader(streamdata);
@@ -74,7 +76,7 @@ namespace SmartDrawerWpfApp.Wcf
 
                 JsonProductAddOrUpdate jsonProducts = JsonConvert.DeserializeObject<JsonProductAddOrUpdate>(res);
                 if (jsonProducts != null)
-                {     
+                {
                     var ctx = RemoteDatabase.GetDbContext();
                     int nbSuccess = 0;
                     for (int loop = 0; loop < jsonProducts.listOfProducts.Length; loop++)
@@ -88,7 +90,7 @@ namespace SmartDrawerWpfApp.Wcf
                                 jsonProducts.listOfProducts[loop].productInfo[bcl] = " ";
 
                         RfidTag tag = ctx.RfidTags.AddIfNotExisting(jsonProducts.listOfProducts[loop].tagUID);
-                        Product p =  ctx.Products.GetByTagUid(jsonProducts.listOfProducts[loop].tagUID);
+                        Product p = ctx.Products.GetByTagUid(jsonProducts.listOfProducts[loop].tagUID);
                         if (p != null)
                         {
                             ctx.Products.Attach(p);
@@ -141,7 +143,7 @@ namespace SmartDrawerWpfApp.Wcf
                                 ProductInfo18 = jsonProducts.listOfProducts[loop].productInfo[18],
                                 ProductInfo19 = jsonProducts.listOfProducts[loop].productInfo[19],
                             };
-                            ctx.Products.Add(newProduct);                            
+                            ctx.Products.Add(newProduct);
                             nbSuccess++;
                         }
                         ctx.SaveChanges();
@@ -168,7 +170,7 @@ namespace SmartDrawerWpfApp.Wcf
           BodyStyle = WebMessageBodyStyle.WrappedRequest,
           ResponseFormat = WebMessageFormat.Json)]
         public string StockOutProduct(Stream streamdata)
-        {           
+        {
             try
             {
                 StreamReader reader = new StreamReader(streamdata);
@@ -188,7 +190,7 @@ namespace SmartDrawerWpfApp.Wcf
                         Product p = ctx.Products.GetByTagUid(ListOfTags.listOfTagId[loop]);
                         if (p != null)
                             ctx.Products.Remove(p);
-                            nbSuccess++;
+                        nbSuccess++;
                     }
                     ctx.SaveChanges();
                     ctx.Database.Connection.Close();
@@ -247,18 +249,18 @@ namespace SmartDrawerWpfApp.Wcf
                     //mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                     //{
                     if ((mylist != null) && (mylist.Count > 0))
-                    {                        
+                    {
                         mainview0.myDatagrid.SelectedItems.Clear();
-                        if (mainview0.Data != null && mainview0.Data.Count  > 0)
+                        if (mainview0.Data != null && mainview0.Data.Count > 0)
                         {
                             var watch = System.Diagnostics.Stopwatch.StartNew();
                             foreach (string uid in mylist)
-                            {    
-                                foreach (RecordEntry re  in mainview0.myDatagrid.View.Records)
+                            {
+                                foreach (RecordEntry re in mainview0.myDatagrid.View.Records)
                                 {
                                     DataRowView drv = re.Data as DataRowView;
                                     if (drv.Row[0].Equals(uid))
-                                         mainview0.myDatagrid.SelectedItems.Add(drv);
+                                        mainview0.myDatagrid.SelectedItems.Add(drv);
                                 }
                             }
                             mainview0.myDatagrid.View.Refresh();
@@ -266,7 +268,8 @@ namespace SmartDrawerWpfApp.Wcf
                             msg = string.Format(" - {0} Product(s) Selected from {1} in {2} ms", mainview0.myDatagrid.SelectedItems.Count, mylist.Count, watch.ElapsedMilliseconds);
                         }
                         else
-                            return "Failed : datagrid is empty !";                    }   
+                            return "Failed : datagrid is empty !";
+                    }
                 }
                 else
                     msg = " - Tag list is empty";
@@ -292,7 +295,6 @@ namespace SmartDrawerWpfApp.Wcf
             }
             return false;
         }
-
         private bool IsOneDrawerOpen()
         {
             bool bRet = false;
@@ -303,7 +305,369 @@ namespace SmartDrawerWpfApp.Wcf
             }
             return bRet;
         }
+
+
+         [OperationContract]
+         [WebInvoke(Method = "POST",
+         UriTemplate = "/PullItemsRequest",
+         BodyStyle = WebMessageBodyStyle.WrappedRequest,
+         ResponseFormat = WebMessageFormat.Json)]
+         public async Task<string> PullItem(Stream streamdata)
+            {
+                try
+                {
+                    StreamReader reader = new StreamReader(streamdata);
+                    string res = reader.ReadToEnd();
+                    reader.Close();
+                    reader.Dispose();
+
+                    JsonItemToPull jitp = JsonConvert.DeserializeObject<JsonItemToPull>(res);
+                    if (jitp != null)
+                    {
+                        var ctx = await RemoteDatabase.GetDbContextAsync();
+                        var user = ctx.GrantedUsers.Find(jitp.userId);
+                        var pullItemToAdd = new SmartDrawerDatabase.DAL.PullItem
+                        {
+                            PullItemDate = jitp.pullItemDate,
+                            Description = jitp.description,
+                            GrantedUser = user,
+                            TotalToPull = jitp.listOfTagToPull.Length,
+
+                        };
+                        ctx.PullItems.Add(pullItemToAdd);
+                        foreach (string uid in jitp.listOfTagToPull)
+                        {
+                            RfidTag tag = ctx.RfidTags.AddIfNotExisting(uid);
+                            ctx.PullItemsDetails.Add(new PullItemDetail
+                            {
+                                PullItem = pullItemToAdd,
+                                RfidTag = tag,
+                            });
+                        }
+                        await ctx.SaveChangesAsync();
+
+                        int PullId = pullItemToAdd.PullItemId;
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+
+                        if (MyHostEvent != null)
+                            MyHostEvent(this, new MyHostEventArgs("PullItemsRequest", null));
+                        return "Success : " + PullId;
+                    }
+                    return "Error : Bad Parameters";
+
+                }
+                catch (Exception exp)
+                {
+                    return "Exception : " + exp.InnerException + "-" + exp.Message;
+                }
+            }
+
+         [OperationContract]
+         [WebInvoke(Method = "POST",
+         UriTemplate = "/RemovePullItemsRequest",
+         BodyStyle = WebMessageBodyStyle.WrappedRequest,
+         ResponseFormat = WebMessageFormat.Json)]
+         public async Task<string> RemovePullItem(Stream streamdata)
+            {
+                try
+                {
+                    StreamReader reader = new StreamReader(streamdata);
+                    string res = reader.ReadToEnd();
+                    int IdToRemove;
+                    reader.Close();
+                    reader.Dispose();
+                    if (int.TryParse(res, out IdToRemove))
+                    {
+                        var ctx = await RemoteDatabase.GetDbContextAsync();
+                        var pullitem = ctx.PullItems.Find(IdToRemove);
+                        if (pullitem != null)
+                        {
+                            ctx.PullItems.Remove(pullitem);
+                            await ctx.SaveChangesAsync();
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
+                            if (MyHostEvent != null)
+                                MyHostEvent(this, new MyHostEventArgs("PullItemsRequest", null));
+                            return "Success : " + IdToRemove;
+                        }
+                        else
+                        {
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
+                            return "Failed : " + IdToRemove;
+                        }
+                    }
+                    return "Error : Bad Parameters";
+                }
+                catch (Exception exp)
+                {
+                    return "Exception : " + exp.InnerException + "-" + exp.Message;
+                }
+            }
+
+         [OperationContract]
+         [WebInvoke(Method = "POST",
+         UriTemplate = "/AddOrUpdateUser",
+         BodyStyle = WebMessageBodyStyle.WrappedRequest,
+         ResponseFormat = WebMessageFormat.Json)]
+         public async Task<string> AddOrUpdateUser(Stream streamdata)
+            {
+                try
+                {
+                    StreamReader reader = new StreamReader(streamdata);
+                    string res = reader.ReadToEnd();
+                    reader.Close();
+                    reader.Dispose();
+
+                    JsonUser ju = JsonConvert.DeserializeObject<JsonUser>(res);
+                    if (ju != null)
+                    {
+                        var ctx = await RemoteDatabase.GetDbContextAsync();
+                        var user = ctx.GrantedUsers.GetByLogin(ju.Login);                    
+                        if (user != null) //update
+                        {
+                            if (ju.Password != null)
+                                user.Password = PasswordHashing.Sha256Of(ju.Password);
+                            user.FirstName = ju.FirstName;
+                            user.LastName = ju.LastName;
+                            user.BadgeNumber = ju.BadgeNumber;
+                            ctx.Entry(user).State = EntityState.Modified;
+                            await ctx.SaveChangesAsync();
+                            foreach (var dev in ctx.Devices)
+                                ctx.GrantedAccesses.AddOrUpdateAccess(user, dev, ctx.GrantTypes.All());
+                            await ctx.SaveChangesAsync();
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
+                            return "Success : " + user.GrantedUserId;
+                        }
+                        else //create
+                        {                        
+                            GrantedUser gu = new GrantedUser()
+                            {
+                                Login = ju.Login,
+                                Password = ju.Password != null ? PasswordHashing.Sha256Of(ju.Password) : PasswordHashing.Sha256Of("123456"),
+                                FirstName = ju.FirstName,
+                                LastName = ju.LastName,
+                                BadgeNumber = ju.BadgeNumber,
+                                UserRank = ctx.UserRanks.User(),                              
+                            };
+                            ctx.GrantedUsers.Add(gu);
+                            await ctx.SaveChangesAsync();
+                            foreach (var dev in ctx.Devices)
+                                ctx.GrantedAccesses.AddOrUpdateAccess(gu, dev, ctx.GrantTypes.All());
+                            await ctx.SaveChangesAsync();
+                            int UserId = gu.GrantedUserId;
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
+                            if (MyHostEvent != null)
+                                MyHostEvent(this, new MyHostEventArgs("UpdateUserInfoList", null));
+                            return "Success : " + UserId;
+                        }
+                    }
+                    return "Error : Bad Parameters";
+                }
+                catch (Exception exp)
+                {
+                    return "Exception : " + exp.InnerException + "-" + exp.Message;
+                }
+            }
+
+         [OperationContract]
+         [WebInvoke(Method = "POST",
+         UriTemplate = "/RemoveUser",
+         BodyStyle = WebMessageBodyStyle.WrappedRequest,
+         ResponseFormat = WebMessageFormat.Json)]
+         public async Task<string> RemoveUser(Stream streamdata)
+            {
+                try
+                {
+                    StreamReader reader = new StreamReader(streamdata);
+                    string res = reader.ReadToEnd();
+                    int IdToRemove;
+                    reader.Close();
+                    reader.Dispose();
+                    if (int.TryParse(res, out IdToRemove))
+                    {
+                        var ctx = await RemoteDatabase.GetDbContextAsync();
+                        var user = ctx.GrantedUsers.Find(IdToRemove);
+                        if (user != null)
+                        {
+                            ctx.GrantedUsers.Remove(user);
+                            await ctx.SaveChangesAsync();
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
+                            if (MyHostEvent != null)
+                                MyHostEvent(this, new MyHostEventArgs("UpdateUserInfoList", null));
+                            return "Success : " + IdToRemove;
+                        }
+                        else
+                        {
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
+                            return "Failed : " + IdToRemove;
+                        }
+                    }
+                    return "Error : Bad Parameters";
+                }
+                catch (Exception exp)
+                {
+                    return "Exception : " + exp.InnerException + "-" + exp.Message;
+                }
+            }
+
+         [OperationContract]
+         [WebInvoke(Method = "POST",
+         UriTemplate = "/AddOrUpdateUserFingerprint",
+         BodyStyle = WebMessageBodyStyle.WrappedRequest,
+         ResponseFormat = WebMessageFormat.Json)]
+         public async Task<string> AddOrUpdateUserFingerprint(Stream streamdata)
+            {
+                try
+                {
+                    StreamReader reader = new StreamReader(streamdata);
+                    string res = reader.ReadToEnd();
+                    reader.Close();
+                    reader.Dispose();
+
+                    JsonUserFingerprint juf = JsonConvert.DeserializeObject<JsonUserFingerprint>(res);
+                    if (juf != null)
+                    {
+                        var ctx = await RemoteDatabase.GetDbContextAsync();
+                        var user = ctx.GrantedUsers.Find(juf.GrantedUserId);
+                        if (user != null) //user Exist
+                        {
+                            var fingerprint =  ctx.Fingerprints.FirstOrDefault(fp => fp.Index == juf.Index && fp.GrantedUserId == user.GrantedUserId);
+                            if (fingerprint != null)
+                                ctx.Fingerprints.Remove(fingerprint);
+
+                            ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                            {
+                                Index = juf.Index,
+                                GrantedUserId = user.GrantedUserId,
+                                Template = juf.Template
+                            });
+
+                            await ctx.SaveChangesAsync();
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
+                            MyHostEvent(this, new MyHostEventArgs("UpdateUserInfoList", null));
+                            return "Success : " + user.GrantedUserId;
+                        }
+                        else //create
+                        {                        
+                            return "Failed : " + juf.GrantedUserId;
+                        }
+                    }
+                    return "Error : Bad Parameters";
+                }
+                catch (Exception exp)
+                {
+                    return "Exception : " + exp.InnerException + "-" + exp.Message;
+                }
+            }
+
+        [OperationContract]
+        [WebInvoke(Method = "POST",
+        UriTemplate = "/RemoveUserFingerprint",
+        BodyStyle = WebMessageBodyStyle.WrappedRequest,
+        ResponseFormat = WebMessageFormat.Json)]
+        public async Task<string> RemoveUserFingerprint(Stream streamdata)
+        {
+            try
+            {
+                StreamReader reader = new StreamReader(streamdata);
+                string res = reader.ReadToEnd();
+                reader.Close();
+                reader.Dispose();
+
+                JsonUserFingerprint juf = JsonConvert.DeserializeObject<JsonUserFingerprint>(res);
+                if (juf != null)
+                {
+                    var ctx = await RemoteDatabase.GetDbContextAsync();
+                    var user = ctx.GrantedUsers.Find(juf.GrantedUserId);
+                    if (user != null) //user Exist
+                    {
+                        var fingerprint = ctx.Fingerprints.FirstOrDefault(fp => fp.Index == juf.Index && fp.GrantedUserId == user.GrantedUserId);
+                        if (fingerprint != null)
+                            ctx.Fingerprints.Remove(fingerprint);
+                        MyHostEvent(this, new MyHostEventArgs("UpdateUserInfoList", null));
+                        return "Success : " + user.GrantedUserId;
+                    }
+                    else //create
+                    {
+                        return "Failed : " + juf.GrantedUserId;
+                    }
+                }
+                return "Error : Bad Parameters";
+            }
+            catch (Exception exp)
+            {
+                return "Exception : " + exp.InnerException + "-" + exp.Message;
+            }
+        }
+
+        [OperationContract]
+        [WebInvoke(Method = "POST",
+        UriTemplate = "/getCurrentInventory",
+        BodyStyle = WebMessageBodyStyle.WrappedRequest,
+        ResponseFormat = WebMessageFormat.Json)]
+        public JsonInventory getCurrentInventory()
+        {
+            try
+            {
+                List<TagInfo> lstTag = new List<TagInfo>();                             
+                for(int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
+                {
+                    List<string> TmpListCtrlPerDrawer = new List<string>(DevicesHandler.GetTagFromDictionnary(loop, DevicesHandler.ListTagPerDrawer));
+                    List<string> TmpListCtrlPerDrawerAdded = new List<string>(DevicesHandler.GetTagFromDictionnary(loop, DevicesHandler.ListTagAddedPerDrawer));
+                    List<string> TmpListCtrlPerDrawerRemoved = new List<string>(DevicesHandler.GetTagFromDictionnary(loop, DevicesHandler.ListTagRemovedPerDrawer));
+
+                    foreach (string uid in TmpListCtrlPerDrawerAdded)
+                    {
+                        if (TmpListCtrlPerDrawer.Contains(uid))
+                            TmpListCtrlPerDrawer.Remove(uid);
+                        lstTag.Add(new TagInfo()
+                        {
+                            tagUID = uid,
+                            DrawerId = loop,
+                            Movement = 1,
+                        });
+                    }
+
+                    foreach (string uid in TmpListCtrlPerDrawer)
+                    {                      
+                        lstTag.Add(new TagInfo()
+                        {
+                            tagUID = uid,
+                            DrawerId = loop,
+                            Movement = 0,
+                        });
+                    }
+                    foreach (string uid in TmpListCtrlPerDrawerRemoved)
+                    {
+                        lstTag.Add(new TagInfo()
+                        {
+                            tagUID = uid,
+                            DrawerId = loop,
+                            Movement = -1,
+                        });
+                    }
+                }
+                JsonInventory ji = new JsonInventory();
+                ji.listOfTags = lstTag.ToArray();
+                ji.Status = "Success";
+                return ji;
+               
+            }
+            catch (Exception exp)
+            {
+                JsonInventory ret = new JsonInventory();
+                ret.Status = "Failed";
+                ret.Reason = "Exception : " + exp.InnerException + " - " + exp.Message;
+                ret.listOfTags = null;
+                return ret;
+            }
+        }
     }
-
-
 }
