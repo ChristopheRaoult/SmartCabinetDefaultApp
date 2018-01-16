@@ -87,6 +87,14 @@
                                 <RowDefinition Height="5"></RowDefinition>
                             </Grid.RowDefinitions>
                             <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Left" >
+                            <Button Width="50"  Height="50" Margin="0, 0, 10, 0" Style="{DynamicResource MetroCircleButtonStyle}"
+                                    Command="{Binding BtRefreshSelection}">
+                                    <Rectangle Width="20"  Height="20" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                                        <Rectangle.OpacityMask>
+                                            <VisualBrush Stretch="Fill"    Visual="{DynamicResource appbar_refresh}" />
+                                        </Rectangle.OpacityMask>
+                                    </Rectangle>
+                                </Button>
                                 <Button  Command="{Binding btLightFilteredTagSelection}"    Margin="10,5,5,5"  Height="35" Content=" Light Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
                                 <Button  Command="{Binding btRemoveSelection}"   Margin="50,5,5,5"  Height="35" Content=" Remove Selection " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15" PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"   />
 

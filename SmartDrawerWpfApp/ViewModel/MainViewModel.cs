@@ -575,8 +575,10 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
+        private RelayCommand BtRefreshSelection { get; set; }
         public async void getSelection()
         {
+            List<PullItem> lstToRemove = new List<PullItem>();
             var ctx = await  RemoteDatabase.GetDbContextAsync();
             Selection.Clear();
             foreach (var sel in ctx.PullItems)
@@ -600,10 +602,24 @@ namespace SmartDrawerWpfApp.ViewModel
                         nbInDevice++;
                     }
                 }
-                svm.TotalToPullInDevice = nbInDevice;
-                Selection.Add(svm);
+                if (nbInDevice > 0)
+                {
+                    svm.TotalToPullInDevice = nbInDevice;
+                    Selection.Add(svm);
+                }
+                else   //remove selection bigger thant 1 week having no selection
+                {
+                    if (sel.PullItemDate.AddDays(7) < DateTime.Now)
+                        lstToRemove.Add(sel);
+                }
             }
 
+            if (lstToRemove.Count > 0)
+            {
+                foreach (var sel in lstToRemove)
+                    ctx.PullItems.Remove(sel);
+                await ctx.SaveChangesAsync();
+            }
             ctx.Database.Connection.Close();
             ctx.Dispose();
         }
@@ -2098,10 +2114,7 @@ namespace SmartDrawerWpfApp.ViewModel
             ScanTimer.Tick += new EventHandler(ScanTimer_Tick);
             ScanTimer.Interval = new TimeSpan(0, 0, 5);
             ScanTimer.Start();
-        }
-
-       
-
+        }     
         private void CountTotalStones()
         {
             WallTotalStones = 0;
@@ -2131,16 +2144,15 @@ namespace SmartDrawerWpfApp.ViewModel
             LogoutCommand = new RelayCommand(() => logout());
             btLightFilteredTagSelection = new RelayCommand(() => LightSelectionFromList());
             btRemoveSelection = new RelayCommand(() => removeSelection());
+            BtRefreshSelection = new RelayCommand(() => getSelection());
 
             #endregion
         }
-
         private void Mainview0_NotifyM2MCardEvent(object sender, string CardID)
         {
             txtSearchCtrl = CardID;
             searchTxtGotCRfn();
         }
-
         private void Mainview0_NotifyBadgeReaderEvent(object sender, string badgeID)
         {
             LoggedUser = badgeID;
@@ -2260,7 +2272,6 @@ namespace SmartDrawerWpfApp.ViewModel
                     break;
             }    
         }
-
         ~MainViewModel()
         {
            
