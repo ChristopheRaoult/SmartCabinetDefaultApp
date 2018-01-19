@@ -539,21 +539,31 @@ namespace SmartDrawerAdmin.ViewModel
                 result = await mainview0.ShowLoginAsync("Information", "Enter administrator password?", lds);
                 if (result != null)
                 {
-                    var ctx = await RemoteDatabase.GetDbContextAsync();
-                    GrantedUser adminUser = ctx.GrantedUsers.GetByLogin(result.Username);
-                    if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
+                    try
                     {
-                        isAdmin = true;
-                    }
-                    else
-                    {
-                         MessageDialogResult mdr =  await mainview0.ShowMessageAsync("Question" , "Would you like to quit" , MessageDialogStyle.AffirmativeAndNegative);
-                        if (mdr == MessageDialogResult.Affirmative)
-                            System.Windows.Application.Current.Shutdown();
+                        var ctx = await RemoteDatabase.GetDbContextAsync();
+                        GrantedUser adminUser = ctx.GrantedUsers.GetByLogin(result.Username);
+                        if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
+                        {
+                            isAdmin = true;
+                        }
+                        else
+                        {
+                            MessageDialogResult mdr = await mainview0.ShowMessageAsync("Question", "Admin not found , Would you like to quit", MessageDialogStyle.AffirmativeAndNegative);
+                            if (mdr == MessageDialogResult.Affirmative)
+                                System.Windows.Application.Current.Shutdown();
 
+                        }
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
                     }
-                    ctx.Database.Connection.Close();
-                    ctx.Dispose();
+                    catch (Exception error)
+                    {
+                        await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                        {
+                            ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error get Admin");
+                        }));
+                    }   
                 }
             }
             while (!isAdmin);

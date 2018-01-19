@@ -393,7 +393,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             if (_LastDrawerOpened != 0)
             {
                 if (GpioCardObject.InStatus[_LastDrawerOpened] == 0)
-                {
+                {                   
                     _LastDrawerClosed = _LastDrawerOpened;
                     _LastDrawerOpened = 0;
                     FireEvent(DrawerClosed, DeviceList.FirstOrDefault(x => x.Value == _LastDrawerClosed).Key, _LastDrawerClosed);
@@ -405,9 +405,12 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             {
                 if (GpioCardObject.InStatus[loop] == 1)
                 {
-                    _LastDrawerOpened = loop;
-                    _LastDrawerClosed = 0;
-                    FireEvent(DrawerOpened, DeviceList.FirstOrDefault(x => x.Value == _LastDrawerOpened).Key, _LastDrawerOpened);
+                    if (_LastDrawerOpened != loop)
+                    {
+                        _LastDrawerOpened = loop;
+                        _LastDrawerClosed = 0;
+                        FireEvent(DrawerOpened, DeviceList.FirstOrDefault(x => x.Value == _LastDrawerOpened).Key, _LastDrawerOpened);
+                    }
                     break;
                 }
             }

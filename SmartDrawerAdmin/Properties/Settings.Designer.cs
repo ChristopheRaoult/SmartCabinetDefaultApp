@@ -61,7 +61,7 @@ namespace SmartDrawerAdmin.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("rfid")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string DbPassword {
             get {
                 return ((string)(this["DbPassword"]));

@@ -34,7 +34,11 @@ namespace SmartDrawerWpfApp
         public event NotifyHandlerBadgeReaderDelegate NotifyM2MCardEvent;
         public MainWindow()
         {
-            InitializeComponent();    
+            InitializeComponent();
+            if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
+            {
+                Title += " - " + System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
+            }
             if (string.IsNullOrEmpty(Properties.Settings.Default.DbPassword))
             {
                 string pwd = "rfid";

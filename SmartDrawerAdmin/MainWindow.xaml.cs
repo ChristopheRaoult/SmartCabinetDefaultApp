@@ -23,7 +23,16 @@ namespace SmartDrawerAdmin
     {
         public MainWindow()
         {
-            InitializeComponent();            
+            InitializeComponent();
+
+            if (string.IsNullOrEmpty(Properties.Settings.Default.DbPassword))
+            {
+                string pwd = "rfid";
+                var secureString = pwd.ToSecureString();
+                Properties.Settings.Default.DbPassword = secureString.EncryptString();
+                Properties.Settings.Default.Save();
+                Properties.Settings.Default.Upgrade();
+            }
         }
     }
 }

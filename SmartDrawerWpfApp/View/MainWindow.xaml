@@ -16,7 +16,7 @@
         Icon="/SmartDrawerWpfApp;component/Icons/Logo.PNG"
        
         mc:Ignorable="d"
-        Title="SmartDrawer Application" MinHeight="850" MinWidth="1366" WindowStartupLocation="CenterScreen" WindowState="Maximized" d:DesignWidth="1160" d:DesignHeight="973.3" PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"  >
+        Title="SmartDrawer Application" MinHeight="800" MinWidth="1366" WindowStartupLocation="CenterScreen" WindowState="Maximized" d:DesignWidth="1160" d:DesignHeight="973.3" PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"  >
 
     <Controls:MetroWindow.Resources>
         <Image x:Key="keybImg" Source="/SmartDrawerWpfApp;component/Icons/Keyboard-icon.png" />

@@ -516,7 +516,48 @@ namespace SmartDrawerWpfApp.Wcf
                 }
             }
 
-         [OperationContract]
+
+        [OperationContract]
+        [WebInvoke(Method = "POST",
+        UriTemplate = "/RemoveUserByLogin",
+        BodyStyle = WebMessageBodyStyle.WrappedRequest,
+        ResponseFormat = WebMessageFormat.Json)]
+        public async Task<string> RemoveUserByLogin(Stream streamdata)
+        {
+            try
+            {
+                StreamReader reader = new StreamReader(streamdata);
+                string Login = reader.ReadToEnd();               
+                reader.Close();
+                reader.Dispose();
+               
+                var ctx = await RemoteDatabase.GetDbContextAsync();
+                var user = ctx.GrantedUsers.GetByLogin(Login);
+                if (user != null)
+                {
+                    ctx.GrantedUsers.Remove(user);
+                    await ctx.SaveChangesAsync();
+                    ctx.Database.Connection.Close();
+                    ctx.Dispose();
+                    if (MyHostEvent != null)
+                        MyHostEvent(this, new MyHostEventArgs("UpdateUserInfoList", null));
+                    return "Success : " + Login;
+                }
+                else
+                {
+                    ctx.Database.Connection.Close();
+                    ctx.Dispose();
+                    return "Failed : " + Login;
+                }            
+               
+            }
+            catch (Exception exp)
+            {
+                return "Exception : " + exp.InnerException + "-" + exp.Message;
+            }
+        }
+
+        [OperationContract]
          [WebInvoke(Method = "POST",
          UriTemplate = "/AddOrUpdateUserFingerprint",
          BodyStyle = WebMessageBodyStyle.WrappedRequest,

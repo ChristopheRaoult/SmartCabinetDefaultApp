@@ -12,7 +12,7 @@
       <Value Profile="(Default)">sa</Value>
     </Setting>
     <Setting Name="DbPassword" Type="System.String" Scope="User">
-      <Value Profile="(Default)">rfid</Value>
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>

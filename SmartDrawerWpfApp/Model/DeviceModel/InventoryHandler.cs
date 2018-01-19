@@ -36,14 +36,24 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 }
 
 
-                //remove previous entry Older than 30 days
-                DateTime dtToKeep = DateTime.Now.AddDays(-30.0);
+                //remove previous entry Older than 7 days
+                DateTime dtToKeep = DateTime.Now.AddDays(-7.0);
+
+                //remove event drawer
+                var itemBinding2 = ctx.EventDrawerDetails.Where(i => i.DrawerNumber == drawerId && i.DeviceId == _deviceEntity.DeviceId && i.EventDrawerDate < dtToKeep);
+                if (itemBinding2 != null)
+                    foreach (var ib in itemBinding2)
+                    {
+                        ctx.EventDrawerDetails.Remove(ib);
+                    }
+
+                //removed inventory
                 var itemBinding = ctx.Inventories.Where(i => i.DrawerNumber == drawerId && i.DeviceId == _deviceEntity.DeviceId && i.InventoryDate < dtToKeep);
                 if (itemBinding != null)
                 foreach (var ib in itemBinding)
                 {                  
                     ctx.Inventories.Remove(ib);                   
-                }
+                }               
                 ctx.SaveChanges();
 
 
@@ -96,6 +106,11 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 ctx.SaveChanges();
                 AddMovementToInventory(ctx, newInventory, removedTags, MovementType.Removed, drawerId);
                 ctx.SaveChanges();
+
+                //Update event drawer
+                ctx.EventDrawerDetails.UpdateInventoryForEventDrawer(_deviceEntity, drawerId, newInventory);
+                ctx.SaveChanges();
+
                 var handler = InventoryCompleted;
                 if (handler != null)
                 {

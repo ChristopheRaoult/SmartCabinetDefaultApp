@@ -1085,12 +1085,13 @@ namespace SmartDrawerWpfApp.ViewModel
         public async void logout()
         {
             LoggedUser = null;
-            //TODO
             while (IsOneDrawerOpen())
                 await mainview0.ShowMessageAsync("Error", "Please Close all drawer before Logout");
 
             DevicesHandler.LockWall();  
             bLatchUnlocked = false;
+            GrantedUsersCache.LastAuthenticatedUser = null;
+            DevicesHandler.LastScanAccessTypeName = AccessType.Manual;
             AutoLockMsg = "Wait User";
         }
 
@@ -1183,6 +1184,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 DevicesHandler.LockWall();
                 bLatchUnlocked = false;
                 AutoLockMsg = "Wait User";
+                GrantedUsersCache.LastAuthenticatedUser = null;
+                DevicesHandler.LastScanAccessTypeName = AccessType.Manual;
             }
 
             if (_autoLockCpt > 0)
@@ -1368,10 +1371,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             if ((DevicesHandler.Device != null) && (DevicesHandler.Device.IsConnected) && (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready))
                             {
                                 DevicesHandler.StartManualScan(loop);
-                                //TODO
-                               /* SearchWallDrawer = "";
-                                SearchWallInfo = "";
-                                SearchWallLocation = "";*/
+                              
                                 break;
                             }
                         }
@@ -1717,6 +1717,21 @@ namespace SmartDrawerWpfApp.ViewModel
                 _lastDrawerOpen = e.DrawerId;
                 wallStatus = "Drawer " + e.DrawerId + " opened";
 
+
+                //Store event drawer 
+                Task.Factory.StartNew(() =>
+                {
+                    var ctx = RemoteDatabase.GetDbContext();
+                    if (GrantedUsersCache.LastAuthenticatedUser != null)
+                        ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId, InventoryId = null, EventDrawerDate = DateTime.Now });
+                    else
+                        ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null,  EventDrawerDate = DateTime.Now });
+
+                    ctx.SaveChanges();
+                    ctx.Database.Connection.Close();
+                    ctx.Dispose();
+                });
+
                 //When a search find stone on other drawer than one currently open
                 if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
                 {
@@ -2019,11 +2034,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 wallStatus = "Wait user Action";
                         }
                     }
-                    //TODO
-                    /*
-                    SearchWallDrawer = "";
-                    SearchWallInfo = "";
-                    SearchWallLocation = "";*/
+                   
                     IsFlyoutCassetteInfoOpen = false;     
                 }
             }
