@@ -21,6 +21,19 @@ namespace SmartDrawerDatabase.DAL
         }
 
         /// <summary>
+        /// Looks for an user matching the given serverID  and returns a GrantedUser instance.
+        /// </summary>
+        /// <param name="grantedUsers">Self-instance (extension method).</param>
+        /// <param name="serverId">Given serverId.</param>
+        /// <returns>A GrantedUser instance if a user matches, Null otherwise.</returns>
+        public static GrantedUser GetByServerId(this DbSet<GrantedUser> grantedUsers, int serverId)
+        {
+            return grantedUsers.SingleOrDefault(gu => gu.ServerGrantedUserId == serverId);
+        }
+
+
+
+        /// <summary>
         /// Tries to find a GrantedUser matching both given login & password.
         /// </summary>
         /// <param name="grantedUsers">Self-instance (extension method).</param>

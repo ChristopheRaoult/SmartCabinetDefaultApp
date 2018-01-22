@@ -11,6 +11,8 @@ namespace SmartDrawerWpfApp.Wcf
     public class JsonItemToPull
     {
         [DataMember]
+        public int ServerPullItemId { get; set; }
+        [DataMember]
         public DateTime pullItemDate { get; set; }
         [DataMember]
         public string description { get; set; }

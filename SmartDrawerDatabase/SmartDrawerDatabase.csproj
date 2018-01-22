@@ -64,11 +64,13 @@
     <Compile Include="DAL\GrantType.cs" />
     <Compile Include="DAL\GrantTypeExtension.cs" />
     <Compile Include="DAL\Inventory.cs" />
+    <Compile Include="DAL\InventoryExtension.cs" />
     <Compile Include="DAL\InventoryProduct.cs" />
     <Compile Include="DAL\Product.cs" />
     <Compile Include="DAL\ProductExtension.cs" />
     <Compile Include="DAL\PullItem.cs" />
     <Compile Include="DAL\PullItemDetail.cs" />
+    <Compile Include="DAL\PullItemExtension.cs" />
     <Compile Include="DAL\RfidTag.cs" />
     <Compile Include="DAL\RfidTagExtension.cs" />
     <Compile Include="DAL\SmartDrawerDatabaseContext.cs" />

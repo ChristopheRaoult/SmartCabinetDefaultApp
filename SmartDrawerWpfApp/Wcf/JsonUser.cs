@@ -11,6 +11,8 @@ namespace SmartDrawerWpfApp.Wcf
     public class JsonUser
     {
         [DataMember]
+        public int ServerUserId { get; set; }
+        [DataMember]
         public string Login { get; set; }
         [DataMember]
         public string Password { get; set; }

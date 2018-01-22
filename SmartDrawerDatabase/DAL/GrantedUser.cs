@@ -20,6 +20,7 @@ namespace SmartDrawerDatabase.DAL
         }
         [Key]
         public int GrantedUserId { get; set; }
+        public int ServerGrantedUserId { get; set; }
         [Required]
         [StringLength(20)]
         public string Login { get; set; }        

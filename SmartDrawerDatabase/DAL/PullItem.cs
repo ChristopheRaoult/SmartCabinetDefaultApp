@@ -18,6 +18,7 @@ namespace SmartDrawerDatabase.DAL
 
         [Key]
         public int PullItemId { get; set; }
+        public int ServerPullItemId { get; set; }
         [Required]
         public DateTime PullItemDate { get; set; }
         [StringLength(256)]

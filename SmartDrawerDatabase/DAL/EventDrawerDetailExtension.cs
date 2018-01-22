@@ -14,6 +14,11 @@ namespace SmartDrawerDatabase.DAL
             return EventDrawerDetails.Where(edd => edd.DeviceId == device.DeviceId && edd.DrawerNumber == drawerNb && edd.InventoryId == null).ToList();
         }
 
+        public static List<EventDrawerDetail> GetEventForDrawerByInventoryID(this DbSet<EventDrawerDetail> EventDrawerDetails, Device device, int drawerNb , int invId)
+        {
+            return EventDrawerDetails.Where(edd => edd.DeviceId == device.DeviceId && edd.DrawerNumber == drawerNb && edd.InventoryId == invId).ToList();
+        }
+
         public static void UpdateInventoryForEventDrawer(this DbSet<EventDrawerDetail> EventDrawerDetails, Device device, int drawerNb , Inventory newInventory)
         {
             List<EventDrawerDetail> theEventToUpdate = EventDrawerDetails.GetcurrentEventForDrawer(device, drawerNb);

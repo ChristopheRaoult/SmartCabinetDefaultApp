@@ -543,17 +543,17 @@ namespace SmartDrawerAdmin.ViewModel
                     {
                         var ctx = await RemoteDatabase.GetDbContextAsync();
                         GrantedUser adminUser = ctx.GrantedUsers.GetByLogin(result.Username);
-                        if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
-                        {
-                            isAdmin = true;
-                        }
-                        else
+                        if (adminUser == null)
                         {
                             MessageDialogResult mdr = await mainview0.ShowMessageAsync("Question", "Admin not found , Would you like to quit", MessageDialogStyle.AffirmativeAndNegative);
                             if (mdr == MessageDialogResult.Affirmative)
                                 System.Windows.Application.Current.Shutdown();
-
                         }
+                            
+                        if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
+                        {
+                            isAdmin = true;
+                        }                        
                         ctx.Database.Connection.Close();
                         ctx.Dispose();
                     }

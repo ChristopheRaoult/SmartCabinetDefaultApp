@@ -345,14 +345,13 @@ namespace SmartDrawerWpfApp.Wcf
                             });
                         }
                         await ctx.SaveChangesAsync();
-
-                        int PullId = pullItemToAdd.PullItemId;
+                       
                         ctx.Database.Connection.Close();
                         ctx.Dispose();
 
                         if (MyHostEvent != null)
                             MyHostEvent(this, new MyHostEventArgs("PullItemsRequest", null));
-                        return "Success : " + PullId;
+                        return "Success : " + pullItemToAdd.ServerPullItemId;
                     }
                     return "Error : Bad Parameters";
 
@@ -380,7 +379,7 @@ namespace SmartDrawerWpfApp.Wcf
                     if (int.TryParse(res, out IdToRemove))
                     {
                         var ctx = await RemoteDatabase.GetDbContextAsync();
-                        var pullitem = ctx.PullItems.Find(IdToRemove);
+                    var pullitem = ctx.PullItems.GetByServerId(IdToRemove);
                         if (pullitem != null)
                         {
                             ctx.PullItems.Remove(pullitem);
@@ -424,7 +423,7 @@ namespace SmartDrawerWpfApp.Wcf
                     if (ju != null)
                     {
                         var ctx = await RemoteDatabase.GetDbContextAsync();
-                        var user = ctx.GrantedUsers.GetByLogin(ju.Login);                    
+                    var user = ctx.GrantedUsers.GetByServerId(ju.ServerUserId);
                         if (user != null) //update
                         {
                             if (ju.Password != null)
@@ -439,13 +438,14 @@ namespace SmartDrawerWpfApp.Wcf
                             await ctx.SaveChangesAsync();
                             ctx.Database.Connection.Close();
                             ctx.Dispose();
-                            return "Success : " + user.GrantedUserId;
+                            return "Success : " + user.ServerGrantedUserId;
                         }
                         else //create
                         {                        
                             GrantedUser gu = new GrantedUser()
                             {
                                 Login = ju.Login,
+                                ServerGrantedUserId = ju.ServerUserId,
                                 Password = ju.Password != null ? PasswordHashing.Sha256Of(ju.Password) : PasswordHashing.Sha256Of("123456"),
                                 FirstName = ju.FirstName,
                                 LastName = ju.LastName,
@@ -456,13 +456,12 @@ namespace SmartDrawerWpfApp.Wcf
                             await ctx.SaveChangesAsync();
                             foreach (var dev in ctx.Devices)
                                 ctx.GrantedAccesses.AddOrUpdateAccess(gu, dev, ctx.GrantTypes.All());
-                            await ctx.SaveChangesAsync();
-                            int UserId = gu.GrantedUserId;
+                            await ctx.SaveChangesAsync();                           
                             ctx.Database.Connection.Close();
                             ctx.Dispose();
                             if (MyHostEvent != null)
                                 MyHostEvent(this, new MyHostEventArgs("UpdateUserInfoList", null));
-                            return "Success : " + UserId;
+                            return "Success : " + gu.ServerGrantedUserId;
                         }
                     }
                     return "Error : Bad Parameters";
@@ -490,8 +489,8 @@ namespace SmartDrawerWpfApp.Wcf
                     if (int.TryParse(res, out IdToRemove))
                     {
                         var ctx = await RemoteDatabase.GetDbContextAsync();
-                        var user = ctx.GrantedUsers.Find(IdToRemove);
-                        if (user != null)
+                        var user = ctx.GrantedUsers.GetByServerId(IdToRemove);
+                    if (user != null)
                         {
                             ctx.GrantedUsers.Remove(user);
                             await ctx.SaveChangesAsync();
@@ -639,6 +638,8 @@ namespace SmartDrawerWpfApp.Wcf
                     {
                         return "Failed : " + juf.GrantedUserId;
                     }
+                    ctx.Database.Connection.Close();
+                    ctx.Dispose();
                 }
                 return "Error : Bad Parameters";
             }
@@ -710,5 +711,97 @@ namespace SmartDrawerWpfApp.Wcf
                 return ret;
             }
         }
-    }
+
+        [OperationContract]
+        [WebInvoke(Method = "POST",
+        UriTemplate = "/getLastDrawerInventory",
+        BodyStyle = WebMessageBodyStyle.WrappedRequest,
+        ResponseFormat = WebMessageFormat.Json)]
+        public async Task<JsonDrawerInventory> getLastDrawerInventory(Stream streamdata)
+        {
+            try
+            {
+                StreamReader reader = new StreamReader(streamdata);
+                string res = reader.ReadToEnd();
+                int drawerNb;
+                reader.Close();
+                reader.Dispose();
+                if (int.TryParse(res, out drawerNb))
+                {
+                    var ctx = await RemoteDatabase.GetDbContextAsync();
+                    var LastDrawerInv = ctx.Inventories.GetLastInventoryforDrawer(drawerNb);
+                    if (LastDrawerInv != null)
+                    {
+                        JsonDrawerInventory ret = new JsonDrawerInventory();
+                        ret.Status = "Success";
+                        ret.ServerDeviceId = LastDrawerInv.Device.ServerDeviceID;
+                        ret.DrawerNumber = LastDrawerInv.DrawerNumber;
+                        ret.InventoryDate = LastDrawerInv.InventoryDate;
+                        ret.TotalAdded = LastDrawerInv.TotalAdded;
+                        ret.TotalPresent = LastDrawerInv.TotalPresent;
+                        ret.TotalRemoved = LastDrawerInv.TotalRemoved;
+
+                        var invProducts = LastDrawerInv.InventoryProducts;
+                        if (invProducts != null)
+                        {
+                            List<TagInfo> lstTags = new List<TagInfo>();
+                            int nIndex = 0;                            foreach (var tag in LastDrawerInv.InventoryProducts)
+                            {
+                                TagInfo ti = new TagInfo() { DrawerId = tag.Shelve, tagUID = tag.RfidTag.TagUid , Movement = tag.MovementType };
+                                lstTags.Add(ti);
+                            }
+                            ret.listOfTags = lstTags.ToArray();
+                        }
+
+                        var ListEvent = ctx.EventDrawerDetails.GetEventForDrawerByInventoryID(LastDrawerInv.Device, drawerNb,LastDrawerInv.InventoryId);
+                        if ((ListEvent != null) )
+                        {
+                            List<UserEventInfo> lstUserEventInfo = new List<UserEventInfo>();
+                          
+                            foreach (var userEvent in ListEvent)
+                            {
+                                UserEventInfo uei = new UserEventInfo() { ServerGrantedUserId = userEvent.GrantedUser.ServerGrantedUserId, EventDrawerDate = userEvent.EventDrawerDate };
+                                lstUserEventInfo.Add(uei);
+                            }
+                            ret.listOfUserEvent = lstUserEventInfo.ToArray();
+                        }
+                      
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+                        return ret;
+                    }
+                    else
+                    {
+                        JsonDrawerInventory ret = new JsonDrawerInventory();
+                        ret.Status = "Failed";
+                        ret.Reason = "No Inventory found";
+                        ret.listOfTags = null;
+                        ret.listOfUserEvent = null;
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+                        return ret;
+                    }
+                  
+                }
+                else
+                {
+                    JsonDrawerInventory ret = new JsonDrawerInventory();
+                    ret.Status = "Failed";
+                    ret.Reason = "Error : Bad Parameters"; 
+                    ret.listOfTags = null;
+                    ret.listOfUserEvent = null;
+                    return ret;
+                }                  
+            }
+            catch (Exception exp)
+            {
+                JsonDrawerInventory ret = new JsonDrawerInventory();
+                ret.Status = "Failed";
+                ret.Reason = "Exception : " + exp.InnerException + " - " + exp.Message;
+                ret.listOfTags = null;
+                ret.listOfUserEvent = null;
+                return ret;
+            }
+        }
+    }    
 }

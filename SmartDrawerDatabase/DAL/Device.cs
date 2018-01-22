@@ -19,6 +19,7 @@ namespace SmartDrawerDatabase.DAL
         }
         [Key]
         public int DeviceId { get; set; }
+        public int ServerDeviceID { get; set; }
         [Required]
         public int DeviceTypeId { get; set; }
         [Required]
