@@ -7,6 +7,12 @@
         <Setter Property="FontWeight" Value="ExtraLight" />
         <Setter Property="Foreground" Value="Gray" />
     </Style>
+
+    <Style x:Key="itemTextBlock2" TargetType="TextBlock">
+        <Setter Property="FontSize"  Value="8" />
+        <Setter Property="FontWeight" Value="ExtraLight" />
+        <Setter Property="Foreground" Value="Gray" />
+    </Style>
     <!-- Style Textblock Wall info-->
     <Style x:Key="wallinfoTextBlock" TargetType="TextBlock">
         <Setter Property="FontSize"  Value="16" />

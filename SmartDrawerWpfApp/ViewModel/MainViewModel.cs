@@ -27,6 +27,7 @@ using SmartDrawerWpfApp.StaticHelpers.Security;
 using SmartDrawerWpfApp.Fingerprint;
 using SecurityModules.FingerprintReader;
 using System.Windows.Input;
+using System.Diagnostics;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -806,6 +807,20 @@ namespace SmartDrawerWpfApp.ViewModel
             mainview0.Dispatcher.BeginInvoke(new ThreadStart(delegate ()
             {
                 wallStatus = "Devices Released";
+
+                if (DevicesHandler.FPReader.Available)
+                {
+                    string fileName = @"C:\devcon\x64\removeFP.bat";
+                    if (File.Exists(fileName))
+                    {
+                        Process proc = new Process();
+                        proc.StartInfo.FileName = fileName;
+                        proc.StartInfo.UseShellExecute = true;
+                        proc.StartInfo.Verb = "runas";
+                        proc.Start();
+                    }
+                }
+
                 DevicesHandler.ReleaseDevices();
                 GpioStatus = DevicesHandler.GpioCardObject.IsConnected;
                 RfidStatus = DevicesHandler.DevicesConnected;
@@ -814,6 +829,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 Thread.Sleep(1000);
                 DevicesHandler.TryInitializeLocalDeviceAsync();
                 InitWcfService();
+                
+
             }));
         }
         public RelayCommand btLightFilteredTag { get; set; }
@@ -2146,6 +2163,7 @@ namespace SmartDrawerWpfApp.ViewModel
             mainview0.NotifyM2MCardEvent += Mainview0_NotifyM2MCardEvent;
 
             #region Initialize command
+            ResetDeviceCommand = new RelayCommand(() => Reset());
             btSettingCommand = new RelayCommand(() => Settings());
             btLightFilteredTag = new RelayCommand(() => LightFilteredTag());
             LightAllCommand = new RelayCommand(() => LightAll());

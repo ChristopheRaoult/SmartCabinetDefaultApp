@@ -325,33 +325,40 @@ namespace SmartDrawerWpfApp.Wcf
                     if (jitp != null)
                     {
                         var ctx = await RemoteDatabase.GetDbContextAsync();
+                        var currentpullItem = ctx.PullItems.GetByServerId(jitp.ServerPullItemId);
+                        if (currentpullItem != null)
+                        {
+                            ctx.PullItems.Remove(currentpullItem);
+                            await ctx.SaveChangesAsync();
+                        }
                         var user = ctx.GrantedUsers.Find(jitp.userId);
                         var pullItemToAdd = new SmartDrawerDatabase.DAL.PullItem
                         {
-                            PullItemDate = jitp.pullItemDate,
-                            Description = jitp.description,
-                            GrantedUser = user,
-                            TotalToPull = jitp.listOfTagToPull.Length,
+                                ServerPullItemId = jitp.ServerPullItemId,
+                                PullItemDate = jitp.pullItemDate,
+                                Description = jitp.description,
+                                GrantedUser = user,
+                                TotalToPull = jitp.listOfTagToPull.Length,
 
-                        };
-                        ctx.PullItems.Add(pullItemToAdd);
-                        foreach (string uid in jitp.listOfTagToPull)
-                        {
-                            RfidTag tag = ctx.RfidTags.AddIfNotExisting(uid);
-                            ctx.PullItemsDetails.Add(new PullItemDetail
+                            };
+                            ctx.PullItems.Add(pullItemToAdd);
+                            foreach (string uid in jitp.listOfTagToPull)
                             {
-                                PullItem = pullItemToAdd,
-                                RfidTag = tag,
-                            });
-                        }
-                        await ctx.SaveChangesAsync();
+                                RfidTag tag = ctx.RfidTags.AddIfNotExisting(uid);
+                                ctx.PullItemsDetails.Add(new PullItemDetail
+                                {
+                                    PullItem = pullItemToAdd,
+                                    RfidTag = tag,
+                                });
+                            }
+                            await ctx.SaveChangesAsync();
                        
-                        ctx.Database.Connection.Close();
-                        ctx.Dispose();
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
 
-                        if (MyHostEvent != null)
-                            MyHostEvent(this, new MyHostEventArgs("PullItemsRequest", null));
-                        return "Success : " + pullItemToAdd.ServerPullItemId;
+                            if (MyHostEvent != null)
+                                MyHostEvent(this, new MyHostEventArgs("PullItemsRequest", null));
+                            return "Success : " + pullItemToAdd.ServerPullItemId;
                     }
                     return "Error : Bad Parameters";
 
@@ -490,7 +497,7 @@ namespace SmartDrawerWpfApp.Wcf
                     {
                         var ctx = await RemoteDatabase.GetDbContextAsync();
                         var user = ctx.GrantedUsers.GetByServerId(IdToRemove);
-                    if (user != null)
+                        if (user != null)
                         {
                             ctx.GrantedUsers.Remove(user);
                             await ctx.SaveChangesAsync();
@@ -728,6 +735,16 @@ namespace SmartDrawerWpfApp.Wcf
                 reader.Dispose();
                 if (int.TryParse(res, out drawerNb))
                 {
+                    if ((drawerNb <= 0 ) || (drawerNb > 7))
+                    {
+                        JsonDrawerInventory ret = new JsonDrawerInventory();
+                        ret.Status = "Failed";
+                        ret.Reason = "Error : Bad Parameters";
+                        ret.listOfTags = null;
+                        ret.listOfUserEvent = null;
+                        return ret;
+                    }
+
                     var ctx = await RemoteDatabase.GetDbContextAsync();
                     var LastDrawerInv = ctx.Inventories.GetLastInventoryforDrawer(drawerNb);
                     if (LastDrawerInv != null)

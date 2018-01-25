@@ -500,7 +500,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 {
                     GpioCardObject.CloseSerialPort();
                     GpioCardObject = new GpioCardLib();
-                }
+                }              
 
             }
             catch

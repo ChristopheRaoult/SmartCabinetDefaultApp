@@ -14,7 +14,7 @@
         xmlns:Views="clr-namespace:SmartDrawerWpfApp.View"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         Icon="/SmartDrawerWpfApp;component/Icons/Logo.PNG"
-       
+        ShowIconOnTitleBar="False"
         mc:Ignorable="d"
         Title="SmartDrawer Application" MinHeight="800" MinWidth="1366" WindowStartupLocation="CenterScreen" WindowState="Maximized" d:DesignWidth="1160" d:DesignHeight="973.3" PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"  >
 
@@ -58,27 +58,58 @@
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="50"></RowDefinition>
                 </Grid.RowDefinitions>
-                <StackPanel Orientation="Horizontal">
+                <Border Grid.Row="0" CornerRadius="8" BorderBrush="Silver" BorderThickness="1" >
+                    <StackPanel Orientation="Horizontal">
+                    <Rectangle Width="30" Margin="5">
+                        <Rectangle.Fill>
+                            <VisualBrush Visual="{StaticResource appbar_barcode}" Stretch="Uniform" />
+                        </Rectangle.Fill>
+                    </Rectangle>
                     <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
-                        <TextBlock Margin="10,5,0,0" Text="Wall Serial:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
-                        <TextBlock Margin="20,5,0,0" Text="{Binding  WallSerial}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                            <TextBlock Margin="10,5,0,0" Text="Wall Serial:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <TextBlock Margin="20,5,0,0" Text="{Binding  WallSerial}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                       
                     </StackPanel>
-                    <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
+                    <StackPanel Orientation="Horizontal">
+                        <Rectangle Width="30" Margin="5">
+                            <Rectangle.Fill>
+                                <VisualBrush Visual="{StaticResource appbar_home}" Stretch="Uniform" />
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">                        
                         <TextBlock Margin="10,5,0,0" Text="Wall Location:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
                         <TextBlock Margin="20,5,0,0" Text="{Binding WallName}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="0" Orientation="Horizontal" Width="300">
-                        <StackPanel  Orientation="Vertical">
+                    </StackPanel>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" >                        
+                        <Rectangle Width="30" Margin="5">
+                            <Rectangle.Fill>
+                                <VisualBrush Visual="{StaticResource appbar_user}" Stretch="Uniform" />
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <StackPanel  Orientation="Vertical" Width="200">
                             <TextBlock Margin="10,5,0,0" Text="User Logged:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
-                            <Button  Command="{Binding LogoutCommand}"  Grid.Column="5" Margin="1,5,1,1" Width="100" Height="30" Content="{Binding AutoLockMsg}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="12"   />
-                        </StackPanel>
-                        <TextBlock Margin="20,5,0,0"  Text="{Binding LoggedUser}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" VerticalAlignment="Center"/>
+                            <TextBlock Margin="20,5,0,0"  Text="{Binding LoggedUser}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel  Orientation="Horizontal" Margin="0,0,0,0">
+                                <Button Width="40"  Height="40" Margin="0, 0, 0, 0" Style="{DynamicResource MetroCircleButtonStyle}"
+                                    Command="{Binding LogoutCommand}">
+                                    <Rectangle Width="20"  Height="20" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                                        <Rectangle.OpacityMask>
+                                            <VisualBrush Stretch="Fill"    Visual="{DynamicResource appbar_lock}" />
+                                        </Rectangle.OpacityMask>
+                                    </Rectangle>
+                                </Button>
+                                <TextBlock Margin="5,0,0,0" Text="{Binding AutoLockMsg}" VerticalAlignment="Center" TextWrapping="Wrap" Style="{StaticResource  wallinfoTextBlock}"></TextBlock>
+                                <!--Button  Command="{Binding LogoutCommand}"  Grid.Column="5" Margin="1,5,1,1" Width="100" Height="30" Content="{Binding AutoLockMsg}" VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="12"   /-->
+                            </StackPanel>
+                           
                     </StackPanel>
                 </StackPanel>
+                </Border>
                 <!-- GRID-->
-
-                <TabControl Grid.Row="1">                   
-                    
+                <Border Grid.Row="1" CornerRadius="8" BorderBrush="Silver" BorderThickness="1" Margin=" 0,5,0,0">
+                <TabControl Grid.Row="1" Margin="0,10,0,0">                     
                     <TabItem Header="Selection List" Width="200">
                         <Grid Grid.Row="1" >
                             <Grid.RowDefinitions>
@@ -314,14 +345,28 @@
                         </Grid>
                     </TabItem>
                 </TabControl>
-                       
+                </Border>
                 <!-- BOTTOM-->
                 <Border Grid.Row="2" Margin="2" Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8">
                     <Grid>
                         <StackPanel  Orientation="Horizontal">
-                            <Button  Command="{Binding ResetDeviceCommand}"  Margin="5,5,5,5"   Content=" Reset Device " VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="10"   />
-                            <TextBlock   Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="WCF :"   Style="{StaticResource itemTextBlock}"></TextBlock>
-                        <Image Width="18" Height="18" Stretch="Fill" Margin="0,0,0,0">
+                            <Button Width="40"  Height="40" Margin="0, 0, 10, 0" Style="{DynamicResource MetroCircleButtonStyle}"
+                                    Command="{Binding ResetDeviceCommand}">
+                                <Rectangle Width="20"  Height="20" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                                    <Rectangle.OpacityMask>
+                                        <VisualBrush Stretch="Fill"    Visual="{DynamicResource appbar_reset}" />
+                                    </Rectangle.OpacityMask>
+                                </Rectangle>
+                            </Button>
+                            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="5"/>
+                            <!--Button  Command="{Binding ResetDeviceCommand}"  Margin="5,5,5,5"   Content=" Reset Device " VerticalAlignment="Stretch" HorizontalAlignment="Stretch"   FontSize="10"   /-->
+                            <Rectangle Width="25" Margin="15,5,0,5">
+                                <Rectangle.Fill>
+                                    <VisualBrush Visual="{StaticResource appbar_network_home}" Stretch="Uniform" />
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <TextBlock   Margin="10,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="SERVICE :"   Style="{StaticResource itemTextBlock}"></TextBlock>
+                        <Image Width="18" Height="18" Stretch="Fill" Margin="10,0,0,0">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
                                     <Style.Triggers>
@@ -335,6 +380,12 @@
                                 </Style>
                             </Image.Style>
                         </Image>
+                            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="5"/>
+                            <Rectangle Width="25" Margin="15,5,0,5">
+                                <Rectangle.Fill>
+                                    <VisualBrush Visual="{StaticResource appbar_radar}" Stretch="Uniform" />
+                                </Rectangle.Fill>
+                            </Rectangle>
                         <TextBlock   Text="RFID :"   Margin="20,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center"  Style="{StaticResource itemTextBlock}"></TextBlock>
                         <Image Width="18" Height="18" Stretch="Fill" Margin="10,0,0,0">
                             <Image.Style>
@@ -350,7 +401,13 @@
                                 </Style>
                             </Image.Style>
                         </Image>
-                        <TextBlock   Text="GPIO :" Margin="20,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"  Margin="5" />
+                            <Rectangle Width="25" Margin="15,5,0,5">
+                                <Rectangle.Fill>
+                                    <VisualBrush Visual="{StaticResource appbar_layer}" Stretch="Uniform" />
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <TextBlock   Text="DRAWER :" Margin="20,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
                         <Image Width="18" Height="18" Stretch="Fill" Margin="10,0,0,0">
                             <Image.Style>
                                 <Style TargetType="{x:Type Image}">
@@ -365,12 +422,23 @@
                                 </Style>
                             </Image.Style>
                         </Image>
-                        <TextBlock    Text="Information : "  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,10,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
+                            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}"  Margin="5"/>
+                            <Rectangle Width="10" Margin="15,5,0,5">
+                                <Rectangle.Fill>
+                                    <VisualBrush Visual="{StaticResource appbar_information}" Stretch="Uniform" />
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <TextBlock    Text="INFORMATION : "  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,10,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
                     <TextBlock   x:Name="wallInfo" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding wallStatus}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>                       
                 </StackPanel>
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Controls:ToggleSwitch x:Name="ChkAutoLight"  IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>
-                            <TextBlock  Text="Auto Light Drawer" Margin="2,0,2,0" VerticalAlignment="Center" HorizontalAlignment="Left" FontFamily="Verdana" FontSize="8"></TextBlock>
+                            <Rectangle Width="15" Margin="15,5,5,5" >
+                                <Rectangle.Fill>
+                                    <VisualBrush Visual="{StaticResource appbar_lightbulb}" Stretch="Uniform" />
+                                </Rectangle.Fill>
+                            </Rectangle>
+                            <Controls:ToggleSwitch x:Name="ChkAutoLight"  IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>
+                            <!--TextBlock  Text="Auto Light Drawer" Margin="2,0,2,0" VerticalAlignment="Center" HorizontalAlignment="Left" FontFamily="Verdana" FontSize="8"></-->
                         </StackPanel>
                     </Grid>
                 </Border>
@@ -395,10 +463,12 @@
                         <RowDefinition Height="3*"></RowDefinition>
                     </Grid.RowDefinitions>
                   
-                    <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[1]}" Margin="5,0,5,2">
-                        <TextBlock Text="DRAWER 1" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                    <Grid Grid.Row="0" Grid.Column="0"  Margin="5,0,5,2">
+                        <Border Background="{Binding BrushDrawer[1]}" CornerRadius="8" BorderBrush="Silver" BorderThickness="1">
+                            <TextBlock Text="DRAWER 1" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                        </Border>                       
                     </Grid>
-                    <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                    <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,5,5,5">
                         <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
                         <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
                         <StackPanel Orientation="Horizontal" >
@@ -421,11 +491,12 @@
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="3*"></RowDefinition>
                 </Grid.RowDefinitions>
-
-                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[2]}" Margin="5,0,5,2">
-                    <TextBlock Text="DRAWER 2" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
-                </Grid>
-                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                <Grid Grid.Row="0" Grid.Column="0" Margin="5,0,5,2">
+                        <Border  Background="{Binding BrushDrawer[2]}" CornerRadius="8" BorderBrush="Silver" BorderThickness="1">
+                            <TextBlock Text="DRAWER 2" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                        </Border>
+                 </Grid>
+                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,5,5,5">
                         <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
                         <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
                             <StackPanel Orientation="Horizontal" >
@@ -449,10 +520,12 @@
                     <RowDefinition Height="3*"></RowDefinition>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[3]}" Margin="5,0,5,2">
-                    <TextBlock Text="DRAWER 3" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
-                </Grid>
-                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                    <Grid Grid.Row="0" Grid.Column="0" Margin="5,0,5,2">
+                        <Border  Background="{Binding BrushDrawer[3]}" CornerRadius="8" BorderBrush="Silver" BorderThickness="1">
+                            <TextBlock Text="DRAWER 3" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                        </Border>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,5,5,5">
                         <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
                         <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
                             <StackPanel Orientation="Horizontal" >
@@ -476,10 +549,12 @@
                     <RowDefinition Height="3*"></RowDefinition>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[4]}" Margin="5,0,5,2">
-                    <TextBlock Text="DRAWER 4" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
-                </Grid>
-                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                    <Grid Grid.Row="0" Grid.Column="0" Margin="5,0,5,2">
+                        <Border  Background="{Binding BrushDrawer[4]}" CornerRadius="8" BorderBrush="Silver" BorderThickness="1">
+                            <TextBlock Text="DRAWER 4" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                        </Border>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,5,5,5">
                         <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
                         <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
                             <StackPanel Orientation="Horizontal" >
@@ -502,11 +577,12 @@
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="3*"></RowDefinition>
                 </Grid.RowDefinitions>
-
-                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[5]}" Margin="5,0,5,2">
-                    <TextBlock Text="DRAWER 5" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
-                </Grid>
-                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                    <Grid Grid.Row="0" Grid.Column="0" Margin="5,0,5,2">
+                        <Border  Background="{Binding BrushDrawer[5]}" CornerRadius="8" BorderBrush="Silver" BorderThickness="1">
+                            <TextBlock Text="DRAWER 5" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                        </Border>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,5,5,5">
                         <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
                         <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
                             <StackPanel Orientation="Horizontal" >
@@ -529,10 +605,12 @@
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="3*"></RowDefinition>
                 </Grid.RowDefinitions>
-                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[6]}" Margin="5,0,5,2">
-                    <TextBlock Text="DRAWER 6" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
-                </Grid>
-                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                    <Grid Grid.Row="0" Grid.Column="0" Margin="5,0,5,2">
+                        <Border  Background="{Binding BrushDrawer[6]}" CornerRadius="8" BorderBrush="Silver" BorderThickness="1">
+                            <TextBlock Text="DRAWER 6" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                        </Border>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,5,5,5">
                         <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
                         <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
                             <StackPanel Orientation="Horizontal" >
@@ -555,10 +633,12 @@
                     <RowDefinition Height="*"></RowDefinition>
                     <RowDefinition Height="3*"></RowDefinition>
                 </Grid.RowDefinitions>
-                <Grid Grid.Row="0" Grid.Column="0" Background="{Binding BrushDrawer[7]}" Margin="5,0,5,2">
-                    <TextBlock Text="DRAWER 7" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
-                </Grid>
-                <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,0,5,5">
+                    <Grid Grid.Row="0" Grid.Column="0" Margin="5,0,5,2">
+                        <Border  Background="{Binding BrushDrawer[7]}" CornerRadius="8" BorderBrush="Silver" BorderThickness="1">
+                            <TextBlock Text="DRAWER 7" FontSize="15"  VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Black" ></TextBlock>
+                        </Border>
+                    </Grid>
+                    <Grid Grid.Row="1" Grid.Column="0" Background="White" Margin="5,5,5,5">
                         <Border Background="GhostWhite" BorderBrush="Silver" BorderThickness="1" CornerRadius="8,8,8,8" VerticalAlignment = "Stretch">
                         <StackPanel Orientation="Vertical" Margin="0,2,0,0" >
                             <StackPanel Orientation="Horizontal" >
