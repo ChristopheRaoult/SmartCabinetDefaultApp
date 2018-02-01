@@ -28,6 +28,8 @@ using SmartDrawerWpfApp.Fingerprint;
 using SecurityModules.FingerprintReader;
 using System.Windows.Input;
 using System.Diagnostics;
+using System.ServiceProcess;
+using System.Reflection;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -382,6 +384,39 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
+        private ObservableCollection<string> _ListCtrlPerDrawer;
+        public ObservableCollection<string> ListCtrlPerDrawer
+        {
+            get { return _ListCtrlPerDrawer; }
+            set
+            {
+                _ListCtrlPerDrawer = value;
+                RaisePropertyChanged(() => ListCtrlPerDrawer);
+            }
+        }
+
+        private string _DrawerSelected;
+        public string DrawerSelected
+        {
+            get { return _DrawerSelected; }
+            set
+            {
+                _DrawerSelected = value;
+                RaisePropertyChanged(() => DrawerSelected);
+            }
+        }
+
+        private string _DrawerCtrlCount;
+        public string DrawerCtrlCount
+        {
+            get { return _DrawerCtrlCount; }
+            set
+            {
+                _DrawerCtrlCount = value;
+                RaisePropertyChanged(() => DrawerCtrlCount);
+            }
+        }
+
         #endregion
         #region Datagrid
 
@@ -576,14 +611,17 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
-        private RelayCommand BtRefreshSelection { get; set; }
+        #endregion
+        #region Command
+
+        public RelayCommand BtRefreshSelection { get; set; }
         public async void getSelection()
         {
             List<PullItem> lstToRemove = new List<PullItem>();
-            var ctx = await  RemoteDatabase.GetDbContextAsync();
+            var ctx = await RemoteDatabase.GetDbContextAsync();
             Selection.Clear();
             foreach (var sel in ctx.PullItems)
-            {            
+            {
                 SelectionViewModel svm = new SelectionViewModel();
                 svm.PullItemId = sel.PullItemId;
                 svm.PullItemDate = sel.PullItemDate.ToShortDateString();
@@ -624,7 +662,7 @@ namespace SmartDrawerWpfApp.ViewModel
             ctx.Database.Connection.Close();
             ctx.Dispose();
         }
-       
+
 
         public RelayCommand btLightFilteredTagSelection { get; set; }
         private void LightSelectionFromList()
@@ -749,10 +787,10 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         public RelayCommand btRemoveSelection { get; set; }
-        private async  void removeSelection()
+        private async void removeSelection()
         {
             if (SelectionSelected != null)
-            {               
+            {
                 var ctx = await RemoteDatabase.GetDbContextAsync();
 
                 var sel = ctx.PullItems.Find(SelectionSelected.PullItemId);
@@ -766,8 +804,6 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
-        #endregion
-        #region Command
         public RelayCommand btSettingCommand { get; set; }
         async void Settings()
         {
@@ -794,7 +830,33 @@ namespace SmartDrawerWpfApp.ViewModel
                     GrantedUser adminUser = ctx.GrantedUsers.GetByLogin(result.Username);
                     if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
                     {
-                        MessageDialogResult messageResult = await mainview0.ShowMessageAsync("Authentication Information", String.Format("Username: {0}\nPassword: {1}", result.Username, result.Password));
+                        string path = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "\\", "Spacecode", "\\", "SmartDrawerAdmin", "\\", "SmartDrawerAdmin", ".appref-ms");
+                        if (File.Exists(path))
+                        {
+                            var process = Process.Start(path);
+                            Thread.Sleep(5000);
+
+                            Process[] pname = Process.GetProcessesByName("SmartDrawerAdmin");
+                            do
+                            {
+                                pname = Process.GetProcessesByName("SmartDrawerAdmin");
+                                mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                                Thread.Sleep(500);
+                            }
+                            while (pname.Length > 0);                                 
+
+                            ProcessStartInfo Info = new ProcessStartInfo();
+                            Info.Arguments = "/C choice /C Y /N /D Y /T 1 & START \"\" \"" + Assembly.GetExecutingAssembly().Location + "\"";
+                            Info.WindowStyle = ProcessWindowStyle.Hidden;
+                            Info.CreateNoWindow = true;
+                            Info.FileName = "cmd.exe";
+                            Process.Start(Info);
+                            Application.Current.Shutdown();
+                        }
+                        else
+                        {
+                            MessageDialogResult messageResult = await mainview0.ShowMessageAsync("Authentication Information", "Administration Program not found ...");
+                        }
                     }
                     ctx.Database.Connection.Close();
                     ctx.Dispose();
@@ -802,37 +864,64 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         public RelayCommand ResetDeviceCommand { get; set; }
-        void Reset()
+        void Reset(bool renewFP = false)
         {
-            mainview0.Dispatcher.BeginInvoke(new ThreadStart(delegate ()
+
+            AutoConnectTimer.IsEnabled = false;
+
+            try
             {
-                wallStatus = "Devices Released";
-
-                if (DevicesHandler.FPReader.Available)
+                GpioStatus = false;
+                RfidStatus = false;
+                NetworkStatus = false;
+                Thread.Sleep(200);
+                mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                Thread.Sleep(200);
+                mainview0.Dispatcher.BeginInvoke(new ThreadStart(async delegate ()
                 {
-                    string fileName = @"C:\devcon\x64\removeFP.bat";
-                    if (File.Exists(fileName))
+                    wallStatus = "Devices Released";
+
+                    if (renewFP)
                     {
-                        Process proc = new Process();
-                        proc.StartInfo.FileName = fileName;
-                        proc.StartInfo.UseShellExecute = true;
-                        proc.StartInfo.Verb = "runas";
-                        proc.Start();
+                        if ((DevicesHandler.FPReader != null) && (DevicesHandler.FPReader.Available))
+                        {
+
+                            string fileName = @"C:\devcon\x64\renewFP.lnk";
+                            if (File.Exists(fileName))
+                            {
+                                var t = Task.Run(() => StartAndWaitProcess(fileName));
+                                await t;
+                            }
+                        }
                     }
-                }
 
-                DevicesHandler.ReleaseDevices();
-                GpioStatus = DevicesHandler.GpioCardObject.IsConnected;
-                RfidStatus = DevicesHandler.DevicesConnected;
-                Thread.Sleep(1000);
-                wallStatus = "In Connection";
-                Thread.Sleep(1000);
-                DevicesHandler.TryInitializeLocalDeviceAsync();
-                InitWcfService();
-                
+                    DevicesHandler.ReleaseDevices();
+                    GpioStatus = DevicesHandler.GpioCardObject.IsConnected;
+                    RfidStatus = DevicesHandler.DevicesConnected;
+                    Thread.Sleep(1000);
+                    wallStatus = "In Connection";
+                    Thread.Sleep(1000);
+                    DevicesHandler.TryInitializeLocalDeviceAsync();
+                    InitWcfService();
 
-            }));
+                }));
+            }
+            catch
+            {
+            }
+            finally
+            {
+
+                AutoConnectTimer.IsEnabled = true;
+            }
         }
+
+        void StartAndWaitProcess(string path)
+        {
+            using (var p = Process.Start(path))
+                p.WaitForExit();
+        }
+
         public RelayCommand btLightFilteredTag { get; set; }
         void LightFilteredTag()
         {
@@ -1112,6 +1201,52 @@ namespace SmartDrawerWpfApp.ViewModel
             AutoLockMsg = "Wait User";
         }
 
+
+        public RelayCommand BtLighAllPerDrawer { get; set; }
+        public void BtLighAllPerDrawerFn()
+        {
+
+            if (_lastDrawerOpen <=0)
+            {
+                wallStatus = "Open a drawer before press an action !!";
+                return;
+            }
+
+            if (IsWallInScan())
+                StopWallScan();
+            DrawerStatus[_lastDrawerOpen] = DrawerStatusList.InLight;
+            _currentDrawerInLight = _lastDrawerOpen;
+            DrawerStatus[_lastDrawerOpen] = DrawerStatusList.InLight;
+            DevicesHandler.StopLighting(_lastDrawerOpen);
+            DevicesHandler.SetDrawerActive(_lastDrawerOpen);
+            DevicesHandler.LightAll(_lastDrawerOpen);
+            DevicesHandler.Device.LEdOnAll(1, 0, false);
+        }
+
+        public RelayCommand BtLighListPerDrawer { get; set; }
+        public void BtLighListPerDrawerFn()
+        {
+            if (_lastDrawerOpen <= 0)
+            {
+                wallStatus = "Open a drawer before press an action !!";
+                return;
+            }
+
+            if (IsWallInScan())
+                StopWallScan();
+            _currentDrawerInLight = _lastDrawerOpen;
+            DrawerStatus[_lastDrawerOpen] = DrawerStatusList.InLight;
+            DevicesHandler.StopLighting(_lastDrawerOpen);
+            DevicesHandler.SetDrawerActive(_lastDrawerOpen);
+            List<string> listCtrl = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
+            DevicesHandler.LightTags(_lastDrawerOpen, listCtrl, true);
+            DevicesHandler.Device.LEdOnAll(1, 0, false);
+            mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+            {
+                mainview0.ShowMessageAsync("Info Drawer " + _lastDrawerOpen, "Light list process finish");
+            }));
+        }
+
         #endregion
         #region timer
         private async void StartTimer_Tick(object sender, EventArgs e)
@@ -1180,7 +1315,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     BrushDrawer[loop] = _borderNotReady;
 
                 }
-                Reset();
+                Reset(false);
             }
             else
                 DevicesHandler.GpioCardObject.GetInValues();
@@ -1443,7 +1578,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
 
                 WallService.mainview0 = mainview0;
-                host = new ServiceHost(WallService);
+                host = new ServiceHost(WallService);              
                 host.Opened += Host_Opened;
                 host.Closed += Host_Closed;
                 host.Faulted += Host_Faulted;
@@ -1636,6 +1771,18 @@ namespace SmartDrawerWpfApp.ViewModel
         {           
             try
             {
+
+
+                if (mainview0.tabListPerDrawer.IsVisible)
+                {    
+                    List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
+                    ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
+                    ListCtrlPerDrawer = null;
+                    DrawerSelected = "";
+                    DrawerCtrlCount = "";
+                }
+
+
                 if (string.IsNullOrEmpty(tagOnBadDrawer.TagId))
                     IsFlyoutCassetteInfoOpen = false;
 
@@ -1733,6 +1880,24 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 _lastDrawerOpen = e.DrawerId;
                 wallStatus = "Drawer " + e.DrawerId + " opened";
+
+
+                if (mainview0.tabListPerDrawer.IsVisible)
+                {
+
+                    if (_autoLightDrawer != -1) //switch of drawer
+                    {
+                        if (DevicesHandler.DevicesConnected)
+                            DevicesHandler.StopLighting(_autoLightDrawer);
+                    }
+                    IsAutoLightDrawerChecked = false;
+
+                    List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
+                    ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
+                    ListCtrlPerDrawer = new ObservableCollection<string>(TmpListCtrlPerDrawer.OrderBy(i => i));
+                    DrawerSelected = "Drawer " + _lastDrawerOpen;
+                    DrawerCtrlCount = " (" + ListCtrlPerDrawer.Count + ")";
+                }
 
 
                 //Store event drawer 
@@ -2163,7 +2328,7 @@ namespace SmartDrawerWpfApp.ViewModel
             mainview0.NotifyM2MCardEvent += Mainview0_NotifyM2MCardEvent;
 
             #region Initialize command
-            ResetDeviceCommand = new RelayCommand(() => Reset());
+            ResetDeviceCommand = new RelayCommand(() => Reset(true));
             btSettingCommand = new RelayCommand(() => Settings());
             btLightFilteredTag = new RelayCommand(() => LightFilteredTag());
             LightAllCommand = new RelayCommand(() => LightAll());
@@ -2174,6 +2339,8 @@ namespace SmartDrawerWpfApp.ViewModel
             btLightFilteredTagSelection = new RelayCommand(() => LightSelectionFromList());
             btRemoveSelection = new RelayCommand(() => removeSelection());
             BtRefreshSelection = new RelayCommand(() => getSelection());
+            BtLighAllPerDrawer = new RelayCommand(() => BtLighAllPerDrawerFn());
+            BtLighListPerDrawer = new RelayCommand(() => BtLighListPerDrawerFn());
 
             #endregion
         }

@@ -49,6 +49,13 @@ namespace SmartDrawerWpfApp
         }
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+
+
+
+
+
+
+
             AppDomain.CurrentDomain.UnhandledException +=
               (s, exception) =>
               LogUnhandledException((Exception)exception.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");

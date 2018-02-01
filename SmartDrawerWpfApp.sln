@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecurityModules", "Security
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDrawerAdmin", "SmartDrawerAdmin\SmartDrawerAdmin.csproj", "{542E7D31-BFC1-4293-A516-645E600CAB3A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AddHTTP", "AddHTTP\AddHTTP.csproj", "{12D66163-E115-46F4-B719-4AB4535E11F6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{542E7D31-BFC1-4293-A516-645E600CAB3A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{542E7D31-BFC1-4293-A516-645E600CAB3A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{542E7D31-BFC1-4293-A516-645E600CAB3A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12D66163-E115-46F4-B719-4AB4535E11F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12D66163-E115-46F4-B719-4AB4535E11F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12D66163-E115-46F4-B719-4AB4535E11F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12D66163-E115-46F4-B719-4AB4535E11F6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

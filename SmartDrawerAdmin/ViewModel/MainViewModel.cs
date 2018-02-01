@@ -529,7 +529,8 @@ namespace SmartDrawerAdmin.ViewModel
         bool quit = false;
         private async void Mainview0_Loaded(object sender, System.Windows.RoutedEventArgs e)
         {
-            LoginDialogData result = null;
+            isAdmin = true;
+            /*LoginDialogData result = null;
             do
             {
                 LoginDialogSettings lds = new LoginDialogSettings();
@@ -566,7 +567,8 @@ namespace SmartDrawerAdmin.ViewModel
                     }   
                 }
             }
-            while (!isAdmin);
+            while (!isAdmin);*/
+
             if (isAdmin)
             {
                 PopulateDevice();

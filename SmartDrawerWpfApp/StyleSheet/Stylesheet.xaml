@@ -20,4 +20,11 @@
         <Setter Property="Foreground" Value="Gray" />
     </Style>  
     <!---End of style-->
+    <Style x:Key="DefaultButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="FontSize" Value="15"/>
+        <Setter Property="Height" Value="50"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="Foreground"  Value="Gray" />
+    </Style>
 </ResourceDictionary>

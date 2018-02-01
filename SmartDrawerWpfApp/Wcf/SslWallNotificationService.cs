@@ -36,8 +36,7 @@ namespace SmartDrawerWpfApp.Wcf
        UriTemplate = "/GetWallInfoByGet",
        BodyStyle = WebMessageBodyStyle.WrappedRequest,
        RequestFormat = WebMessageFormat.Json,
-       ResponseFormat = WebMessageFormat.Json)]
-        [PrincipalPermission(SecurityAction.Demand, Role = "WcfUser")]
+       ResponseFormat = WebMessageFormat.Json)]      
         public WallDevice GetWallInfoByGet()
         {
             myWall.DeviceType = "SMARTWALL";
@@ -50,8 +49,7 @@ namespace SmartDrawerWpfApp.Wcf
            UriTemplate = "/GetWallInfo",
            BodyStyle = WebMessageBodyStyle.WrappedRequest,
            RequestFormat = WebMessageFormat.Json,
-           ResponseFormat = WebMessageFormat.Json)]
-        [PrincipalPermission(SecurityAction.Demand, Role = "WcfUser")]
+           ResponseFormat = WebMessageFormat.Json)]       
         public WallDevice GetWallInfo()
         {
             myWall.DeviceType = "SMARTWALL";

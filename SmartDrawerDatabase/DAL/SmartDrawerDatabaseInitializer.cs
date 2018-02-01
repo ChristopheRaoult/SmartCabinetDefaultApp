@@ -40,7 +40,7 @@ namespace SmartDrawerDatabase.DAL
             //Seed Column  for not null at Start
             IList<Column> DefaultColumns = new List<Column>();
             DefaultColumns.Add(new Column() { ColumnId = 1, ColumnIndex = 0, ColumnName = "Tag UID" });
-            DefaultColumns.Add(new Column() { ColumnId = 2, ColumnIndex = 1, ColumnName = "LOT ID" });
+            //DefaultColumns.Add(new Column() { ColumnId = 2, ColumnIndex = 1, ColumnName = "LOT ID" });
             foreach (Column c in DefaultColumns)
                 context.Columns.Add(c);
 
