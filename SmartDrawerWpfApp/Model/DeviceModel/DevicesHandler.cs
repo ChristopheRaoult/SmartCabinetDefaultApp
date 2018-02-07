@@ -322,7 +322,6 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
 
             });
         }
-
         private static void FPReader_FingerprintReaderEvent(object sender, FingerprintReaderEventArgs args)
         {
             var fpReader = sender as FingerprintReader;
@@ -343,33 +342,33 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 handler(sender, evt);
             }          
         }
-
         public static void FindAndConnectDevice()
         {
-
             lock (thisLock)
             {
                 //Connect RFID             
                 List<string> comPortList = new List<string>(System.IO.Ports.SerialPort.GetPortNames());
-                foreach (string comPort in comPortList)
+                if ((comPortList != null) && (comPortList.Count > 0))
                 {
-                    RfidReader tmpReader = new RfidReader();
-                    tmpReader.NotifyEvent += deviceForDiscover_NotifyEvent;
-                    tmpReader.ConnectReader(comPort);
-                    eventEndDiscover.WaitOne(500, false);
-                    if (tmpReader.IsConnected)
+                    foreach (string comPort in comPortList)
                     {
-                        Device = tmpReader;
-                        Device.NotifyEvent += Device_NotifyEvent;
-                        InitDeviceList(tmpReader.SerialNumber);
-                        LastScanAccessTypeName = AccessType.Manual;
-                        FireEvent(DeviceConnected, tmpReader.SerialNumber, 0);
-
-                    }
-                    else
-                    {
-                        tmpReader.DisconnectReader();
-                        tmpReader.Dispose();
+                        RfidReader tmpReader = new RfidReader();
+                        tmpReader.NotifyEvent += deviceForDiscover_NotifyEvent;
+                        tmpReader.ConnectReader(comPort);
+                        eventEndDiscover.WaitOne(500, false);
+                        if (tmpReader.IsConnected)
+                        {
+                            Device = tmpReader;
+                            Device.NotifyEvent += Device_NotifyEvent;
+                            InitDeviceList(tmpReader.SerialNumber);
+                            LastScanAccessTypeName = AccessType.Manual;
+                            FireEvent(DeviceConnected, tmpReader.SerialNumber, 0);
+                        }
+                        else
+                        {
+                            tmpReader.DisconnectReader();
+                            tmpReader.Dispose();
+                        }
                     }
                 }
             }

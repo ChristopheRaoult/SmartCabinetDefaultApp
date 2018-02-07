@@ -329,7 +329,7 @@ namespace SmartDrawerWpfApp.Wcf
                             ctx.PullItems.Remove(currentpullItem);
                             await ctx.SaveChangesAsync();
                         }
-                        var user = ctx.GrantedUsers.Find(jitp.userId);
+                        var user = ctx.GrantedUsers.GetByServerId(jitp.userId);
                         var pullItemToAdd = new SmartDrawerDatabase.DAL.PullItem
                         {
                                 ServerPullItemId = jitp.ServerPullItemId,

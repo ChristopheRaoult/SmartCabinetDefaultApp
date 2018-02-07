@@ -2,6 +2,8 @@
 using SmartDrawerDatabase.DAL;
 using SmartDrawerWpfApp.Model;
 using SmartDrawerWpfApp.StaticHelpers;
+using SmartDrawerWpfApp.ViewModel;
+using Syncfusion.Windows.Tools.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -126,6 +128,7 @@ namespace SmartDrawerWpfApp
                 if ((e.Key == Key.OemPeriod) || (e.Key == Key.Oem1))
                     ProcessMessage();
                 wallInfo.Text = IncomeMessage;
+                
             }  
         }
         private void MetroWindow_PreviewKeyUp(object sender, KeyEventArgs e)
@@ -139,6 +142,7 @@ namespace SmartDrawerWpfApp
         private void MetroWindow_KeyDown(object sender, KeyEventArgs e)
         {
             wallInfo.Text = "KeyDown : " + e.Key.ToString();
+            
             if ((e.Key == Key.Oem8) && (!shiftPressed))
                 IsAccessCardInAccess = true;
 
@@ -173,6 +177,28 @@ namespace SmartDrawerWpfApp
             }
         }
 
-        
+        private void UIElement_OnPreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender is CardView)
+            {
+                var cardview = sender as CardView;
+                if (cardview.SelectedItem != null)
+                {
+                    var cardviewItem = cardview.ItemsSource != null
+                        ? (CardViewItem)cardview.ItemContainerGenerator.ContainerFromItem(cardview.SelectedItem)
+                        : (CardViewItem)cardview.SelectedItem;
+                    if (cardviewItem != null && cardviewItem.IsInEditMode)
+                    {
+                        if (e.Key == Key.Escape)
+                        {
+                            if (cardviewItem.DataContext is MainViewModel)
+                                e.Handled = !(cardviewItem.DataContext as MainViewModel).ValidationSuccess;
+                        }
+                    }
+                }
+
+            }
+        }
+
     }
 }

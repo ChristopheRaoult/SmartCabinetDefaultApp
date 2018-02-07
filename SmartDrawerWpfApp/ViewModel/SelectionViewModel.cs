@@ -9,6 +9,7 @@ namespace SmartDrawerWpfApp.ViewModel
     public class SelectionViewModel
     {
         public int PullItemId { get; set; }
+        public int ServerPullItemId { get; set; }
         public string PullItemDate { get; set; }
         public string Description { get; set; }
         public string User { get; set; }

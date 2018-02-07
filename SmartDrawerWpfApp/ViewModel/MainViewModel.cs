@@ -30,6 +30,8 @@ using System.Windows.Input;
 using System.Diagnostics;
 using System.ServiceProcess;
 using System.Reflection;
+using System.Windows.Data;
+using System.Globalization;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -57,7 +59,7 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Variables
         private MainWindow mainview0;
-        
+
         private ProgressDialogController myConTroller = null;
         private readonly TouchKeyboardProvider _touchKeyboardProvider = new TouchKeyboardProvider();
 
@@ -90,13 +92,20 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Properties
 
+        private bool _validationSuccess = true;
+        internal bool ValidationSuccess
+        {
+            get { return _validationSuccess; }
+            set { _validationSuccess = value; }
+        }
+
         string _WallSerial;
         public string WallSerial
         {
             get { return _WallSerial; }
             set
             {
-                _WallSerial = value;              
+                _WallSerial = value;
                 RaisePropertyChanged(() => WallSerial);
             }
         }
@@ -120,7 +129,7 @@ namespace SmartDrawerWpfApp.ViewModel
             get { return _wallStatus; }
             set
             {
-                _wallStatus = value;
+                _wallStatus = value ;
                 RaisePropertyChanged("wallStatus");
             }
         }
@@ -218,7 +227,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             get { return _IsAutoLightDrawerChecked; }
             set
-            {               
+            {
                 _IsAutoLightDrawerChecked = value;
                 if ((IsFlyoutCassettePositionOpen) || (IsFlyoutCassetteInfoOpen))
                 {
@@ -292,7 +301,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             get { return _IsFlyoutCassettePositionOpen; }
             set
-            {                
+            {
                 _IsFlyoutCassettePositionOpen = value;
                 RaisePropertyChanged("IsFlyoutCassettePositionOpen");
                 if (_IsFlyoutCassettePositionOpen == false)
@@ -302,7 +311,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     SelectedCassette = null;
                     if (bNeedUpdateCriteria)
                     {
-                        bNeedUpdateCriteria = false;                        
+                        bNeedUpdateCriteria = false;
                     }
                 }
                 else
@@ -322,7 +331,7 @@ namespace SmartDrawerWpfApp.ViewModel
             set
             {
                 _IsFlyoutCassetteInfoOpen = value;
-                RaisePropertyChanged(() => IsFlyoutCassetteInfoOpen);    
+                RaisePropertyChanged(() => IsFlyoutCassetteInfoOpen);
                 if (_IsFlyoutCassetteInfoOpen == false)
                 {
                     if (!IsFlyoutCassettePositionOpen)
@@ -355,7 +364,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 _txtNbSelectedItem = value;
                 RaisePropertyChanged("txtNbSelectedItem");
             }
-        }       
+        }
 
         private CassettesSelection _previousSelectedCassettes;
         private CassettesSelection _SelectedCassette;
@@ -365,7 +374,7 @@ namespace SmartDrawerWpfApp.ViewModel
             set
             {
                 _SelectedCassette = value;
-                RaisePropertyChanged("SelectedCassette");    
+                RaisePropertyChanged("SelectedCassette");
             }
         }
 
@@ -378,9 +387,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 _txtSearchCtrl = value;
                 RaisePropertyChanged(() => txtSearchCtrl);
                 mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
-                mainview0.myDatagrid.SearchHelper.ClearSearch();                
+                mainview0.myDatagrid.SearchHelper.ClearSearch();
                 mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
-                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);                
+                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
             }
         }
 
@@ -420,7 +429,7 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Datagrid
 
-        private ObservableCollection<BaseObject> _data= new ObservableCollection<BaseObject>();
+        private ObservableCollection<BaseObject> _data = new ObservableCollection<BaseObject>();
         public ObservableCollection<BaseObject> Data
         {
             get { return _data; }
@@ -447,8 +456,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {
-                    if(mainview0.myDatagrid.View != null)
-                    txtNbSelectedItem = string.Format("Stones Selected : {0}", mainview0.myDatagrid.View.Records.Count());
+                    if (mainview0.myDatagrid.View != null)
+                        txtNbSelectedItem = string.Format("Stones Selected : {0}", mainview0.myDatagrid.View.Records.Count());
                 }
             }
         }
@@ -472,40 +481,40 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 var controller = await mainview0.ShowProgressAsync("Please wait", "Retrieving information from Database");
                 controller.SetIndeterminate();
-                await Task.Run( () =>
-                {
-                    lock (thisLock)
-                    {
-                        Data.Clear();
-                        var ctx = RemoteDatabase.GetDbContext();
-                        int nbCol = ctx.Columns.Count();
-                        foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
-                        {
-                            RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
-                            Product pct = ctx.Products.GetByTagUid(entry.Key);
-                            if (pct != null)
-                            {
-                                Data.Add(new BaseObject(pct, entry.Value));
-                            }
-                            else
-                            {
-                                Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
-                                Data.Add(new BaseObject(tmpProd, entry.Value));
-                            }
-                        }
-                        ctx.Database.Connection.Close();
-                        ctx.Dispose();
+                await Task.Run(() =>
+               {
+                   lock (thisLock)
+                   {
+                       Data.Clear();
+                       var ctx = RemoteDatabase.GetDbContext();
+                       int nbCol = ctx.Columns.Count();
+                       foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
+                       {
+                           RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
+                           Product pct = ctx.Products.GetByTagUid(entry.Key);
+                           if (pct != null)
+                           {
+                               Data.Add(new BaseObject(pct, entry.Value));
+                           }
+                           else
+                           {
+                               Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
+                               Data.Add(new BaseObject(tmpProd, entry.Value));
+                           }
+                       }
+                       ctx.Database.Connection.Close();
+                       ctx.Dispose();
 
-                        if (Data.Count != 0)
-                            SourceTable = PopulateDataGrid(Data);
-                        else
-                            SourceTable = null;
+                       if (Data.Count != 0)
+                           SourceTable = PopulateDataGrid(Data);
+                       else
+                           SourceTable = null;
 
-                        if (_IsFlyoutCassettePositionOpen)
-                            bNeedUpdateCriteria = true;
-                    }
-                    
-                });
+                       if (_IsFlyoutCassettePositionOpen)
+                           bNeedUpdateCriteria = true;
+                   }
+
+               });
                 mainview0.Data = Data;
                 mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
                 await controller.CloseAsync();
@@ -581,7 +590,7 @@ namespace SmartDrawerWpfApp.ViewModel
                         case 18: row[colName] = bo.Productinfo.ProductInfo17; break;
                         case 19: row[colName] = bo.Productinfo.ProductInfo18; break;
                         case 20: row[colName] = bo.Productinfo.ProductInfo19; break;
-                    }                   
+                    }
                 }
             }
             return tmpDt;
@@ -607,7 +616,7 @@ namespace SmartDrawerWpfApp.ViewModel
             set
             {
                 _SelectionSelected = value;
-                RaisePropertyChanged(() => SelectionSelected);          
+                RaisePropertyChanged(() => SelectionSelected);
             }
         }
 
@@ -624,8 +633,9 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 SelectionViewModel svm = new SelectionViewModel();
                 svm.PullItemId = sel.PullItemId;
+                svm.ServerPullItemId = sel.ServerPullItemId;
                 svm.PullItemDate = sel.PullItemDate.ToShortDateString();
-                svm.Description = sel.Description;
+                svm.Description = "          " + sel.Description + "          ";
                 if (sel.GrantedUser != null)
                     svm.User = sel.GrantedUser.FirstName + " " + sel.GrantedUser.LastName;
                 svm.TotalToPull = sel.TotalToPull;
@@ -669,6 +679,11 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
+                if ((mainview0.CardViewList != null) && (mainview0.CardViewList.SelectedItem != null))
+                {
+                    SelectionSelected = (SelectionViewModel)mainview0.CardViewList.SelectedItem;
+                }
+
                 if (RfidStatus == false)
                 {
                     IsFlyoutCassettePositionOpen = false;
@@ -789,11 +804,16 @@ namespace SmartDrawerWpfApp.ViewModel
         public RelayCommand btRemoveSelection { get; set; }
         private async void removeSelection()
         {
+            if ((mainview0.CardViewList != null) && (mainview0.CardViewList.SelectedItem != null))
+            {
+                SelectionSelected = (SelectionViewModel) mainview0.CardViewList.SelectedItem;
+            }
+
             if (SelectionSelected != null)
             {
                 var ctx = await RemoteDatabase.GetDbContextAsync();
 
-                var sel = ctx.PullItems.Find(SelectionSelected.PullItemId);
+                var sel = ctx.PullItems.GetByServerId(SelectionSelected.ServerPullItemId);
                 if (sel != null)
                     ctx.PullItems.Remove(sel);
                 await ctx.SaveChangesAsync();
@@ -843,7 +863,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
                                 Thread.Sleep(500);
                             }
-                            while (pname.Length > 0);                                 
+                            while (pname.Length > 0);
 
                             ProcessStartInfo Info = new ProcessStartInfo();
                             Info.Arguments = "/C choice /C Y /N /D Y /T 1 & START \"\" \"" + Assembly.GetExecutingAssembly().Location + "\"";
@@ -926,7 +946,7 @@ namespace SmartDrawerWpfApp.ViewModel
         void LightFilteredTag()
         {
             try
-            {     
+            {
                 if (RfidStatus == false)
                 {
                     IsFlyoutCassettePositionOpen = false;
@@ -948,8 +968,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 List<string> TmpListCtrlPerDrawer6 = new List<string>(DevicesHandler.GetTagFromDictionnary(6, DevicesHandler.ListTagPerDrawer));
                 List<string> TmpListCtrlPerDrawer7 = new List<string>(DevicesHandler.GetTagFromDictionnary(7, DevicesHandler.ListTagPerDrawer));
 
-                if (SelectedItems!= null &&  SelectedItems.Count > 0)
-                {     
+                if (SelectedItems != null && SelectedItems.Count > 0)
+                {
                     foreach (DataRowView item in SelectedItems)
                     {
                         string uid = item.Row.ItemArray[0].ToString();
@@ -1018,7 +1038,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             }
                         }
                     }
-                    
+
                 }
                 else
                 {  // filtered records
@@ -1091,7 +1111,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             }
                         }
                     }
-                    
+
                 }
                 tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count;
                 tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count;
@@ -1159,16 +1179,16 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
-                if ((Data == null ) || (Data.Count == 0)) return;
+                if ((Data == null) || (Data.Count == 0)) return;
 
                 mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
                 mainview0.myDatagrid.SearchHelper.ClearSearch();
                 mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
                 mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
                 do
-                {                 
+                {
                     var rowIndex = mainview0.myDatagrid.SearchHelper.CurrentRowColumnIndex.RowIndex;
-                    var record = mainview0.myDatagrid.View.Records[rowIndex-1];
+                    var record = mainview0.myDatagrid.View.Records[rowIndex - 1];
                     DataRowView drv = record.Data as DataRowView;
                     mainview0.myDatagrid.SelectedItems.Add(drv);
                 }
@@ -1194,7 +1214,7 @@ namespace SmartDrawerWpfApp.ViewModel
             while (IsOneDrawerOpen())
                 await mainview0.ShowMessageAsync("Error", "Please Close all drawer before Logout");
 
-            DevicesHandler.LockWall();  
+            DevicesHandler.LockWall();
             bLatchUnlocked = false;
             GrantedUsersCache.LastAuthenticatedUser = null;
             DevicesHandler.LastScanAccessTypeName = AccessType.Manual;
@@ -1206,7 +1226,7 @@ namespace SmartDrawerWpfApp.ViewModel
         public void BtLighAllPerDrawerFn()
         {
 
-            if (_lastDrawerOpen <=0)
+            if (_lastDrawerOpen <= 0)
             {
                 wallStatus = "Open a drawer before press an action !!";
                 return;
@@ -1252,7 +1272,7 @@ namespace SmartDrawerWpfApp.ViewModel
         private async void StartTimer_Tick(object sender, EventArgs e)
         {
             startTimer.Stop();
-            startTimer.IsEnabled = false;        
+            startTimer.IsEnabled = false;
 
             // No serial in Configuration - Conenct to get rfid serial
             if (string.IsNullOrEmpty(Properties.Settings.Default.RfidSerial))
@@ -1265,7 +1285,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     Properties.Settings.Default.Upgrade();
                 }
                 DevicesHandler.Device.DisconnectReader();
-            }          
+            }
 
             // Is Wall In database - refer to Rfid serial so need conenction to get number
             await mainview0.Dispatcher.BeginInvoke(new System.Action(async () =>
@@ -1282,12 +1302,12 @@ namespace SmartDrawerWpfApp.ViewModel
                     WallSerial = mydev.SerialNumber;
                     WallName = mydev.Name;
                     InitValue();
-                }                
+                }
 
                 ctx.Database.Connection.Close();
                 ctx.Dispose();
-               
-            }));           
+
+            }));
         }
         private void AutoConnectTimer_Tick(object sender, EventArgs e)
         {
@@ -1319,7 +1339,7 @@ namespace SmartDrawerWpfApp.ViewModel
             }
             else
                 DevicesHandler.GpioCardObject.GetInValues();
-           
+
             if (!NetworkStatus)
                 InitWcfService();
 
@@ -1363,7 +1383,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 #endregion
                 #region Recheck light
                 else if (_recheckLightDrawer != -1)
-                {                   
+                {
                     int _bckrecheckLightDrawer = _recheckLightDrawer;
                     myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Rechecking {0} tags in drawer {1}", SelectedCassette.TagToLight[_bckrecheckLightDrawer].Count, _bckrecheckLightDrawer));
                     myConTroller.SetIndeterminate();
@@ -1413,7 +1433,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
                                 //Store removed tag at recheck with user    
                                 ReaderData rd = DevicesHandler.DrawerInventoryData[_bckrecheckLightDrawer];
-                                for(int loop=0 ; loop < TagToLight.Count; loop++ ) // tag to light should contain all removed tags
+                                for (int loop = 0; loop < TagToLight.Count; loop++) // tag to light should contain all removed tags
                                 {
                                     string uid = TagToLight[loop];
                                     if (rd.strListTag.Contains(uid))
@@ -1427,7 +1447,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 DevicesHandler.UpdateAddedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
                                 DevicesHandler.UpdateremovedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
                                 InventoryHandler.HandleNewScanCompleted(_bckrecheckLightDrawer);
-                                 
+
                                 //Update GUI INFO 
                                 SelectedCassette.CassetteDrawer1Number = SelectedCassette.TagToLight[1].Count;
                                 SelectedCassette.CassetteDrawer2Number = SelectedCassette.TagToLight[2].Count;
@@ -1439,7 +1459,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 SelectedCassette.CassetteSelectionTotalNumber = SelectedCassette.ListControlNumber.Count;
 
                                 if (TotalCassettesPulled == TotalCassettesToPull)
-                                {                                   
+                                {
                                     IsFlyoutCassetteInfoOpen = false;
                                     IsFlyoutCassettePositionOpen = false;
                                 }
@@ -1456,7 +1476,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 #endregion
                 #region Light
                 else if (_lightDrawer != -1)
-                {                   
+                {
                     int bckDrawer = _lightDrawer;
                     DevicesHandler.SetDrawerActive(bckDrawer);
                     if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
@@ -1523,7 +1543,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             if ((DevicesHandler.Device != null) && (DevicesHandler.Device.IsConnected) && (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready))
                             {
                                 DevicesHandler.StartManualScan(loop);
-                              
+
                                 break;
                             }
                         }
@@ -1534,7 +1554,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     if (!IsWaitingForScan())
                     {
-                        bNeedUpdateCriteriaAfterScan = false;                      
+                        bNeedUpdateCriteriaAfterScan = false;
                         getCriteria();
                         getSelection();
                     }
@@ -1566,7 +1586,7 @@ namespace SmartDrawerWpfApp.ViewModel
         #region WCF Service
         private ServiceHost host = null;
         SslWallNotificationService WallService = new SslWallNotificationService();
-       // WebHttpBinding webBinding;
+        // WebHttpBinding webBinding;
         private void InitWcfService()
         {
             try
@@ -1578,7 +1598,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
 
                 WallService.mainview0 = mainview0;
-                host = new ServiceHost(WallService);              
+                host = new ServiceHost(WallService);
                 host.Opened += Host_Opened;
                 host.Closed += Host_Closed;
                 host.Faulted += Host_Faulted;
@@ -1650,11 +1670,11 @@ namespace SmartDrawerWpfApp.ViewModel
 
                     case "SelectProduct":
                         if (e.Message != null)
-                        { 
+                        {
                             if (mainview0.myDatagrid.SelectedItems.Count > 0)
                                 LightFilteredTag();
                             wallStatus = DateTime.Now.ToLongTimeString() + e.Message;
-                        }                            
+                        }
                         break;
 
                     case "PullItemsRequest":
@@ -1685,7 +1705,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 wallStatus = "Rfid Connected";
                 WallService.myWall.DeviceSerial = e.Serial;
-                
+
                 for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
                 {
                     DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
@@ -1694,13 +1714,13 @@ namespace SmartDrawerWpfApp.ViewModel
                     string serialDrawer = e.Serial + "_" + loop;
 
                     SmartDrawerDatabase.DAL.Device _deviceEntity = null;
-                    var ctx = RemoteDatabase.GetDbContext();   
+                    var ctx = RemoteDatabase.GetDbContext();
                     if (_deviceEntity == null)
                     {
                         _deviceEntity = DevicesHandler.GetDeviceEntity();
                         if (_deviceEntity != null)
                         {
-                            if( ctx.Inventories != null)
+                            if (ctx.Inventories != null)
                             {
                                 var lastInventory = ctx.Inventories.Where(inv => inv.DeviceId == _deviceEntity.DeviceId && inv.DrawerNumber == loop).OrderByDescending(inv => inv.InventoryId).FirstOrDefault();
                                 if (lastInventory != null)
@@ -1718,20 +1738,20 @@ namespace SmartDrawerWpfApp.ViewModel
                                     DevicesHandler.DrawerInventoryData[loop] = new ReaderData();
 
                                 DevicesHandler.RemoveTagFromListForDrawer(loop);
-                                
+
                                 DevicesHandler.AddTagListForDrawer(loop, DevicesHandler.DrawerInventoryData[loop].strListTag);
-                                DevicesHandler.UpdateAddedTagToDrawer(loop, DevicesHandler.DrawerInventoryData[loop].strListTag);                                                                                                          
+                                DevicesHandler.UpdateAddedTagToDrawer(loop, DevicesHandler.DrawerInventoryData[loop].strListTag);
                                 DevicesHandler.UpdateremovedTagToDrawer(loop, DevicesHandler.DrawerInventoryData[loop].strListTag);
 
                                 DrawerEventArgs newArg = new DrawerEventArgs(serialDrawer, loop);
                                 DeviceHandler_TagRead(this, newArg);
-                               // DeviceHandler_ScanCompleted(this, newArg);
+                                // DeviceHandler_ScanCompleted(this, newArg);
                                 DevicesHandler.IsDrawerWaitScan[loop] = true;
                             }
                         }
                     }
                     ctx.Database.Connection.Close();
-                    ctx.Dispose();                   
+                    ctx.Dispose();
                 }
                 // Load Granted User
                 GrantedUsersCache.Reload();
@@ -1746,7 +1766,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     exp.ShowDialog();
                 }));
             }
-            
+
         }
         private void DeviceHandlerOnDeviceDisconnected(object sender, DrawerEventArgs e)
         {
@@ -1768,13 +1788,13 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         private void DevicesHandler_DrawerClosed(object sender, DrawerEventArgs e)
-        {           
+        {
             try
             {
 
 
                 if (mainview0.tabListPerDrawer.IsVisible)
-                {    
+                {
                     List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
                     ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
                     ListCtrlPerDrawer = null;
@@ -1848,7 +1868,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     }
                     else
                     {
-                        IsFlyoutCassetteInfoOpen = false;                       
+                        IsFlyoutCassetteInfoOpen = false;
                     }
                 }
 
@@ -1907,7 +1927,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     if (GrantedUsersCache.LastAuthenticatedUser != null)
                         ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId, InventoryId = null, EventDrawerDate = DateTime.Now });
                     else
-                        ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null,  EventDrawerDate = DateTime.Now });
+                        ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null, EventDrawerDate = DateTime.Now });
 
                     ctx.SaveChanges();
                     ctx.Database.Connection.Close();
@@ -2084,7 +2104,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     exp.ShowDialog();
                 }));
             }
-        }      
+        }
         public async Task DoConnect()
         {
             await Task.Run(() => DevicesHandler.TryInitializeLocalDeviceAsync());
@@ -2148,7 +2168,7 @@ namespace SmartDrawerWpfApp.ViewModel
         private void cancelLighting(bool bUpdateTreeview = true)
         {
             _InLightProcess = false;
-            _autoLockCpt = 120;         
+            _autoLockCpt = 120;
 
             if (!GpioStatus)
                 return;
@@ -2185,7 +2205,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
             }
             IsAutoLightDrawerChecked = bWasInAutoLight;
-        }               
+        }
         private void LightSelection()
         {
             try
@@ -2216,8 +2236,8 @@ namespace SmartDrawerWpfApp.ViewModel
                                 wallStatus = "Wait user Action";
                         }
                     }
-                   
-                    IsFlyoutCassetteInfoOpen = false;     
+
+                    IsFlyoutCassetteInfoOpen = false;
                 }
             }
             catch (Exception error)
@@ -2307,7 +2327,7 @@ namespace SmartDrawerWpfApp.ViewModel
             ScanTimer.Tick += new EventHandler(ScanTimer_Tick);
             ScanTimer.Interval = new TimeSpan(0, 0, 5);
             ScanTimer.Start();
-        }     
+        }
         private void CountTotalStones()
         {
             WallTotalStones = 0;
@@ -2358,7 +2378,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
                     LoggedUser = user.Login;
-                    var ctx =  RemoteDatabase.GetDbContext();                    
+                    var ctx = RemoteDatabase.GetDbContext();
                     DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
                     ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
                     ctx.SaveChanges();
@@ -2405,10 +2425,10 @@ namespace SmartDrawerWpfApp.ViewModel
                 // cannot happen
                 return;
             }
-           /* if (args.EventType != FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete)
-            {
-                return;
-            }*/
+            /* if (args.EventType != FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete)
+             {
+                 return;
+             }*/
             switch (args.EventType)
             {
                 case FingerprintReaderEventArgs.EventTypeValue.FPReaderReadingComplete:
@@ -2466,11 +2486,11 @@ namespace SmartDrawerWpfApp.ViewModel
                 default:
                     wallStatus = args.EventType.ToString();
                     break;
-            }    
+            }
         }
         ~MainViewModel()
         {
-           
+
         }
         private void Mainview0_Loaded(object sender, RoutedEventArgs e)
         {
@@ -2481,8 +2501,25 @@ namespace SmartDrawerWpfApp.ViewModel
             startTimer.Start();
         }
 
-       
-       
         #endregion
+    }
+    public class DateTimeToShortDateConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is DateTime)
+            {
+                return ((DateTime)value).ToShortDateString();
+            }
+            return value;
+        }
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value != null && !string.IsNullOrEmpty(value.ToString()))
+            {
+                return DateTime.Parse(value.ToString());
+            }
+            return value;
+        }
     }
 }

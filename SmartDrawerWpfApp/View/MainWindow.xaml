@@ -5,11 +5,11 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
         xmlns:syncfusion="http://schemas.syncfusion.com/wpf" 
-        xmlns:datapager="clr-namespace:Syncfusion.UI.Xaml.Controls.DataPager;assembly=Syncfusion.SfGrid.WPF"
-                     
+        xmlns:datapager="clr-namespace:Syncfusion.UI.Xaml.Controls.DataPager;assembly=Syncfusion.SfGrid.WPF"                     
         xmlns:Dialog="clr-namespace:MahApps.Metro.Controls.Dialogs;assembly=MahApps.Metro"
         xmlns:local="clr-namespace:SmartDrawerWpfApp"
         xmlns:cmd="http://www.galasoft.ch/mvvmlight"
+        xmlns:MyCtrl="clr-namespace:SmartDrawerWpfApp.View.UC"
         xmlns:sfHelper="clr-namespace:SmartDrawerWpfApp.StaticHelpers"
         xmlns:Views="clr-namespace:SmartDrawerWpfApp.View"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
@@ -139,7 +139,7 @@
                                     <Controls:ToggleSwitch x:Name="ChkAutoLight"  IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" Foreground="{DynamicResource AccentColorBrush}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>
                                             <!--TextBlock  Text="Auto Light Drawer" Margin="2,0,2,0" VerticalAlignment="Center" HorizontalAlignment="Left" FontFamily="Verdana" FontSize="8"></-->
                                         </StackPanel>
-                                        <syncfusion:SfDataGrid Name="myDatagridSelection" Grid.Row="1"
+                                        <!-- syncfusion:SfDataGrid Name="myDatagridSelection" Grid.Row="1"
                                                         HeaderRowHeight="50"
                                                        RowHeight="40"
                                                VerticalAlignment="Stretch"  
@@ -147,8 +147,8 @@
                                                AutoGenerateColumns="False"                                                                             
                                                SelectionMode="Single"   
                                                SelectionUnit="Row"
-                                               SelectionForegroundBrush="LightGray"
-                                               RowSelectionBrush="{DynamicResource AccentColorBrush}"
+                                               SelectionForegroundBrush="{DynamicResource AccentColorBrush}"
+                                               RowSelectionBrush="LightGray"
                                                AllowDraggingColumns="False"                                           
                                                AllowEditing="False"
                                                AllowFiltering="False"
@@ -164,27 +164,50 @@
                                                AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
                                                AlternationCount="2"
                                                HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star">
-                                    <syncfusion:SfDataGrid.Columns>
-                                        <syncfusion:GridTextColumn  x:Name="ColId"
-                                                                 HeaderText="ID"
-                                                                 MappingName="PullItemId" TextAlignment="Center" ColumnSizer="Star"  />
-                                        <syncfusion:GridTextColumn  x:Name="ColDate"
-                                                                 HeaderText="Date"
-                                                                 MappingName="PullItemDate" TextAlignment="Center" ColumnSizer="Star"/>
-                                        <syncfusion:GridTextColumn  x:Name="ColDescription"
-                                                                 HeaderText="Description"
-                                                                 MappingName="Description" TextAlignment="Center" ColumnSizer="Star"/>
-                                        <syncfusion:GridTextColumn  x:Name="ColUser"
-                                                                 HeaderText="User"
-                                                                 MappingName="User" TextAlignment="Center" ColumnSizer="Star"/>
-                                        <syncfusion:GridTextColumn  x:Name="ColToPull"
-                                                                 HeaderText="To Pull"
-                                                                 MappingName="TotalToPull" TextAlignment="Center" ColumnSizer="Star"/>
-                                        <syncfusion:GridTextColumn  x:Name="ColInDevicel"
-                                                                 HeaderText="In Device"
-                                                                 MappingName="TotalToPullInDevice" TextAlignment="Center" ColumnSizer="Star"/>                               
-                                    </syncfusion:SfDataGrid.Columns>
-                                </syncfusion:SfDataGrid>
+                                                <syncfusion:SfDataGrid.Columns>
+                                                    <syncfusion:GridTextColumn  x:Name="ColId"
+                                                                             HeaderText="ID"
+                                                                             MappingName="PullItemId" TextAlignment="Center" ColumnSizer="Star"  />
+                                                    <syncfusion:GridTextColumn  x:Name="ColDate"
+                                                                             HeaderText="Date"
+                                                                             MappingName="PullItemDate" TextAlignment="Center" ColumnSizer="Star"/>
+                                                    <syncfusion:GridTextColumn  x:Name="ColDescription"
+                                                                             HeaderText="Description"
+                                                                             MappingName="Description" TextAlignment="Center" ColumnSizer="Star"/>
+                                                    <syncfusion:GridTextColumn  x:Name="ColUser"
+                                                                             HeaderText="User"
+                                                                             MappingName="User" TextAlignment="Center" ColumnSizer="Star"/>
+                                                    <syncfusion:GridTextColumn  x:Name="ColToPull"
+                                                                             HeaderText="To Pull"
+                                                                             MappingName="TotalToPull" TextAlignment="Center" ColumnSizer="Star"/>
+                                                    <syncfusion:GridTextColumn  x:Name="ColInDevicel"
+                                                                             HeaderText="In Device"
+                                                                             MappingName="TotalToPullInDevice" TextAlignment="Center" ColumnSizer="Star"/>                               
+                                                </syncfusion:SfDataGrid.Columns>
+                                </-->
+                                <syncfusion:CardView Grid.Row="1" x:Name="CardViewList"
+                                                     ItemsSource="{Binding Selection}" 
+                                                     SelectedItem="{Binding SelectionSelected}" 
+                                                     PreviewKeyDown="UIElement_OnPreviewKeyDown"
+                                                     ItemTemplate="{StaticResource 2}"
+                                                     CanEdit="False"
+                                                     ShowHeader="False"
+                                                     CanSort="False"
+                                                     CanGroup="false"
+                                                     ForceCursor="False"                                                    
+                                                     ItemContainerStyle="{StaticResource contactStyle}"
+                                                     syncfusion:SkinStorage.VisualStyle="Transparent">  
+                                   
+                                    <syncfusion:CardView.HeaderTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                                <Border Background="{DynamicResource AccentColorBrush}">
+                                                    <TextBlock Text="{Binding User}"  Margin="5" Foreground="White" VerticalAlignment="Center" FontWeight="Bold" FontFamily="Bookman Old Style" Grid.Column="1"/>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </syncfusion:CardView.HeaderTemplate>
+                                </syncfusion:CardView>                               
                                 </Grid>
                             </TabItem>
                             <TabItem Header="Device Content" Width="200">
@@ -526,8 +549,10 @@
                                 </Rectangle.Fill>
                             </Rectangle>
                             <TextBlock    Text="STATUS : "  HorizontalAlignment="Center" VerticalAlignment="Center" Margin="10,0,10,0" TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
-                    <TextBlock   x:Name="wallInfo" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding wallStatus}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>                       
-                </StackPanel>
+                            <TextBlock   x:Name="wallInfo" Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding wallStatus}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
+                            <!-- MyCtrl:TextDefil   x:Name="wallInfo" myText="{Binding wallStatus}" Width="50"/ -->
+
+                        </StackPanel>
                    
                     </Grid>
                 </Border>                
