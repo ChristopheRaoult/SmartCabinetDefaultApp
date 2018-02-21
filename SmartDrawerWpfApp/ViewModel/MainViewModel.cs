@@ -32,6 +32,8 @@ using System.ServiceProcess;
 using System.Reflection;
 using System.Windows.Data;
 using System.Globalization;
+using MahApps.Metro;
+using SmartDrawerWpfApp.View;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -50,15 +52,16 @@ namespace SmartDrawerWpfApp.ViewModel
     public class MainViewModel : ViewModelBase
     {
         #region Constant
-        Brush _borderInScan = Brushes.Red;
+        Brush _borderInScan = new SolidColorBrush(Color.FromRgb(0xF5, 0xA6, 0x23));
         Brush _borderDrawerOpen = Brushes.Green;
-        Brush _borderNotReady = Brushes.OrangeRed;
-        Brush _borderReady = Brushes.DeepSkyBlue;
+        Brush _borderNotReady = new SolidColorBrush(Color.FromRgb(0xD0, 0x02, 0x1B)); 
+        Brush _borderReady = new SolidColorBrush(Color.FromRgb(0xD8, 0xD8, 0xD8));
+        Brush _borderReadyToPull = new SolidColorBrush(Color.FromRgb(0x33, 0xBC, 0xBA));
         Brush _borderWhite = Brushes.WhiteSmoke;
         Brush _borderLight = Brushes.Brown;
         #endregion
         #region Variables
-        private MainWindow mainview0;
+        private MainWindow2 mainview0;
 
         private ProgressDialogController myConTroller = null;
         private readonly TouchKeyboardProvider _touchKeyboardProvider = new TouchKeyboardProvider();
@@ -92,11 +95,41 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Properties
 
+       
+
         private bool _validationSuccess = true;
         internal bool ValidationSuccess
         {
             get { return _validationSuccess; }
             set { _validationSuccess = value; }
+        }
+
+        string _dayDate;
+        public string dayDate
+        {
+            get { return _dayDate; }
+            set
+            {
+                if (_dayDate != value)
+                {
+                    _dayDate = value;
+                    RaisePropertyChanged(() => dayDate);
+                }
+            }
+        }
+
+        string _dayTime;
+        public string dayTime
+        {
+            get { return _dayTime; }
+            set
+            {
+                if (_dayTime != value)
+                {
+                    _dayTime = value;
+                    RaisePropertyChanged(() => dayTime);
+                }
+            }
         }
 
         string _WallSerial;
@@ -163,6 +196,48 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 _WallTotalStones = value;
                 RaisePropertyChanged(() => WallTotalStones);
+            }
+        }
+
+        string _WallStatusOperational;
+        public string WallStatusOperational
+        {
+            get { return _WallStatusOperational; }
+            set
+            {
+                if (_WallStatusOperational != value)
+                {
+                    _WallStatusOperational = value;
+                    RaisePropertyChanged(() => WallStatusOperational);
+                }
+            }
+        }
+
+        string _LastScanInfo;
+        public string LastScanInfo
+        {
+            get { return _LastScanInfo; }
+            set
+            {
+                if (_LastScanInfo != value)
+                {
+                    _LastScanInfo = value;
+                    RaisePropertyChanged(() => LastScanInfo);
+                }
+            }
+        }
+
+        bool _OverallStatus;
+        public bool OverallStatus
+        {
+            get { return _OverallStatus; }
+            set
+            {
+                if (_OverallStatus != value)
+                {
+                    _OverallStatus = value;
+                    RaisePropertyChanged("OverallStatus");
+                }
             }
         }
 
@@ -386,10 +461,11 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 _txtSearchCtrl = value;
                 RaisePropertyChanged(() => txtSearchCtrl);
-                mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
+                //Todo
+                /*mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
                 mainview0.myDatagrid.SearchHelper.ClearSearch();
                 mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
-                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
+                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);*/
             }
         }
 
@@ -456,8 +532,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {
-                    if (mainview0.myDatagrid.View != null)
-                        txtNbSelectedItem = string.Format("Stones Selected : {0}", mainview0.myDatagrid.View.Records.Count());
+                    //todo
+                    /*if (mainview0.myDatagrid.View != null)
+                        txtNbSelectedItem = string.Format("Stones Selected : {0}", mainview0.myDatagrid.View.Records.Count());*/
                 }
             }
         }
@@ -623,9 +700,34 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Command
 
+        public RelayCommand BtRemoveCardSelection { get; set; }
+        public async void DeleteCard()
+        {
+            removeSelection();
+        }
+
         public RelayCommand BtRefreshSelection { get; set; }
         public async void getSelection()
         {
+            //Clear pull info
+            CassettesSelection tmpCassette = new CassettesSelection();
+            tmpCassette.CassetteDrawer1Number = String.Empty;
+            tmpCassette.CassetteDrawer2Number = String.Empty;
+            tmpCassette.CassetteDrawer3Number = String.Empty;
+            tmpCassette.CassetteDrawer4Number = String.Empty;
+            tmpCassette.CassetteDrawer5Number = String.Empty;
+            tmpCassette.CassetteDrawer6Number = String.Empty;
+            tmpCassette.CassetteDrawer7Number = String.Empty;
+            SelectedCassette = tmpCassette;
+
+            BrushDrawer[1] = _borderReady;
+            BrushDrawer[2] = _borderReady;
+            BrushDrawer[3] = _borderReady;
+            BrushDrawer[4] = _borderReady;
+            BrushDrawer[5] = _borderReady;
+            BrushDrawer[6] = _borderReady;
+            BrushDrawer[7] = _borderReady;
+
             List<PullItem> lstToRemove = new List<PullItem>();
             var ctx = await RemoteDatabase.GetDbContextAsync();
             Selection.Clear();
@@ -634,8 +736,16 @@ namespace SmartDrawerWpfApp.ViewModel
                 SelectionViewModel svm = new SelectionViewModel();
                 svm.PullItemId = sel.PullItemId;
                 svm.ServerPullItemId = sel.ServerPullItemId;
-                svm.PullItemDate = sel.PullItemDate.ToShortDateString();
-                svm.Description = "          " + sel.Description + "          ";
+
+                TimeSpan ts = DateTime.Now - sel.PullItemDate;
+                if (ts.TotalDays < 1)
+                    svm.PullItemDate = sel.PullItemDate.ToString("hh:mm tt");
+                else if (ts.TotalDays == 2)
+                    svm.PullItemDate = "Yesterday\r\n" + sel.PullItemDate.ToString("hh:mm tt");
+                else
+                    svm.PullItemDate = sel.PullItemDate.ToString("MMM dd") + "\r\n" + sel.PullItemDate.ToString("hh:mm tt");  
+              
+                    svm.Description =  sel.Description ;
                 if (sel.GrantedUser != null)
                     svm.User = sel.GrantedUser.FirstName + " " + sel.GrantedUser.LastName;
                 svm.TotalToPull = sel.TotalToPull;
@@ -651,6 +761,7 @@ namespace SmartDrawerWpfApp.ViewModel
                         nbInDevice++;
                     }
                 }
+                // if (1 == 1)
                 if (nbInDevice > 0)
                 {
                     svm.TotalToPullInDevice = nbInDevice;
@@ -675,15 +786,10 @@ namespace SmartDrawerWpfApp.ViewModel
 
 
         public RelayCommand btLightFilteredTagSelection { get; set; }
-        private void LightSelectionFromList()
+        public void LightSelectionFromList()
         {
             try
-            {
-                if ((mainview0.CardViewList != null) && (mainview0.CardViewList.SelectedItem != null))
-                {
-                    SelectionSelected = (SelectionViewModel)mainview0.CardViewList.SelectedItem;
-                }
-
+            {     
                 if (RfidStatus == false)
                 {
                     IsFlyoutCassettePositionOpen = false;
@@ -772,13 +878,23 @@ namespace SmartDrawerWpfApp.ViewModel
                     }
                 }
 
-                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count;
-                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count;
-                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count;
-                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count;
-                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count;
-                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count;
-                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count;
+                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count == 0 ? "-" : tmpCassette.TagToLight[1].Count.ToString();
+                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count == 0 ? "-" : tmpCassette.TagToLight[2].Count.ToString(); 
+                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count == 0 ? "-" : tmpCassette.TagToLight[3].Count.ToString(); 
+                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count == 0 ? "-" : tmpCassette.TagToLight[4].Count.ToString(); 
+                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count == 0 ? "-" : tmpCassette.TagToLight[5].Count.ToString(); 
+                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count == 0 ? "-" : tmpCassette.TagToLight[6].Count.ToString(); 
+                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count == 0 ? "-" : tmpCassette.TagToLight[7].Count.ToString();
+
+                BrushDrawer[1] = tmpCassette.TagToLight[1].Count == 0 ? BrushDrawer[1] : _borderReadyToPull;
+                BrushDrawer[2] = tmpCassette.TagToLight[2].Count == 0 ? BrushDrawer[2] : _borderReadyToPull;
+                BrushDrawer[3] = tmpCassette.TagToLight[3].Count == 0 ? BrushDrawer[3] : _borderReadyToPull;
+                BrushDrawer[4] = tmpCassette.TagToLight[4].Count == 0 ? BrushDrawer[4] : _borderReadyToPull;
+                BrushDrawer[5] = tmpCassette.TagToLight[5].Count == 0 ? BrushDrawer[5] : _borderReadyToPull;
+                BrushDrawer[6] = tmpCassette.TagToLight[6].Count == 0 ? BrushDrawer[6] : _borderReadyToPull;
+                BrushDrawer[7] = tmpCassette.TagToLight[7].Count == 0 ? BrushDrawer[7] : _borderReadyToPull;
+              
+
                 tmpCassette.CassetteSelectionTotalNumber = tmpCassette.ListControlNumber.Count;
 
                 if (_SelectedBaseObjects.Count > 0)
@@ -803,12 +919,7 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         public RelayCommand btRemoveSelection { get; set; }
         private async void removeSelection()
-        {
-            if ((mainview0.CardViewList != null) && (mainview0.CardViewList.SelectedItem != null))
-            {
-                SelectionSelected = (SelectionViewModel) mainview0.CardViewList.SelectedItem;
-            }
-
+        {  
             if (SelectionSelected != null)
             {
                 var ctx = await RemoteDatabase.GetDbContextAsync();
@@ -888,6 +999,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
 
             AutoConnectTimer.IsEnabled = false;
+            WallStatusOperational = "INITIALISATION";
 
             try
             {
@@ -1042,7 +1154,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {  // filtered records
-                    foreach (RecordEntry re in mainview0.myDatagrid.View.Records)
+                    //todo
+                    /*foreach (RecordEntry re in mainview0.myDatagrid.View.Records)
                     {
                         DataRowView drv = re.Data as DataRowView;
                         string uid = drv.Row[0].ToString();
@@ -1110,16 +1223,16 @@ namespace SmartDrawerWpfApp.ViewModel
                                 }
                             }
                         }
-                    }
+                    }*/
 
                 }
-                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count;
-                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count;
-                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count;
-                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count;
-                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count;
-                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count;
-                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count;
+                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count.ToString(); ;
+                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count.ToString(); ;
+                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count.ToString(); ;
+                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count.ToString(); ;
+                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count.ToString(); ;
+                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count.ToString(); ;
+                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count.ToString(); ;
                 tmpCassette.CassetteSelectionTotalNumber = tmpCassette.ListControlNumber.Count;
 
                 if (_SelectedBaseObjects.Count > 0)
@@ -1172,7 +1285,8 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             //wallStatus = "txt Got focus";
             _touchKeyboardProvider.ShowTouchKeyboard();
-            mainview0.TxtCtrlNumber.Focus();
+            //Todo
+            //mainview0.TxtCtrlNumber.Focus();
         }
         public RelayCommand searchTxtGotCR { get; set; }
         void searchTxtGotCRfn()
@@ -1181,7 +1295,9 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 if ((Data == null) || (Data.Count == 0)) return;
 
-                mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
+                //todo
+
+                /*mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
                 mainview0.myDatagrid.SearchHelper.ClearSearch();
                 mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
                 mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
@@ -1193,6 +1309,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     mainview0.myDatagrid.SelectedItems.Add(drv);
                 }
                 while (mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl));
+                */
             }
             catch (Exception error)
             {
@@ -1203,9 +1320,12 @@ namespace SmartDrawerWpfApp.ViewModel
         public RelayCommand btClearSelection { get; set; }
         void ClearSelection()
         {
+            //todo
+            /*
             mainview0.myDatagrid.SelectedItems.Clear();
             mainview0.myDatagrid.SearchHelper.ClearSearch();
             mainview0.myDatagrid.ScrollInView(new Syncfusion.UI.Xaml.ScrollAxis.RowColumnIndex() { RowIndex = 1, ColumnIndex = 1 });
+            */
         }
         public RelayCommand LogoutCommand { get; set; }
         public async void logout()
@@ -1300,7 +1420,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 else
                 {
                     WallSerial = mydev.SerialNumber;
-                    WallName = mydev.Name;
+                    WallName = mydev.Name;                    
                     InitValue();
                 }
 
@@ -1312,7 +1432,17 @@ namespace SmartDrawerWpfApp.ViewModel
         private void AutoConnectTimer_Tick(object sender, EventArgs e)
         {
             AutoConnectTimer.IsEnabled = false;
+
+            dayDate = DateTime.Now.ToString("dddd, dd");
+            dayTime = DateTime.Now.ToString("hh:mm tt");
+
             RfidStatus = DevicesHandler.DevicesConnected;
+
+            if (RfidStatus)
+            {
+                TimeSpan ts = DateTime.Now - DevicesHandler.LastScanTime;
+                LastScanInfo = string.Format("Last scan : {0} min ago", (int)ts.TotalMinutes);
+            }
 
             // 2 drawers open not possible meaning power cut 
             if ((DevicesHandler.DrawerStatus[1] == DrawerStatusList.Open) && (DevicesHandler.DrawerStatus[2] == DrawerStatusList.Open))
@@ -1364,7 +1494,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 if (IsWallReady())
                     _autoLockCpt--;
-                AutoLockMsg = "Lock (" + _autoLockCpt + ")";
+                AutoLockMsg = "Log Out in " + _autoLockCpt + "s";
             }
         }
         private async void ScanTimer_Tick(object sender, EventArgs e)
@@ -1372,6 +1502,31 @@ namespace SmartDrawerWpfApp.ViewModel
             try
             {
                 ScanTimer.Stop();
+
+                #region status
+
+                if (!RfidStatus)
+                {
+                    OverallStatus = false;
+                    WallStatusOperational = "RFID FAILURE";                   
+                }
+                else if (!GpioStatus)
+                {
+                    OverallStatus = false;
+                    WallStatusOperational = "GPIO FAILURE";                  
+                }
+                else if (!NetworkStatus)
+                {
+                    OverallStatus = false;
+                    WallStatusOperational = "SERVICE FAILURE";                
+                }
+                else
+                {
+                    OverallStatus = true;
+                    WallStatusOperational = "OPERATIONAL";
+                }                
+
+                #endregion
 
                 #region stop scan
                 if (_bStopWall)
@@ -1449,13 +1604,13 @@ namespace SmartDrawerWpfApp.ViewModel
                                 InventoryHandler.HandleNewScanCompleted(_bckrecheckLightDrawer);
 
                                 //Update GUI INFO 
-                                SelectedCassette.CassetteDrawer1Number = SelectedCassette.TagToLight[1].Count;
-                                SelectedCassette.CassetteDrawer2Number = SelectedCassette.TagToLight[2].Count;
-                                SelectedCassette.CassetteDrawer3Number = SelectedCassette.TagToLight[3].Count;
-                                SelectedCassette.CassetteDrawer4Number = SelectedCassette.TagToLight[4].Count;
-                                SelectedCassette.CassetteDrawer5Number = SelectedCassette.TagToLight[5].Count;
-                                SelectedCassette.CassetteDrawer6Number = SelectedCassette.TagToLight[6].Count;
-                                SelectedCassette.CassetteDrawer7Number = SelectedCassette.TagToLight[7].Count;
+                                SelectedCassette.CassetteDrawer1Number = SelectedCassette.TagToLight[1].Count.ToString(); ;
+                                SelectedCassette.CassetteDrawer2Number = SelectedCassette.TagToLight[2].Count.ToString(); ;
+                                SelectedCassette.CassetteDrawer3Number = SelectedCassette.TagToLight[3].Count.ToString(); ;
+                                SelectedCassette.CassetteDrawer4Number = SelectedCassette.TagToLight[4].Count.ToString(); ;
+                                SelectedCassette.CassetteDrawer5Number = SelectedCassette.TagToLight[5].Count.ToString(); ;
+                                SelectedCassette.CassetteDrawer6Number = SelectedCassette.TagToLight[6].Count.ToString(); ;
+                                SelectedCassette.CassetteDrawer7Number = SelectedCassette.TagToLight[7].Count.ToString(); ;
                                 SelectedCassette.CassetteSelectionTotalNumber = SelectedCassette.ListControlNumber.Count;
 
                                 if (TotalCassettesPulled == TotalCassettesToPull)
@@ -1671,8 +1826,9 @@ namespace SmartDrawerWpfApp.ViewModel
                     case "SelectProduct":
                         if (e.Message != null)
                         {
-                            if (mainview0.myDatagrid.SelectedItems.Count > 0)
-                                LightFilteredTag();
+                            //todo
+                           /* if (mainview0.myDatagrid.SelectedItems.Count > 0)
+                                LightFilteredTag();*/
                             wallStatus = DateTime.Now.ToLongTimeString() + e.Message;
                         }
                         break;
@@ -1792,15 +1948,15 @@ namespace SmartDrawerWpfApp.ViewModel
             try
             {
 
-
-                if (mainview0.tabListPerDrawer.IsVisible)
+                //todo
+                /*if (mainview0.tabListPerDrawer.IsVisible)
                 {
                     List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
                     ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
                     ListCtrlPerDrawer = null;
                     DrawerSelected = "";
                     DrawerCtrlCount = "";
-                }
+                }*/
 
 
                 if (string.IsNullOrEmpty(tagOnBadDrawer.TagId))
@@ -1901,8 +2057,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 _lastDrawerOpen = e.DrawerId;
                 wallStatus = "Drawer " + e.DrawerId + " opened";
 
-
-                if (mainview0.tabListPerDrawer.IsVisible)
+                //todo
+                /*if (mainview0.tabListPerDrawer.IsVisible)
                 {
 
                     if (_autoLightDrawer != -1) //switch of drawer
@@ -1917,7 +2073,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     ListCtrlPerDrawer = new ObservableCollection<string>(TmpListCtrlPerDrawer.OrderBy(i => i));
                     DrawerSelected = "Drawer " + _lastDrawerOpen;
                     DrawerCtrlCount = " (" + ListCtrlPerDrawer.Count + ")";
-                }
+                }*/
 
 
                 //Store event drawer 
@@ -2042,7 +2198,10 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void DeviceHandler_ScanCompleted(object sender, DrawerEventArgs e)
         {
-            wallStatus = "Drawer " + e.DrawerId + " scan completed";
+            wallStatus = "Drawer " + e.DrawerId + " scan completed";           
+            TimeSpan ts = DateTime.Now - DevicesHandler.LastScanTime;
+            LastScanInfo = string.Format("Last scan : {0} min ago", (int)ts.TotalMinutes);
+          
             //Store Inventory
             // - Get Tag from Db to synchronize
             try
@@ -2093,7 +2252,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 else
                     DevicesHandler.DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerInventoryData[e.DrawerId].nbTagScan;
 
-                DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerTagQty[e.DrawerId].ToString("000");
+                DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerTagQty[e.DrawerId].ToString();
                 CountTotalStones();
             }
             catch (Exception error)
@@ -2161,7 +2320,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
                     DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
                     BrushDrawer[loop] = _borderReady;
-                    DrawerTagQty[loop] = DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerPreviousDrawer).Count.ToString("000");
+                    DrawerTagQty[loop] = DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerPreviousDrawer).Count.ToString();
                 }
             }
         }
@@ -2271,34 +2430,7 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Function
         private void InitValue()
-        {
-            NetworkStatus = false;
-            GpioStatus = false;
-            RfidStatus = false;
-
-            InitWcfService();
-
-            wallStatus = "In Connection";
-            btLightText = "Light All";
-            txtNbSelectedItem = "Stones Selected : 0";
-            AutoLockMsg = "Wait User";
-
-            DrawerStatus = new ObservableCollection<string>();
-            DrawerStatus.Add("Index0");
-            DrawerTagQty = new ObservableCollection<string>();
-            DrawerTagQty.Add("index0");
-            BrushDrawer = new ObservableCollection<Brush>();
-            BrushDrawer.Add(Brushes.White);
-
-            for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
-            {
-                DevicesHandler.DrawerStatus[loop] = "In Connection";
-                DrawerStatus.Add(DevicesHandler.DrawerStatus[loop]);
-
-                DevicesHandler.DrawerTagQty[loop] = 0;
-                DrawerTagQty.Add(DevicesHandler.DrawerTagQty[loop].ToString("000"));
-                BrushDrawer.Add(_borderNotReady);
-            }
+        {          
 
             DevicesHandler.DeviceConnected += DeviceHandler_DeviceConnected;
             DevicesHandler.DeviceDisconnected += DeviceHandlerOnDeviceDisconnected;
@@ -2312,6 +2444,8 @@ namespace SmartDrawerWpfApp.ViewModel
             DevicesHandler.GpioConnected += DevicesHandler_GpioConnected;
             DevicesHandler.FpAuthenticationReceive += DevicesHandler_FpAuthenticationReceive;
             DevicesHandler.TryInitializeLocalDeviceAsync();
+
+            InitWcfService();
 
             AutoConnectTimer = new DispatcherTimer();
             AutoConnectTimer.Tick += new EventHandler(AutoConnectTimer_Tick);
@@ -2341,11 +2475,26 @@ namespace SmartDrawerWpfApp.ViewModel
         /// </summary>
         public MainViewModel()
         {
+
+            // add custom accent and theme resource dictionaries to the ThemeManager
+            // you should replace MahAppsMetroThemesSample with your application name
+            // and correct place where your custom accent lives
+            ThemeManager.AddAccent("CustomAccent1", new Uri("pack://application:,,,/SmartDrawerWpfApp;component/Stylesheet/CustomAccent.xaml"));
+
+            // get the current app style (theme and accent) from the application
+            Tuple<AppTheme, Accent> theme = ThemeManager.DetectAppStyle(Application.Current);
+
+            // now change app style to the custom accent and current theme
+            ThemeManager.ChangeAppStyle(Application.Current,
+                                        ThemeManager.GetAccent("CustomAccent1"),
+                                        theme.Item1);
+
             //Get handle of main window
-            mainview0 = System.Windows.Application.Current.Windows.OfType<MainWindow>().FirstOrDefault();
+            mainview0 = System.Windows.Application.Current.Windows.OfType<MainWindow2>().FirstOrDefault();
             mainview0.Loaded += Mainview0_Loaded;
             mainview0.NotifyBadgeReaderEvent += Mainview0_NotifyBadgeReaderEvent;
             mainview0.NotifyM2MCardEvent += Mainview0_NotifyM2MCardEvent;
+            mainview0.theModel = this;
 
             #region Initialize command
             ResetDeviceCommand = new RelayCommand(() => Reset(true));
@@ -2361,6 +2510,7 @@ namespace SmartDrawerWpfApp.ViewModel
             BtRefreshSelection = new RelayCommand(() => getSelection());
             BtLighAllPerDrawer = new RelayCommand(() => BtLighAllPerDrawerFn());
             BtLighListPerDrawer = new RelayCommand(() => BtLighListPerDrawerFn());
+            BtRemoveCardSelection = new RelayCommand(() => DeleteCard());
 
             #endregion
         }
@@ -2370,12 +2520,15 @@ namespace SmartDrawerWpfApp.ViewModel
             searchTxtGotCRfn();
         }
         private void Mainview0_NotifyBadgeReaderEvent(object sender, string badgeID)
-        {
-            LoggedUser = badgeID;
+        {            
+            LastScanInfo = "Badge: " + badgeID;
+            AutoConnectTimer.Stop();
+            AutoConnectTimer.Start();
             foreach (var user in GrantedUsersCache.Cache)
             {
                 if (badgeID == user.BadgeNumber)
                 {
+                    
                     wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
                     LoggedUser = user.Login;
                     var ctx = RemoteDatabase.GetDbContext();
@@ -2494,6 +2647,37 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void Mainview0_Loaded(object sender, RoutedEventArgs e)
         {
+
+            NetworkStatus = false;
+            GpioStatus = false;
+            RfidStatus = false;
+
+            dayDate = DateTime.Now.ToString("dddd, dd");
+            dayTime = DateTime.Now.ToString("hh:mm tt");
+            WallStatusOperational = "INITIALISATION";
+
+            wallStatus = "In Connection";
+            btLightText = "Light All";
+            txtNbSelectedItem = "Stones Selected : 0";
+            AutoLockMsg = "Wait User";
+
+            DrawerStatus = new ObservableCollection<string>();
+            DrawerStatus.Add("Index0");
+            DrawerTagQty = new ObservableCollection<string>();
+            DrawerTagQty.Add("index0");
+            BrushDrawer = new ObservableCollection<Brush>();
+            BrushDrawer.Add(Brushes.White);
+
+            for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
+            {
+                DevicesHandler.DrawerStatus[loop] = "In Connection";
+                DrawerStatus.Add(DevicesHandler.DrawerStatus[loop]);
+
+                DevicesHandler.DrawerTagQty[loop] = 0;
+                DrawerTagQty.Add(DevicesHandler.DrawerTagQty[loop].ToString());
+                BrushDrawer.Add(_borderNotReady);
+            }
+
             startTimer = new DispatcherTimer();
             startTimer.Interval = new TimeSpan(0, 0, 1);
             startTimer.Tick += StartTimer_Tick;

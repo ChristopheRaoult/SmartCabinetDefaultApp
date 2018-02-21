@@ -19,6 +19,7 @@ using Syncfusion.UI.Xaml.Grid.Helpers;
 using Syncfusion.Data;
 using System.Data.Entity;
 using SmartDrawerDatabase;
+using SmartDrawerWpfApp.View;
 
 namespace SmartDrawerWpfApp.Wcf
 {
@@ -30,7 +31,7 @@ namespace SmartDrawerWpfApp.Wcf
     {
         public event MyHostEventHandler MyHostEvent = delegate { };
         public WallDevice myWall = new WallDevice();
-        public MainWindow mainview0;
+        public MainWindow2 mainview0;
 
         [WebInvoke(Method = "GET",
        UriTemplate = "/GetWallInfoByGet",
@@ -248,6 +249,8 @@ namespace SmartDrawerWpfApp.Wcf
                     //{
                     if ((mylist != null) && (mylist.Count > 0))
                     {
+                        //todo
+                        /*
                         mainview0.myDatagrid.SelectedItems.Clear();
                         if (mainview0.Data != null && mainview0.Data.Count > 0)
                         {
@@ -267,6 +270,7 @@ namespace SmartDrawerWpfApp.Wcf
                         }
                         else
                             return "Failed : datagrid is empty !";
+                            */
                     }
                 }
                 else
@@ -334,7 +338,7 @@ namespace SmartDrawerWpfApp.Wcf
                         {
                                 ServerPullItemId = jitp.ServerPullItemId,
                                 PullItemDate = jitp.pullItemDate,
-                                Description = jitp.description,
+                                Description =  string.IsNullOrEmpty(jitp.description) ? " " : jitp.description ,
                                 GrantedUser = user,
                                 TotalToPull = jitp.listOfTagToPull.Length,
 
@@ -579,7 +583,7 @@ namespace SmartDrawerWpfApp.Wcf
                     if (juf != null)
                     {
                         var ctx = await RemoteDatabase.GetDbContextAsync();
-                        var user = ctx.GrantedUsers.Find(juf.GrantedUserId);
+                        var user = ctx.GrantedUsers.GetByServerId(juf.GrantedUserId);
                         if (user != null) //user Exist
                         {
                             var fingerprint =  ctx.Fingerprints.FirstOrDefault(fp => fp.Index == juf.Index && fp.GrantedUserId == user.GrantedUserId);
@@ -630,7 +634,7 @@ namespace SmartDrawerWpfApp.Wcf
                 if (juf != null)
                 {
                     var ctx = await RemoteDatabase.GetDbContextAsync();
-                    var user = ctx.GrantedUsers.Find(juf.GrantedUserId);
+                    var user = ctx.GrantedUsers.GetByServerId(juf.GrantedUserId);
                     if (user != null) //user Exist
                     {
                         var fingerprint = ctx.Fingerprints.FirstOrDefault(fp => fp.Index == juf.Index && fp.GrantedUserId == user.GrantedUserId);

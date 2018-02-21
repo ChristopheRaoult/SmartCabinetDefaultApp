@@ -53,6 +53,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         }
 
         public static string LastScanAccessTypeName { get; set; }
+        public static DateTime LastScanTime;
 
         private static int _LastDrawerOpened = 0;
         private static int _LastDrawerClosed = 0;
@@ -729,7 +730,9 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                      
                         AddTagListForDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);
                         UpdateAddedTagToDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);                                          
-                        UpdateremovedTagToDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);                         
+                        UpdateremovedTagToDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);
+                        LastScanTime = DateTime.Now;
+
                         Thread.Sleep(10);
                     }
                     finally

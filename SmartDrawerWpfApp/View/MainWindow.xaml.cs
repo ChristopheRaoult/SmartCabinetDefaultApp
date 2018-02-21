@@ -35,6 +35,7 @@ namespace SmartDrawerWpfApp
         public ObservableCollection<BaseObject> Data;
         public event NotifyHandlerBadgeReaderDelegate NotifyBadgeReaderEvent;
         public event NotifyHandlerBadgeReaderDelegate NotifyM2MCardEvent;
+        public MainViewModel theModel = null;
         public MainWindow()
         {
             InitializeComponent();
@@ -200,5 +201,17 @@ namespace SmartDrawerWpfApp
             }
         }
 
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {           
+            if (theModel != null)
+                theModel.DeleteCard();         
+        }
+        
+
+        private void CardViewList_MouseUp(object sender, MouseButtonEventArgs e)
+        {
+            if (theModel != null)
+                theModel.LightSelectionFromList();
+        }
     }
 }

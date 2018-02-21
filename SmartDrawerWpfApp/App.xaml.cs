@@ -1,4 +1,5 @@
-﻿using SmartDrawerWpfApp.StaticHelpers;
+﻿using MahApps.Metro;
+using SmartDrawerWpfApp.StaticHelpers;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -49,13 +50,6 @@ namespace SmartDrawerWpfApp
         }
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-
-
-
-
-
-
-
             AppDomain.CurrentDomain.UnhandledException +=
               (s, exception) =>
               LogUnhandledException((Exception)exception.ExceptionObject, "AppDomain.CurrentDomain.UnhandledException");
@@ -67,6 +61,9 @@ namespace SmartDrawerWpfApp
             TaskScheduler.UnobservedTaskException +=
                 (s, exception) =>
                 LogUnhandledException(exception.Exception, "TaskScheduler.UnobservedException");
+           
+
+          
         }
     }
 }

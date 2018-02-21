@@ -1,0 +1,407 @@
+﻿<Controls:MetroWindow x:Class="SmartDrawerWpfApp.View.MainWindow2"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:local="clr-namespace:SmartDrawerWpfApp.View"
+        xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
+        DataContext="{Binding Main, Source={StaticResource Locator}}"
+        mc:Ignorable="d"
+        Title="SmartDrawer Application"  MinHeight="900" MinWidth="1600" d:DesignWidth="1600" d:DesignHeight="900" WindowStartupLocation="CenterScreen" WindowState="Maximized"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp">
+    <Controls:MetroWindow.Resources>
+        <Image x:Key="ButtonDelete" Source="/Resources/icon-delete.png" />
+        <Image x:Key="ButtonLight" Source="/Resources/icon-light.png" />
+    </Controls:MetroWindow.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="3" />
+            <ColumnDefinition Width="367" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="90" ></RowDefinition>
+            <RowDefinition Height="3" ></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <!-- Upper LEFT -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Background="#F8F8F8">
+            <Image x:Name="Logo" Source="/SmartDrawerWpfApp;component/Resources/spacecode-logo.png" Margin="10" VerticalAlignment="Center" Height="53" Width="58" ></Image>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="15"/>
+           
+            <StackPanel Orientation="Vertical">
+                <TextBlock Margin="0,23,0,0" Text="Wall Serial:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
+                <TextBlock Margin="0,5,0,0" Text="{Binding  WallSerial}" Style="{StaticResource wallinfoTextBlock2}"/>
+            </StackPanel>          
+
+            <StackPanel Orientation="Vertical" Margin="15,0,0,0">
+                <TextBlock Margin="0,23,0,0" Text="Facility Name:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
+                <TextBlock Margin="0,5,0,0" Text="{Binding  WallName}" Style="{StaticResource wallinfoTextBlock2}"/>
+            </StackPanel>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="15"/>
+            <Image x:Name="User" Source="/SmartDrawerWpfApp;component/Resources/icon-user.png" VerticalAlignment="Center" Height="30" Width="24" ></Image>
+            <StackPanel Orientation="Vertical" Margin="15,0,0,0">
+                <TextBlock Margin="0,23,0,0" Text="User Logged:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
+                <TextBlock Margin="0,5,0,0" Text="{Binding LoggedUser}" Style="{StaticResource wallinfoTextBlock2}"/>
+            </StackPanel>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="15"/>
+            <Button Width="165"  Height="44" BorderThickness="1,1,1,1" BorderBrush="Gainsboro"  Command="{Binding LogoutCommand}" Content="{Binding AutoLockMsg}" Style="{StaticResource DefaultButton2}" />           
+        </StackPanel>
+        <StackPanel Orientation="Vertical" HorizontalAlignment="Right" Background="#F8F8F8">
+            <TextBlock Margin="0,23,20,0" HorizontalAlignment="Center" Text="{Binding dayDate}"  Style="{StaticResource itemTextBlock1}"></TextBlock>
+            <TextBlock Margin="0,5,20,0" HorizontalAlignment="Center" Text="{Binding  dayTime}" Style="{StaticResource wallinfoTextBlock2}"/>
+        </StackPanel>
+        <!-- Upper RIGHT -->
+        <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Background="#F8F8F8">
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Background="#F8F8F8">
+                <TextBlock Margin="5" Text="Status:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
+                <StackPanel Orientation="Horizontal">
+                    <Image Width="18" Height="18" Stretch="Fill" Margin="10,0,0,0">
+                        <Image.Style>
+                            <Style TargetType="{x:Type Image}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding OverallStatus}" Value="False">
+                                        <Setter Property="Source" Value="/Resources/status-failure.png"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding OverallStatus}" Value="True">
+                                        <Setter Property="Source" Value="/Resources/status-operational.png"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                    <TextBlock Margin="5" Text="{Binding WallStatusOperational}"  Style="{StaticResource wallinfoTextBlock3}"></TextBlock>
+                </StackPanel>
+                <TextBlock  x:Name="LastScanInfo" Margin="5" Text="{Binding LastScanInfo}"  Style="{StaticResource itemTextBlock3}"></TextBlock>
+            </StackPanel>          
+        </StackPanel>
+        <StackPanel  Grid.Row="0" Grid.Column="2"  Margin="0,0,25,0" Orientation="Vertical"   HorizontalAlignment="Right" Background="#F8F8F8">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding OverallStatus}" Value="False">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                        </DataTrigger>
+                    <DataTrigger Binding="{Binding OverallStatus}" Value="True">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                </Style.Triggers>
+            </Style>
+            </StackPanel.Style>
+            <StackPanel   Orientation="Vertical"  HorizontalAlignment="Stretch" Background="#F8F8F8">
+                    <TextBlock Margin="0,10,0,0" HorizontalAlignment="Center" Text="{Binding WallTotalStones}"  Style="{StaticResource itemTextBlock4}"></TextBlock>
+                <TextBlock Margin="0,2,0,0" HorizontalAlignment="Center"  Text="Total Items"  Style="{StaticResource itemTextBlock1}"></TextBlock>
+                </StackPanel>            
+        </StackPanel>
+        <StackPanel  Grid.Row="0" Grid.Column="2"  Margin="0,0,25,0" Orientation="Vertical"   HorizontalAlignment="Right" Background="#F8F8F8">
+            <StackPanel.Style>
+                <Style TargetType="StackPanel">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding OverallStatus}" Value="False">
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding OverallStatus}" Value="True">
+                            <Setter Property="Visibility" Value="Hidden"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </StackPanel.Style>
+            <Button Width="150"  Height="44" Margin="0,25,0,0" VerticalAlignment="Center" Command="{Binding ResetDeviceCommand}" Content="Reset System" Style="{StaticResource DefaultButton3}"  />
+        </StackPanel>
+        <!-- RIGHT PANEL DRAWER-->
+        <Grid Grid.Row="2" Grid.Column="2" Background="#F8F8F8" >
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" ></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <!-- Drawer 1 -->
+            <Grid Grid.Row="0" Margin="5">
+                <Grid.Background>
+                    <ImageBrush ImageSource="/Resources/bg.png" Stretch="Fill" />
+                </Grid.Background>
+                <StackPanel Orientation="Horizontal">
+                <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
+                        <TextBlock Margin="0,20,0,0" Text="{Binding DrawerTagQty[1]}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="Items"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                <StackPanel Orientation="Vertical"  Width="150">
+                        <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer1Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <Border Background="{Binding BrushDrawer[1]}" BorderBrush="{Binding BrushDrawer[1]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBlock Background="{Binding BrushDrawer[1]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="1"  Style="{StaticResource itemTextDrawerNumber}"/>                       
+                    </Border>
+                </StackPanel>  
+            </Grid>
+            <!-- Drawer 2 -->
+            <Grid Grid.Row="1" Margin="5">
+                <Grid.Background>
+                    <ImageBrush ImageSource="/Resources/bg.png" Stretch="Fill" />
+                </Grid.Background>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
+                        <TextBlock Margin="0,20,0,0" Text="{Binding DrawerTagQty[2]}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="Items"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical"  Width="150">
+                        <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer2Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <Border Background="{Binding BrushDrawer[2]}" BorderBrush="{Binding BrushDrawer[2]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBlock Background="{Binding BrushDrawer[2]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="2"  Style="{StaticResource itemTextDrawerNumber}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+            <!-- Drawer 3 -->
+            <Grid Grid.Row="2" Margin="5">
+                <Grid.Background>
+                    <ImageBrush ImageSource="/Resources/bg.png" Stretch="Fill" />
+                </Grid.Background>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
+                        <TextBlock Margin="0,20,0,0" Text="{Binding DrawerTagQty[3]}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="Items"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical"  Width="150">
+                        <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer3Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <Border Background="{Binding BrushDrawer[3]}" BorderBrush="{Binding BrushDrawer[3]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBlock Background="{Binding BrushDrawer[3]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="3"  Style="{StaticResource itemTextDrawerNumber}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+            <!-- Drawer 4 -->
+            <Grid Grid.Row="3" Margin="5">
+                <Grid.Background>
+                    <ImageBrush ImageSource="/Resources/bg.png" Stretch="Fill" />
+                </Grid.Background>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
+                        <TextBlock Margin="0,20,0,0" Text="{Binding DrawerTagQty[4]}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="Items"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical"  Width="150">
+                        <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer4Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <Border Background="{Binding BrushDrawer[4]}" BorderBrush="{Binding BrushDrawer[4]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBlock Background="{Binding BrushDrawer[4]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="4"  Style="{StaticResource itemTextDrawerNumber}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>           
+            <!-- Drawer 5 -->
+            <Grid Grid.Row="4" Margin="5">
+                <Grid.Background>
+                    <ImageBrush ImageSource="/Resources/bg.png" Stretch="Fill" />
+                </Grid.Background>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
+                        <TextBlock Margin="0,20,0,0" Text="{Binding DrawerTagQty[5]}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="Items"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical"  Width="150">
+                        <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer5Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <Border Background="{Binding BrushDrawer[5]}" BorderBrush="{Binding BrushDrawer[5]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBlock Background="{Binding BrushDrawer[5]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="5"  Style="{StaticResource itemTextDrawerNumber}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+            <!-- Drawer 6 -->
+            <Grid Grid.Row="5" Margin="5">
+                <Grid.Background>
+                    <ImageBrush ImageSource="/Resources/bg.png" Stretch="Fill" />
+                </Grid.Background>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
+                        <TextBlock Margin="0,20,0,0" Text="{Binding DrawerTagQty[6]}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="Items"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical"  Width="150">
+                        <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer6Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <Border Background="{Binding BrushDrawer[6]}" BorderBrush="{Binding BrushDrawer[6]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBlock Background="{Binding BrushDrawer[6]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="6"  Style="{StaticResource itemTextDrawerNumber}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+            <!-- Drawer 7 -->
+            <Grid Grid.Row="6" Margin="5">
+                <Grid.Background>
+                    <ImageBrush ImageSource="/Resources/bg.png" Stretch="Fill" />
+                </Grid.Background>
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
+                        <TextBlock Margin="0,20,0,0" Text="{Binding DrawerTagQty[7]}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="Items"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical"  Width="150">
+                        <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer7Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
+                        <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
+                    </StackPanel>
+                    <Border Background="{Binding BrushDrawer[7]}" BorderBrush="{Binding BrushDrawer[7]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                        <TextBlock Background="{Binding BrushDrawer[7]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="7"  Style="{StaticResource itemTextDrawerNumber}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </Grid>
+        <!-- Center view -->
+        <TabControl Grid.Row="3" Margin="0,5,0,0">
+            <TabControl.Resources>
+                <Style TargetType="TabItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border Name="Border" BorderThickness="1,1,1,1" BorderBrush="Gainsboro" CornerRadius="5,5,5,5" Margin="5,0,0,0">
+                                    <ContentPresenter x:Name="ContentSite"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Center"
+                                        ContentSource="Header"
+                                        Margin="10,2"/>
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Border" Property="Background" Value="#33BCBA" />
+                                        <Setter Property="Foreground" Value="#FFFFFF" />
+                                        <Setter Property="FontFamily" Value="./Fonts/Roboto-Bold.ttf" />
+                                        <Setter Property="FontSize"  Value="18" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="False">
+                                        <Setter TargetName="Border" Property="Background" Value="#FFFFFF" />                                        
+                                        <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
+                                        <Setter Property="FontSize"  Value="16" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </TabControl.Resources>
+            
+            <TabItem Header="Selection Mode" Width="165" Height="44" >
+                <Grid Grid.Row="1" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="75"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="5"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"   >
+                        <Button Width="50"  Height="50" Margin="0, 0, 10, 0" Style="{DynamicResource MetroCircleButtonStyle}" Command="{Binding BtRefreshSelection}">
+                            <Rectangle Width="20"  Height="20" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                                <Rectangle.OpacityMask>
+                                    <VisualBrush Stretch="Fill"    Visual="{DynamicResource appbar_refresh}" />
+                                </Rectangle.OpacityMask>
+                            </Rectangle>
+                        </Button>
+                        <TextBlock Text="Refresh / Cancel Lighting"  VerticalAlignment="Center" FontSize="20" Style="{StaticResource itemTextBlock}"/>
+                        <Button  x:Name="btLightselection" Visibility="Hidden" Command="{Binding btLightFilteredTagSelection}"    Margin="10,5,5,5"  Content=" Light Selection " Style="{StaticResource DefaultButton}"  />
+                        <Button  Command="{Binding btRemoveSelection}"  Visibility="Hidden"  Margin="50,5,5,5"   Content=" Remove Selection "   Style="{StaticResource DefaultButton}"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"   />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Rectangle Width="15" Margin="15,5,5,5" >
+                            <Rectangle.Fill>
+                                <VisualBrush Visual="{StaticResource appbar_lightbulb}" Stretch="Uniform" />
+                            </Rectangle.Fill>
+                        </Rectangle>
+                        <Controls:ToggleSwitch x:Name="ChkAutoLight"  IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" Foreground="{DynamicResource AccentColorBrush}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>                       
+                    </StackPanel>
+                    <syncfusion:SfDataGrid Name="myDatagridSelection" Grid.Row="1"
+                                               HeaderRowHeight="80"
+                                               RowHeight="60"
+                                               VerticalAlignment="Stretch"  
+                                               HorizontalAlignment="Stretch"
+                                               AutoGenerateColumns="False"                                                                             
+                                               SelectionMode="Single"   
+                                               SelectionUnit="Row"   
+                                               AllowDraggingColumns="False"                                           
+                                               AllowEditing="False"
+                                               AllowFiltering="False"
+                                               AllowGrouping="False"  
+                                               ShowGroupDropArea="False" 
+                                               EnableDataVirtualization="True"
+                                               NavigationMode="Row"  
+                                               ShowBusyIndicator="True"
+                                               FontFamily="./Fonts/Roboto-Regular.ttf" 
+                                               FontSize="18" 
+                                               Foreground="#000000"
+                                               RowSelectionBrush="#33BCBA"
+                                               SelectionForegroundBrush="#FFFFFF"
+                                               ItemsSource="{Binding Selection}" 
+                                               SelectedItem="{Binding SelectionSelected}"
+                                               AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
+                                               AlternationCount="2"
+                                               HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star"
+                                               BorderThickness="0"
+                                               MouseUp="DataGrid_MouseUp">
+
+                        <syncfusion:SfDataGrid.Resources>                         
+                            <Style TargetType="syncfusion:GridCell">
+                                <Setter Property="BorderThickness" Value="0" />
+                            </Style>
+                        </syncfusion:SfDataGrid.Resources>
+
+                    <syncfusion:SfDataGrid.Columns >
+                            <syncfusion:GridTemplateColumn  Width="30">
+                                <syncfusion:GridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Image Width="25" Height="35">
+                                            <Image.Style>                                                
+                                            <Style TargetType="{x:Type Image}">
+                                                    <Setter Property="Source" Value="/Resources/icon-light.png" />                                                 
+                                            </Style>
+                                        </Image.Style>
+                                        </Image>
+                                    </DataTemplate>
+                                </syncfusion:GridTemplateColumn.CellTemplate>
+                                
+                            </syncfusion:GridTemplateColumn>
+
+                            <syncfusion:GridTextColumn   x:Name="ColDate"  HeaderText="TIME"
+                                                        MappingName="PullItemDate" TextAlignment="Center"  VerticalAlignment="Center"  ColumnSizer="Star" TextWrapping="Wrap" AllowResizing="True"/>
+                            <syncfusion:GridTextColumn  x:Name="ColUser"
+                                                        HeaderText="USER"
+                                                        MappingName="User" TextAlignment="Center" ColumnSizer="Star"/>
+                            <syncfusion:GridTextColumn  x:Name="ColDescription"
+                                                        HeaderText="DESCRIPTION"
+                                                        MappingName="Description" TextAlignment="Center" Width="400"/>
+                           
+                            <syncfusion:GridTextColumn  x:Name="ColToPull"
+                                                        HeaderText="#ITEMS TO PULL"
+                                                        MappingName="TotalToPull" TextAlignment="Center" ColumnSizer="Star"/>
+                            <syncfusion:GridTextColumn  x:Name="ColInDevicel"
+                                                        HeaderText="#ITEMS IN DEVICE"
+                                                        MappingName="TotalToPullInDevice" TextAlignment="Center" ColumnSizer="Star"/>
+                            <syncfusion:GridTemplateColumn HeaderText="ACTION">
+                                <syncfusion:GridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Width="25" Height="25" Style="{DynamicResource MetroCircleButtonStyle}"  Click="Button_Click_Delete">
+                                            <Rectangle Width="20"  Height="20" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                                                <Rectangle.OpacityMask>
+                                                    <VisualBrush Stretch="Fill"    Visual="{DynamicResource appbar_delete}" />
+                                                </Rectangle.OpacityMask>
+                                            </Rectangle>
+                                        </Button>
+                                    </DataTemplate>
+                                </syncfusion:GridTemplateColumn.CellTemplate>
+                            </syncfusion:GridTemplateColumn>
+                        </syncfusion:SfDataGrid.Columns>
+                    </syncfusion:SfDataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Inventory Mode" Width="165" Height="44">
+            </TabItem>
+            <TabItem Header="Drawer Mode" Width="165" Height="44">
+            </TabItem>
+            <TabItem Header="Admin Mode" Width="165" Height="44">
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Controls:MetroWindow>

@@ -68,8 +68,7 @@
                     </Rectangle>
                     <StackPanel Grid.Column="0" Orientation="Vertical" Width="200">
                             <TextBlock Margin="10,5,0,0" Text="Wall Serial:"  TextWrapping="Wrap" Style="{StaticResource itemTextBlock}"></TextBlock>
-                            <TextBlock Margin="20,5,0,0" Text="{Binding  WallSerial}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>
-                       
+                            <TextBlock Margin="20,5,0,0" Text="{Binding  WallSerial}" TextWrapping="Wrap" Style="{StaticResource wallinfoTextBlock}"/>                       
                     </StackPanel>
                     <StackPanel Orientation="Horizontal">
                         <Rectangle Width="30" Margin="5">
@@ -127,8 +126,9 @@
                                                  </Rectangle.OpacityMask>
                                              </Rectangle>
                                         </Button>
-                                    <Button  x:Name="btLightselection" Command="{Binding btLightFilteredTagSelection}"    Margin="10,5,5,5"  Content=" Light Selection " Style="{StaticResource DefaultButton}"  />
-                                    <Button  Command="{Binding btRemoveSelection}"   Margin="50,5,5,5"   Content=" Remove Selection "   Style="{StaticResource DefaultButton}"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"   />                                   
+                                    <TextBlock Text="Refresh"  VerticalAlignment="Center" FontSize="20" Style="{StaticResource itemTextBlock}"/> 
+                                    <Button  x:Name="btLightselection" Visibility="Hidden" Command="{Binding btLightFilteredTagSelection}"    Margin="10,5,5,5"  Content=" Light Selection " Style="{StaticResource DefaultButton}"  />
+                                    <Button  Command="{Binding btRemoveSelection}"  Visibility="Hidden"  Margin="50,5,5,5"   Content=" Remove Selection "   Style="{StaticResource DefaultButton}"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"   />                                   
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                                             <Rectangle Width="15" Margin="15,5,5,5" >
@@ -139,7 +139,7 @@
                                     <Controls:ToggleSwitch x:Name="ChkAutoLight"  IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" Foreground="{DynamicResource AccentColorBrush}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>
                                             <!--TextBlock  Text="Auto Light Drawer" Margin="2,0,2,0" VerticalAlignment="Center" HorizontalAlignment="Left" FontFamily="Verdana" FontSize="8"></-->
                                         </StackPanel>
-                                        <!-- syncfusion:SfDataGrid Name="myDatagridSelection" Grid.Row="1"
+                                        <syncfusion:SfDataGrid Name="myDatagridSelection" Grid.Row="1"
                                                         HeaderRowHeight="50"
                                                        RowHeight="40"
                                                VerticalAlignment="Stretch"  
@@ -184,10 +184,10 @@
                                                                              HeaderText="In Device"
                                                                              MappingName="TotalToPullInDevice" TextAlignment="Center" ColumnSizer="Star"/>                               
                                                 </syncfusion:SfDataGrid.Columns>
-                                </-->
-                                <syncfusion:CardView Grid.Row="1" x:Name="CardViewList"
-                                                     ItemsSource="{Binding Selection}" 
-                                                     SelectedItem="{Binding SelectionSelected}" 
+                                </syncfusion:SfDataGrid>
+                                <!--syncfusion:CardView Grid.Row="1" x:Name="CardViewList"
+                                                     ItemsSource="{Binding Selection}"   
+                                                     SelectedItem="{Binding SelectionSelected}"                                                  
                                                      PreviewKeyDown="UIElement_OnPreviewKeyDown"
                                                      ItemTemplate="{StaticResource 2}"
                                                      CanEdit="False"
@@ -196,18 +196,28 @@
                                                      CanGroup="false"
                                                      ForceCursor="False"                                                    
                                                      ItemContainerStyle="{StaticResource contactStyle}"
-                                                     syncfusion:SkinStorage.VisualStyle="Transparent">  
+                                                     syncfusion:SkinStorage.VisualStyle="Transparent" 
+                                                     MouseUp="CardViewList_MouseUp">  
                                    
                                     <syncfusion:CardView.HeaderTemplate>
                                         <DataTemplate>
                                             <Grid>
                                                 <Border Background="{DynamicResource AccentColorBrush}">
+                                                    <StackPanel Orientation="Horizontal" Width="225">
                                                     <TextBlock Text="{Binding User}"  Margin="5" Foreground="White" VerticalAlignment="Center" FontWeight="Bold" FontFamily="Bookman Old Style" Grid.Column="1"/>
+                                                    <Button Width="25"  Height="25" Margin="50, 0, 10, 0" Style="{DynamicResource MetroCircleButtonStyle}"  Click="Button_Click" HorizontalAlignment="Right">
+                                                        <Rectangle Width="20"  Height="20" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
+                                                            <Rectangle.OpacityMask>
+                                                                <VisualBrush Stretch="Fill"    Visual="{DynamicResource appbar_delete}" />
+                                                            </Rectangle.OpacityMask>
+                                                        </Rectangle>
+                                                    </Button>
+                                                    </StackPanel>
                                                 </Border>
                                             </Grid>
                                         </DataTemplate>
                                     </syncfusion:CardView.HeaderTemplate>
-                                </syncfusion:CardView>                               
+                                </-->                               
                                 </Grid>
                             </TabItem>
                             <TabItem Header="Device Content" Width="200">

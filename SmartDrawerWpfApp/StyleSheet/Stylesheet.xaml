@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:sync="http://schemas.syncfusion.com/wpf"
                     xmlns:MyCtrl="clr-namespace:SmartDrawerWpfApp.View.UC"
-                    xmlns:local="clr-namespace:SmartDrawerWpfApp.ViewModel">
+                    xmlns:local="clr-namespace:SmartDrawerWpfApp.ViewModel"
+                    xmlns:syncfusion="http://schemas.syncfusion.com/wpf">
     <!-- Style Textblock items-->
     <Style x:Key="itemTextBlock" TargetType="TextBlock">
         <Setter Property="FontSize"  Value="12" />
@@ -130,70 +131,141 @@
         </Border>
     </DataTemplate>
     <DataTemplate x:Key="2">
-        <ListBox ScrollViewer.HorizontalScrollBarVisibility="Disabled" ScrollViewer.PanningMode="HorizontalOnly" >
+        <ListBox ScrollViewer.HorizontalScrollBarVisibility="Disabled" >           
             <ListBoxItem>
                 <Grid >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>                   
-                    <TextBlock Grid.Column="0" Text="Server ID:" HorizontalAlignment="Right"/>
-                    <TextBlock Grid.Column="1" Text="{Binding ServerPullItemId}" Margin="5,0,0,0"/>
-                </Grid>
-             
-            </ListBoxItem>
-            <ListBoxItem>
-                <Grid >
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
-                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="115"/>
+                        <ColumnDefinition Width="115"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Date:" HorizontalAlignment="Right"/>
-                    <TextBlock Grid.Column="1" Text="{Binding PullItemDate, Converter={StaticResource DateTimeToShortDateConverter}}" Margin="5,0,0,0"/>
+                    <StackPanel Orientation="Horizontal" Grid.Column="0" Grid.Row="0">
+                        <TextBlock Text="ID:" HorizontalAlignment="Left" Margin="10"/>
+                        <TextBlock Text="{Binding ServerPullItemId}" Margin="0,10,0,0"  />
+                    </StackPanel>
+
+                    <TextBlock Grid.Column="1"  Grid.Row="0" Text="{Binding PullItemDate, Converter={StaticResource DateTimeToShortDateConverter}}" HorizontalAlignment="Right" Margin="10"/>
+
+                    <Border Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Background="WhiteSmoke" />
+                    <TextBlock Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" Text="Description:" HorizontalAlignment="Left" FontSize="12" />
+                    <MyCtrl:TextDefil Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="2"  myText="{Binding Description}" HorizontalAlignment="Center" FontSize="20" Margin="10"/>
+
+                    <Border Grid.Column="0" Grid.Row="3" Grid.ColumnSpan="2" Background="WhiteSmoke" />
+                    <TextBlock Grid.Column="0" Grid.Row="3" Text="To Pull:" HorizontalAlignment="Center" FontSize="12" />
+                    <TextBlock Grid.Column="0" Grid.Row="4" Text="{Binding TotalToPull}" HorizontalAlignment="Center" FontSize="40"/>
+                    <TextBlock Grid.Column="1"  Grid.Row="3" Text="In Device:" HorizontalAlignment="Center" FontSize="12"/>
+                    <TextBlock Grid.Column="1"  Grid.Row="4" Text="{Binding TotalToPullInDevice}" HorizontalAlignment="Center" FontSize="40"/>
                 </Grid>
-            </ListBoxItem>
-            <ListBoxItem>
-                <Grid >
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Description:" HorizontalAlignment="Right"/>
-                    <!--TextBlock Grid.Column="1" Text="{Binding Description}" Margin="5,0,0,0"/-->
-                    <MyCtrl:TextDefil  Grid.Column="1"  myText="{Binding Description}" Margin="5,0,0,0"/>
-                </Grid>
-            </ListBoxItem>
-            <ListBoxItem>
-                <Grid >
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"  Text="To Pull:" HorizontalAlignment="Right"/>
-                    <TextBlock Grid.Column="1" Text="{Binding TotalToPull}" Margin="5,0,0,0"/>
-                </Grid>
-            </ListBoxItem>
-            <ListBoxItem>
-                <Grid >
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="100"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="In Device:" HorizontalAlignment="Right"/>
-                    <TextBlock Grid.Column="1" Text="{Binding TotalToPullInDevice}" Margin="5,0,0,0"/>
-                </Grid>
-            </ListBoxItem>   
+            </ListBoxItem>           
         </ListBox>
     </DataTemplate>
 
     <Style TargetType="{x:Type sync:CardViewItem}" x:Key="contactStyle">
-        <Setter Property="Width" Value="350" />
+        <Setter Property="Width" Value="250" />
         <Setter Property="Background" Value="{DynamicResource AccentColorBrush}"/>       
         <Setter Property="Foreground" Value="White"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="FontSize" Value="16"/>
     </Style>
-    
+
+    <Style x:Key="itemTextBlock1" TargetType="TextBlock">
+        <Setter Property="FontSize"  Value="14" />
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Light.ttf" />
+        <Setter Property="Foreground" Value="#9B9B9B" />
+    </Style>
+
+    <Style x:Key="wallinfoTextBlock2" TargetType="TextBlock">
+        <Setter Property="FontSize"  Value="18" />
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
+        <Setter Property="Foreground" Value="#000000" />
+    </Style>
+
+    <Style x:Key="itemTextBlock3" TargetType="TextBlock">
+        <Setter Property="FontSize"  Value="16" />
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Bold.ttf" />
+        <Setter Property="Foreground" Value="#9B9B9B" />
+    </Style>
+
+    <Style x:Key="itemTextBlock4" TargetType="TextBlock">
+        <Setter Property="FontSize"  Value="44" />
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
+        <Setter Property="Foreground" Value="#4A4A4A" />
+    </Style>
+
+    <Style x:Key="wallinfoTextBlock3" TargetType="TextBlock">
+        <Setter Property="FontSize"  Value="18" />
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Bold.ttf" />
+        <Setter Property="Foreground" Value="#4A4A4A" />
+    </Style>
+
+    <Style x:Key="DefaultButton2" TargetType="{x:Type Button}">       
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type Button}">
+                    <Border x:Name="border" CornerRadius="5,5,5,5" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                        <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </Border>
+                    <ControlTemplate.Triggers>                                        
+                        <Trigger Property="IsPressed" Value="False">
+                            <Setter Property="Background" Value="#FFFFFF" />
+                            <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
+                            <Setter Property="FontSize"  Value="16" />
+                        </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter Property="Background" Value="#33BCBA" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
+                            <Setter Property="FontFamily" Value="./Fonts/Roboto-Bold.ttf" />
+                            <Setter Property="FontSize"  Value="18" />
+                        </Trigger>                      
+                    </ControlTemplate.Triggers>
+
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+   
+
+    <Style x:Key="DefaultButton3" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="FontSize"  Value="18" />
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+        <Setter Property="Background" Value="#D0021B" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="itemTextDrawerNumber" TargetType="TextBlock">
+        <Setter Property="FontSize"   Value="40" />
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
+    </Style>
+
+    <Style x:Key="itemTextDrawerQty" TargetType="TextBlock">
+        <Setter Property="FontSize"   Value="40" />
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
+        <Setter Property="Foreground" Value="#4A4A4A" />
+    </Style>
+
+    <Style TargetType="syncfusion:GridHeaderCellControl" x:Key="headerStyle">    
+        <Setter Property="Height" Value="80" />
+        <Setter Property="FontSize" Value="20"/>
+        <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
+        <Setter Property="Foreground" Value="#000000"/>
+        <Setter Property="BorderBrush" Value="#979797"/>
+        <Setter Property="BorderThickness" Value="0 2" />
+    </Style>
+    <Style TargetType="syncfusion:VirtualizingCellsControl" x:Key="alternatingRowStyle">
+        <Setter Property="Background" Value="#F8F8F8"/>
+    </Style>
+
+
 </ResourceDictionary>
 
 
