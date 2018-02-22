@@ -453,6 +453,17 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
+        Visibility _btUserVisibility;
+        public Visibility btUserVisibility
+        {
+            get {  return _btUserVisibility; }
+            set
+            {
+            _btUserVisibility = value;
+                RaisePropertyChanged(() => btUserVisibility);
+            }
+        }
+
         private string _txtSearchCtrl;
         public string txtSearchCtrl
         {
@@ -461,11 +472,11 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 _txtSearchCtrl = value;
                 RaisePropertyChanged(() => txtSearchCtrl);
-                //Todo
-                /*mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
+               
+                mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
                 mainview0.myDatagrid.SearchHelper.ClearSearch();
                 mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
-                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);*/
+                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
             }
         }
 
@@ -532,9 +543,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {
-                    //todo
-                    /*if (mainview0.myDatagrid.View != null)
-                        txtNbSelectedItem = string.Format("Stones Selected : {0}", mainview0.myDatagrid.View.Records.Count());*/
+                   
+                    if (mainview0.myDatagrid.View != null)
+                        txtNbSelectedItem = string.Format("Stones Selected : {0}", mainview0.myDatagrid.View.Records.Count());
                 }
             }
         }
@@ -693,6 +704,18 @@ namespace SmartDrawerWpfApp.ViewModel
             set
             {
                 _SelectionSelected = value;
+
+                if (_selection != null)
+                {
+                    foreach (var item in Selection)
+                    {
+                        if (item == _SelectionSelected)
+                            item.IsSelected = true;
+                        else
+                            item.IsSelected = false;
+                    }
+                }
+
                 RaisePropertyChanged(() => SelectionSelected);
             }
         }
@@ -710,6 +733,9 @@ namespace SmartDrawerWpfApp.ViewModel
         public async void getSelection()
         {
             //Clear pull info
+            if (IsFlyoutCassettePositionOpen) //Stop lighting id lighting ON
+                IsFlyoutCassettePositionOpen = false; 
+
             CassettesSelection tmpCassette = new CassettesSelection();
             tmpCassette.CassetteDrawer1Number = String.Empty;
             tmpCassette.CassetteDrawer2Number = String.Empty;
@@ -718,6 +744,7 @@ namespace SmartDrawerWpfApp.ViewModel
             tmpCassette.CassetteDrawer5Number = String.Empty;
             tmpCassette.CassetteDrawer6Number = String.Empty;
             tmpCassette.CassetteDrawer7Number = String.Empty;
+            tmpCassette.ListControlNumber = new List<string>(); // Mandatory to be not null but need to be emtpy
             SelectedCassette = tmpCassette;
 
             BrushDrawer[1] = _borderReady;
@@ -734,6 +761,7 @@ namespace SmartDrawerWpfApp.ViewModel
             foreach (var sel in ctx.PullItems)
             {
                 SelectionViewModel svm = new SelectionViewModel();
+                svm.IsSelected = false;
                 svm.PullItemId = sel.PullItemId;
                 svm.ServerPullItemId = sel.ServerPullItemId;
 
@@ -936,7 +964,7 @@ namespace SmartDrawerWpfApp.ViewModel
         }
 
         public RelayCommand btSettingCommand { get; set; }
-        async void Settings()
+        public async void Settings()
         {
 
             if (GrantedUsersCache.LastAuthenticatedUser != null)
@@ -1154,8 +1182,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {  // filtered records
-                    //todo
-                    /*foreach (RecordEntry re in mainview0.myDatagrid.View.Records)
+                   
+                    foreach (RecordEntry re in mainview0.myDatagrid.View.Records)
                     {
                         DataRowView drv = re.Data as DataRowView;
                         string uid = drv.Row[0].ToString();
@@ -1223,8 +1251,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 }
                             }
                         }
-                    }*/
-
+                    }
                 }
                 tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count.ToString(); ;
                 tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count.ToString(); ;
@@ -1285,19 +1312,16 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             //wallStatus = "txt Got focus";
             _touchKeyboardProvider.ShowTouchKeyboard();
-            //Todo
-            //mainview0.TxtCtrlNumber.Focus();
+             mainview0.TxtCtrlNumber.Focus();
         }
         public RelayCommand searchTxtGotCR { get; set; }
         void searchTxtGotCRfn()
         {
             try
             {
-                if ((Data == null) || (Data.Count == 0)) return;
+                if ((Data == null) || (Data.Count == 0)) return;               
 
-                //todo
-
-                /*mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
+                mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
                 mainview0.myDatagrid.SearchHelper.ClearSearch();
                 mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
                 mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
@@ -1309,7 +1333,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     mainview0.myDatagrid.SelectedItems.Add(drv);
                 }
                 while (mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl));
-                */
+                
             }
             catch (Exception error)
             {
@@ -1320,17 +1344,38 @@ namespace SmartDrawerWpfApp.ViewModel
         public RelayCommand btClearSelection { get; set; }
         void ClearSelection()
         {
-            //todo
-            /*
+
+            CassettesSelection tmpCassette = new CassettesSelection();
+            tmpCassette.CassetteDrawer1Number = String.Empty;
+            tmpCassette.CassetteDrawer2Number = String.Empty;
+            tmpCassette.CassetteDrawer3Number = String.Empty;
+            tmpCassette.CassetteDrawer4Number = String.Empty;
+            tmpCassette.CassetteDrawer5Number = String.Empty;
+            tmpCassette.CassetteDrawer6Number = String.Empty;
+            tmpCassette.CassetteDrawer7Number = String.Empty;
+            tmpCassette.ListControlNumber = new List<string>(); // Mandatory to be not null but need to be emtpy
+            SelectedCassette = tmpCassette;
+
+            BrushDrawer[1] = _borderReady;
+            BrushDrawer[2] = _borderReady;
+            BrushDrawer[3] = _borderReady;
+            BrushDrawer[4] = _borderReady;
+            BrushDrawer[5] = _borderReady;
+            BrushDrawer[6] = _borderReady;
+            BrushDrawer[7] = _borderReady;
+
             mainview0.myDatagrid.SelectedItems.Clear();
             mainview0.myDatagrid.SearchHelper.ClearSearch();
             mainview0.myDatagrid.ScrollInView(new Syncfusion.UI.Xaml.ScrollAxis.RowColumnIndex() { RowIndex = 1, ColumnIndex = 1 });
-            */
+
+            IsFlyoutCassettePositionOpen = false;
+           
         }
         public RelayCommand LogoutCommand { get; set; }
         public async void logout()
         {
             LoggedUser = null;
+            btUserVisibility = Visibility.Collapsed;
             while (IsOneDrawerOpen())
                 await mainview0.ShowMessageAsync("Error", "Please Close all drawer before Logout");
 
@@ -1481,6 +1526,7 @@ namespace SmartDrawerWpfApp.ViewModel
             if (_autoLockCpt <= 0)
             {
                 LoggedUser = null;
+                btUserVisibility = Visibility.Collapsed;
                 while (IsOneDrawerOpen())
                     await mainview0.ShowMessageAsync("Error", "Please Close all drawer before Logout");
                 DevicesHandler.LockWall();
@@ -1494,7 +1540,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 if (IsWallReady())
                     _autoLockCpt--;
-                AutoLockMsg = "Log Out in " + _autoLockCpt + "s";
+                AutoLockMsg = "Log out in " + _autoLockCpt + "sec";
             }
         }
         private async void ScanTimer_Tick(object sender, EventArgs e)
@@ -1826,9 +1872,9 @@ namespace SmartDrawerWpfApp.ViewModel
                     case "SelectProduct":
                         if (e.Message != null)
                         {
-                            //todo
-                           /* if (mainview0.myDatagrid.SelectedItems.Count > 0)
-                                LightFilteredTag();*/
+                           
+                           if (mainview0.myDatagrid.SelectedItems.Count > 0)
+                                LightFilteredTag();
                             wallStatus = DateTime.Now.ToLongTimeString() + e.Message;
                         }
                         break;
@@ -1947,16 +1993,14 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
-
-                //todo
-                /*if (mainview0.tabListPerDrawer.IsVisible)
+                if (mainview0.tabListPerDrawer.IsVisible)
                 {
                     List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
                     ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
                     ListCtrlPerDrawer = null;
                     DrawerSelected = "";
                     DrawerCtrlCount = "";
-                }*/
+                }
 
 
                 if (string.IsNullOrEmpty(tagOnBadDrawer.TagId))
@@ -2057,8 +2101,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 _lastDrawerOpen = e.DrawerId;
                 wallStatus = "Drawer " + e.DrawerId + " opened";
 
-                //todo
-                /*if (mainview0.tabListPerDrawer.IsVisible)
+                if (mainview0.tabListPerDrawer.IsVisible)
                 {
 
                     if (_autoLightDrawer != -1) //switch of drawer
@@ -2073,7 +2116,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     ListCtrlPerDrawer = new ObservableCollection<string>(TmpListCtrlPerDrawer.OrderBy(i => i));
                     DrawerSelected = "Drawer " + _lastDrawerOpen;
                     DrawerCtrlCount = " (" + ListCtrlPerDrawer.Count + ")";
-                }*/
+                }
 
 
                 //Store event drawer 
@@ -2531,6 +2574,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     
                     wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
                     LoggedUser = user.Login;
+                    btUserVisibility = Visibility.Visible;
                     var ctx = RemoteDatabase.GetDbContext();
                     DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
                     ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
@@ -2554,6 +2598,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
                     LoggedUser = user.Login;
+                    btUserVisibility = Visibility.Visible;
                     var ctx = RemoteDatabase.GetDbContext();
                     DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
                     ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
@@ -2593,6 +2638,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             {
                                 wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
                                 LoggedUser = user.Login;
+                                btUserVisibility = Visibility.Visible;
                                 var ctx = RemoteDatabase.GetDbContext();
                                 DevicesHandler.LastScanAccessTypeName = AccessType.Fingerprint;
                                 ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
@@ -2619,6 +2665,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             {
                                 wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
                                 LoggedUser = user.Login;
+                                btUserVisibility = Visibility.Visible;
                                 var ctx = RemoteDatabase.GetDbContext();
                                 DevicesHandler.LastScanAccessTypeName = AccessType.Fingerprint;
                                 ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
@@ -2647,6 +2694,7 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void Mainview0_Loaded(object sender, RoutedEventArgs e)
         {
+            btUserVisibility = Visibility.Collapsed;
 
             NetworkStatus = false;
             GpioStatus = false;

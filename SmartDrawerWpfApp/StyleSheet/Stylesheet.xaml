@@ -204,14 +204,19 @@
         <Setter Property="Foreground" Value="#4A4A4A" />
     </Style>
 
-    <Style x:Key="DefaultButton2" TargetType="{x:Type Button}">       
+    <Style x:Key="DefaultButton2" TargetType="{x:Type Button}">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding LoggedUser}" Value="{x:Null}">
+                <Setter Property="Visibility" Value="Hidden"/>
+            </DataTrigger>
+        </Style.Triggers>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type Button}">
                     <Border x:Name="border" CornerRadius="5,5,5,5" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
                         <ContentPresenter x:Name="contentPresenter" ContentTemplate="{TemplateBinding ContentTemplate}" Content="{TemplateBinding Content}" ContentStringFormat="{TemplateBinding ContentStringFormat}" Focusable="False" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" Margin="{TemplateBinding Padding}" RecognizesAccessKey="True" SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Border>
-                    <ControlTemplate.Triggers>                                        
+                    <ControlTemplate.Triggers>
                         <Trigger Property="IsPressed" Value="False">
                             <Setter Property="Background" Value="#FFFFFF" />
                             <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
@@ -222,7 +227,7 @@
                             <Setter Property="Foreground" Value="#FFFFFF" />
                             <Setter Property="FontFamily" Value="./Fonts/Roboto-Bold.ttf" />
                             <Setter Property="FontSize"  Value="18" />
-                        </Trigger>                      
+                        </Trigger>
                     </ControlTemplate.Triggers>
 
                 </ControlTemplate>
@@ -230,7 +235,7 @@
         </Setter>
     </Style>
 
-   
+
 
     <Style x:Key="DefaultButton3" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="FontSize"  Value="18" />
@@ -241,14 +246,16 @@
         <Setter Property="HorizontalAlignment" Value="Center" />
     </Style>
 
+    
+
     <Style x:Key="itemTextDrawerNumber" TargetType="TextBlock">
-        <Setter Property="FontSize"   Value="40" />
+        <Setter Property="FontSize"   Value="50" />
         <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
         <Setter Property="Foreground" Value="#FFFFFF" />
     </Style>
 
     <Style x:Key="itemTextDrawerQty" TargetType="TextBlock">
-        <Setter Property="FontSize"   Value="40" />
+        <Setter Property="FontSize"   Value="50" />
         <Setter Property="FontFamily" Value="./Fonts/Roboto-Regular.ttf" />
         <Setter Property="Foreground" Value="#4A4A4A" />
     </Style>

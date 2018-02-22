@@ -248,9 +248,7 @@ namespace SmartDrawerWpfApp.Wcf
                     //mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                     //{
                     if ((mylist != null) && (mylist.Count > 0))
-                    {
-                        //todo
-                        /*
+                    {                      
                         mainview0.myDatagrid.SelectedItems.Clear();
                         if (mainview0.Data != null && mainview0.Data.Count > 0)
                         {
@@ -270,7 +268,7 @@ namespace SmartDrawerWpfApp.Wcf
                         }
                         else
                             return "Failed : datagrid is empty !";
-                            */
+                            
                     }
                 }
                 else

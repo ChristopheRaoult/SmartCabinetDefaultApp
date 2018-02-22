@@ -1,5 +1,7 @@
 ﻿using MahApps.Metro.Controls;
+using SmartDrawerDatabase.DAL;
 using SmartDrawerWpfApp.Model;
+using SmartDrawerWpfApp.StaticHelpers;
 using SmartDrawerWpfApp.ViewModel;
 using System;
 using System.Collections.Generic;
@@ -115,6 +117,47 @@ namespace SmartDrawerWpfApp.View
                 theModel.LightSelectionFromList();
         }
 
+        private async void myDatagrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var ctx = await RemoteDatabase.GetDbContextAsync();
 
+                if (ctx.Columns != null && ctx.Columns.Count() > 0)
+                {
+                    foreach (Column col in ctx.Columns)
+                    {
+                        myDatagrid.Columns[col.ColumnIndex].IsHidden = false;
+                        myDatagrid.Columns[col.ColumnIndex].HeaderText = col.ColumnName;
+                    }
+                }
+                myDatagrid.Columns["Drawer"].IsHidden = false;
+                ctx.Database.Connection.Close();
+                ctx.Dispose();
+            }
+            catch (Exception err)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(err, "Error Datagrid loaded");
+                exp.ShowDialog();
+            }
+        }
+
+       
+
+        private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            string tabItem = ((sender as TabControl).SelectedItem as TabItem).Header as string;
+            switch (tabItem)
+            {
+                case "Admin Mode":
+                    if (theModel != null)
+                        theModel.Settings();
+                    break;
+                default:
+                    return;
+            }
+
+            
+        }
     }
 }

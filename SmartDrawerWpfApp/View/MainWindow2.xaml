@@ -4,15 +4,26 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:Controls="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
+        xmlns:sfHelper="clr-namespace:SmartDrawerWpfApp.StaticHelpers"
         xmlns:local="clr-namespace:SmartDrawerWpfApp.View"
         xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         mc:Ignorable="d"
-        Title="SmartDrawer Application"  MinHeight="900" MinWidth="1600" d:DesignWidth="1600" d:DesignHeight="900" WindowStartupLocation="CenterScreen" WindowState="Maximized"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp">
+        Title="SmartDrawer Application"  MinHeight="980" MinWidth="1600" d:DesignWidth="1920" d:DesignHeight="1080" WindowStartupLocation="CenterScreen" WindowState="Maximized"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp">
     <Controls:MetroWindow.Resources>
         <Image x:Key="ButtonDelete" Source="/Resources/icon-delete.png" />
-        <Image x:Key="ButtonLight" Source="/Resources/icon-light.png" />
+        <Image x:Key="ButtonLight" Source="/Resources/light_on.png" />
+        <Image x:Key="img_Trash"  Source="/Resources/trash.png" />
+        <Image x:Key="img_Recycle"  Source="/Resources/recycle.png" />
+        <Image x:Key="keybImg" Source="/SmartDrawerWpfApp;component/Icons/Keyboard-icon.png" />
+        <DataTemplate x:Key="AddButtonTemplate">
+            <Button Name="btnclickDeleteRow" Click="Button_Click_Delete"  HorizontalAlignment="Center" 
+                        VerticalAlignment="Center" Margin="0" Padding="0"  BorderThickness="0" Height="35" Width="35">
+                <Image Source="/Resources/trash.png" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+            </Button>
+        </DataTemplate>
     </Controls:MetroWindow.Resources>
+    
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -26,26 +37,26 @@
         </Grid.RowDefinitions>
         <!-- Upper LEFT -->
         <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal" Background="#F8F8F8">
-            <Image x:Name="Logo" Source="/SmartDrawerWpfApp;component/Resources/spacecode-logo.png" Margin="10" VerticalAlignment="Center" Height="53" Width="58" ></Image>
-            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="15"/>
-           
-            <StackPanel Orientation="Vertical">
+            <Image x:Name="Logo" Source="/SmartDrawerWpfApp;component/Resources/spacecode-logo.png" Margin="20,10,20,10" VerticalAlignment="Center" Height="53" Width="58" ></Image>
+            <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="15"/>           
+            <StackPanel Orientation="Vertical" Margin="20,0,20,0">
                 <TextBlock Margin="0,23,0,0" Text="Wall Serial:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
                 <TextBlock Margin="0,5,0,0" Text="{Binding  WallSerial}" Style="{StaticResource wallinfoTextBlock2}"/>
-            </StackPanel>          
+            </StackPanel>
 
-            <StackPanel Orientation="Vertical" Margin="15,0,0,0">
+            <StackPanel Orientation="Vertical"  Margin="20,0,20,0">
                 <TextBlock Margin="0,23,0,0" Text="Facility Name:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
                 <TextBlock Margin="0,5,0,0" Text="{Binding  WallName}" Style="{StaticResource wallinfoTextBlock2}"/>
             </StackPanel>
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="15"/>
-            <Image x:Name="User" Source="/SmartDrawerWpfApp;component/Resources/icon-user.png" VerticalAlignment="Center" Height="30" Width="24" ></Image>
-            <StackPanel Orientation="Vertical" Margin="15,0,0,0">
+            <Image x:Name="User"  Margin="20,0,20,0" Source="/SmartDrawerWpfApp;component/Resources/icon-user.png" VerticalAlignment="Center" Height="30" Width="24" ></Image>
+            <StackPanel Orientation="Vertical"  Margin="20,0,20,0">
                 <TextBlock Margin="0,23,0,0" Text="User Logged:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
                 <TextBlock Margin="0,5,0,0" Text="{Binding LoggedUser}" Style="{StaticResource wallinfoTextBlock2}"/>
             </StackPanel>
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="15"/>
-            <Button Width="165"  Height="44" BorderThickness="1,1,1,1" BorderBrush="Gainsboro"  Command="{Binding LogoutCommand}" Content="{Binding AutoLockMsg}" Style="{StaticResource DefaultButton2}" />           
+            <Button   Margin="20,0,20,0" Width="165"  Height="44"  Visibility="{Binding btUserVisibility}" BorderThickness="1,1,1,1" BorderBrush="Gainsboro"  Command="{Binding LogoutCommand}" Content="Log out" Style="{StaticResource DefaultButton2}" />
+            <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding AutoLockMsg}" Style="{StaticResource wallinfoTextBlock2}"/>
         </StackPanel>
         <StackPanel Orientation="Vertical" HorizontalAlignment="Right" Background="#F8F8F8">
             <TextBlock Margin="0,23,20,0" HorizontalAlignment="Center" Text="{Binding dayDate}"  Style="{StaticResource itemTextBlock1}"></TextBlock>
@@ -123,20 +134,20 @@
             <Grid Grid.Row="0" Margin="5">
                 <Grid.Background>
                     <ImageBrush ImageSource="/Resources/bg.png" Stretch="Fill" />
-                </Grid.Background>
-                <StackPanel Orientation="Horizontal">
-                <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
+                </Grid.Background>   
+                <StackPanel Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Width="142">
                         <TextBlock Margin="0,20,0,0" Text="{Binding DrawerTagQty[1]}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
                         <TextBlock Margin="0,2,0,0" Text="Items"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
                     </StackPanel>
-                <StackPanel Orientation="Vertical"  Width="150">
+                    <StackPanel Orientation="Vertical"  Width="150">
                         <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer1Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
                         <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
                     </StackPanel>
-                    <Border Background="{Binding BrushDrawer[1]}" BorderBrush="{Binding BrushDrawer[1]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Border Background="{Binding BrushDrawer[1]}" BorderBrush="{Binding BrushDrawer[1]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                         <TextBlock Background="{Binding BrushDrawer[1]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="1"  Style="{StaticResource itemTextDrawerNumber}"/>                       
                     </Border>
-                </StackPanel>  
+                 </StackPanel>
             </Grid>
             <!-- Drawer 2 -->
             <Grid Grid.Row="1" Margin="5">
@@ -152,7 +163,7 @@
                         <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer2Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
                         <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
                     </StackPanel>
-                    <Border Background="{Binding BrushDrawer[2]}" BorderBrush="{Binding BrushDrawer[2]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Border Background="{Binding BrushDrawer[2]}" BorderBrush="{Binding BrushDrawer[2]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                         <TextBlock Background="{Binding BrushDrawer[2]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="2"  Style="{StaticResource itemTextDrawerNumber}"/>
                     </Border>
                 </StackPanel>
@@ -171,7 +182,7 @@
                         <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer3Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
                         <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
                     </StackPanel>
-                    <Border Background="{Binding BrushDrawer[3]}" BorderBrush="{Binding BrushDrawer[3]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Border Background="{Binding BrushDrawer[3]}" BorderBrush="{Binding BrushDrawer[3]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                         <TextBlock Background="{Binding BrushDrawer[3]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="3"  Style="{StaticResource itemTextDrawerNumber}"/>
                     </Border>
                 </StackPanel>
@@ -190,7 +201,7 @@
                         <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer4Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
                         <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
                     </StackPanel>
-                    <Border Background="{Binding BrushDrawer[4]}" BorderBrush="{Binding BrushDrawer[4]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Border Background="{Binding BrushDrawer[4]}" BorderBrush="{Binding BrushDrawer[4]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                         <TextBlock Background="{Binding BrushDrawer[4]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="4"  Style="{StaticResource itemTextDrawerNumber}"/>
                     </Border>
                 </StackPanel>
@@ -209,7 +220,7 @@
                         <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer5Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
                         <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
                     </StackPanel>
-                    <Border Background="{Binding BrushDrawer[5]}" BorderBrush="{Binding BrushDrawer[5]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Border Background="{Binding BrushDrawer[5]}" BorderBrush="{Binding BrushDrawer[5]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                         <TextBlock Background="{Binding BrushDrawer[5]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="5"  Style="{StaticResource itemTextDrawerNumber}"/>
                     </Border>
                 </StackPanel>
@@ -228,7 +239,7 @@
                         <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer6Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
                         <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
                     </StackPanel>
-                    <Border Background="{Binding BrushDrawer[6]}" BorderBrush="{Binding BrushDrawer[6]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Border Background="{Binding BrushDrawer[6]}" BorderBrush="{Binding BrushDrawer[6]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                         <TextBlock Background="{Binding BrushDrawer[6]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="6"  Style="{StaticResource itemTextDrawerNumber}"/>
                     </Border>
                 </StackPanel>
@@ -247,14 +258,14 @@
                         <TextBlock Margin="0,20,0,0" Foreground="#33BCBA" Text="{Binding SelectedCassette.CassetteDrawer7Number}"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextDrawerQty}"/>
                         <TextBlock Margin="0,2,0,0" Text="To Pull"  HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource itemTextBlock1}"/>
                     </StackPanel>
-                    <Border Background="{Binding BrushDrawer[7]}" BorderBrush="{Binding BrushDrawer[7]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="48" HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Border Background="{Binding BrushDrawer[7]}" BorderBrush="{Binding BrushDrawer[7]}" Margin="6,0,0,0" CornerRadius="5,0,0,0" BorderThickness="1" Width="60" Height="60" HorizontalAlignment="Right" VerticalAlignment="Bottom">
                         <TextBlock Background="{Binding BrushDrawer[7]}" Margin="0,8,0,0" HorizontalAlignment="Center" VerticalAlignment="Center" Text="7"  Style="{StaticResource itemTextDrawerNumber}"/>
                     </Border>
                 </StackPanel>
             </Grid>
         </Grid>
         <!-- Center view -->
-        <TabControl Grid.Row="3" Margin="0,5,0,0">
+        <TabControl Grid.Row="3" Margin="0,40,0,0" SelectionChanged="TabControl_SelectionChanged">
             <TabControl.Resources>
                 <Style TargetType="TabItem">
                     <Setter Property="Template">
@@ -285,33 +296,24 @@
                     </Setter>
                 </Style>
             </TabControl.Resources>
-            
-            <TabItem Header="Selection Mode" Width="165" Height="44" >
-                <Grid Grid.Row="1" >
+            <!-- Selection Mode -->
+            <TabItem Header="Selection Mode" Width="200" Height="44" >
+                <Grid Grid.Row="1"  Margin="10,30,0,0" >
                     <Grid.RowDefinitions>
                         <RowDefinition Height="75"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
                         <RowDefinition Height="5"></RowDefinition>
                     </Grid.RowDefinitions>
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"   >
-                        <Button Width="50"  Height="50" Margin="0, 0, 10, 0" Style="{DynamicResource MetroCircleButtonStyle}" Command="{Binding BtRefreshSelection}">
-                            <Rectangle Width="20"  Height="20" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
-                                <Rectangle.OpacityMask>
-                                    <VisualBrush Stretch="Fill"    Visual="{DynamicResource appbar_refresh}" />
-                                </Rectangle.OpacityMask>
-                            </Rectangle>
-                        </Button>
-                        <TextBlock Text="Refresh / Cancel Lighting"  VerticalAlignment="Center" FontSize="20" Style="{StaticResource itemTextBlock}"/>
+                        <Button Width="50"  Height="50" Margin="0, 0, 10, 0" BorderThickness="0" Style="{DynamicResource MetroCircleButtonStyle}" Content="{StaticResource img_Recycle}" Command="{Binding BtRefreshSelection}"/>
+                        <TextBlock Text="( Refresh / Cancel Lighting )"  VerticalAlignment="Center" FontSize="20" Style="{StaticResource itemTextBlock}"/>
                         <Button  x:Name="btLightselection" Visibility="Hidden" Command="{Binding btLightFilteredTagSelection}"    Margin="10,5,5,5"  Content=" Light Selection " Style="{StaticResource DefaultButton}"  />
                         <Button  Command="{Binding btRemoveSelection}"  Visibility="Hidden"  Margin="50,5,5,5"   Content=" Remove Selection "   Style="{StaticResource DefaultButton}"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"   />
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Rectangle Width="15" Margin="15,5,5,5" >
-                            <Rectangle.Fill>
-                                <VisualBrush Visual="{StaticResource appbar_lightbulb}" Stretch="Uniform" />
-                            </Rectangle.Fill>
-                        </Rectangle>
-                        <Controls:ToggleSwitch x:Name="ChkAutoLight"  IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" Foreground="{DynamicResource AccentColorBrush}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>                       
+                    <StackPanel Orientation="Vertical" HorizontalAlignment="Right">
+                        <Controls:ToggleSwitch x:Name="ChkAutoLight"  Margin="0,10,0,5" IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" Foreground="{DynamicResource AccentColorBrush}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>
+                        <TextBlock Text="Lights" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Style="{StaticResource itemTextBlock}"/>
+                       
                     </StackPanel>
                     <syncfusion:SfDataGrid Name="myDatagridSelection" Grid.Row="1"
                                                HeaderRowHeight="80"
@@ -332,8 +334,8 @@
                                                FontFamily="./Fonts/Roboto-Regular.ttf" 
                                                FontSize="18" 
                                                Foreground="#000000"
-                                               RowSelectionBrush="#33BCBA"
-                                               SelectionForegroundBrush="#FFFFFF"
+                                               RowSelectionBrush="#1A33BCBA"
+                                               SelectionForegroundBrush="#000000"
                                                ItemsSource="{Binding Selection}" 
                                                SelectedItem="{Binding SelectionSelected}"
                                                AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
@@ -349,13 +351,18 @@
                         </syncfusion:SfDataGrid.Resources>
 
                     <syncfusion:SfDataGrid.Columns >
-                            <syncfusion:GridTemplateColumn  Width="30">
+                            <syncfusion:GridTemplateColumn  MinimumWidth="30" >
                                 <syncfusion:GridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Image Width="25" Height="35">
+                                        <Image >
                                             <Image.Style>                                                
                                             <Style TargetType="{x:Type Image}">
-                                                    <Setter Property="Source" Value="/Resources/icon-light.png" />                                                 
+                                                    <Setter Property="Source" Value="/Resources/light_off.png" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="true">
+                                                            <Setter Property="Source" Value="/Resources/light_on.png" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
                                             </Style>
                                         </Image.Style>
                                         </Image>
@@ -368,40 +375,252 @@
                                                         MappingName="PullItemDate" TextAlignment="Center"  VerticalAlignment="Center"  ColumnSizer="Star" TextWrapping="Wrap" AllowResizing="True"/>
                             <syncfusion:GridTextColumn  x:Name="ColUser"
                                                         HeaderText="USER"
-                                                        MappingName="User" TextAlignment="Center" ColumnSizer="Star"/>
+                                                        MappingName="User" TextAlignment="Center" MinimumWidth="200" ColumnSizer="Star"/>
                             <syncfusion:GridTextColumn  x:Name="ColDescription"
                                                         HeaderText="DESCRIPTION"
-                                                        MappingName="Description" TextAlignment="Center" Width="400"/>
-                           
+                                                        MappingName="Description" TextAlignment="Center" MinimumWidth="400" ColumnSizer="Star"/>
                             <syncfusion:GridTextColumn  x:Name="ColToPull"
                                                         HeaderText="#ITEMS TO PULL"
-                                                        MappingName="TotalToPull" TextAlignment="Center" ColumnSizer="Star"/>
-                            <syncfusion:GridTextColumn  x:Name="ColInDevicel"
+                                                        MappingName="TotalToPull" TextAlignment="Center" MinimumWidth="120" ColumnSizer="Star" >
+                                                        <syncfusion:GridTextColumn.HeaderTemplate>
+                                                             <DataTemplate>
+                                                                <TextBlock Text="#ITEMS TO PULL" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                             </DataTemplate>
+                                                          </syncfusion:GridTextColumn.HeaderTemplate>
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="ColInDevice"
                                                         HeaderText="#ITEMS IN DEVICE"
-                                                        MappingName="TotalToPullInDevice" TextAlignment="Center" ColumnSizer="Star"/>
-                            <syncfusion:GridTemplateColumn HeaderText="ACTION">
-                                <syncfusion:GridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Width="25" Height="25" Style="{DynamicResource MetroCircleButtonStyle}"  Click="Button_Click_Delete">
-                                            <Rectangle Width="20"  Height="20" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type Button}}}">
-                                                <Rectangle.OpacityMask>
-                                                    <VisualBrush Stretch="Fill"    Visual="{DynamicResource appbar_delete}" />
-                                                </Rectangle.OpacityMask>
-                                            </Rectangle>
-                                        </Button>
-                                    </DataTemplate>
-                                </syncfusion:GridTemplateColumn.CellTemplate>
-                            </syncfusion:GridTemplateColumn>
+                                                        MappingName="TotalToPullInDevice" TextAlignment="Center" MinimumWidth="120" ColumnSizer="Star">
+                                                        <syncfusion:GridTextColumn.HeaderTemplate>
+                                                            <DataTemplate>
+                                                                <TextBlock Text="#ITEMS IN DEVICE" TextAlignment="Center" TextWrapping="Wrap"/>
+                                                            </DataTemplate>
+                                                        </syncfusion:GridTextColumn.HeaderTemplate>     
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTemplateColumn HeaderText="ACTION" MinimumWidth="80" ColumnSizer="Star" CellTemplate="{StaticResource AddButtonTemplate}" />                            
+
+
                         </syncfusion:SfDataGrid.Columns>
                     </syncfusion:SfDataGrid>
                 </Grid>
             </TabItem>
-            <TabItem Header="Inventory Mode" Width="165" Height="44">
+            <!-- Inventory Mode -->
+            <TabItem Header="Inventory Mode" Width="200" Height="44">
+                <Grid Grid.Row="1" >
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="75"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="5"></RowDefinition>
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Left" >
+                        <Button  Command="{Binding btLightFilteredTag}"  Visibility="Visible"  Margin="10,5,5,5"  Content=" Light Selection" Style="{StaticResource DefaultButton2}" Width="165"  Height="44" BorderThickness="1,1,1,1" BorderBrush="Gainsboro"  />
+                        <TextBlock  Text="{Binding txtNbSelectedItem}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"  FontSize="25" Foreground="{DynamicResource AccentColorBrush}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="0"  HorizontalAlignment="Right" >
+                        <Button  Margin="0,0,5,0" Content="{StaticResource keybImg}" VerticalAlignment="Center"  Command="{Binding openKeyboard}" Style="{DynamicResource MetroCircleButtonStyle}" Height="50" />
+                        <TextBox  x:Name="TxtCtrlNumber" Margin="0,0,0,0"                           
+                                  Text="{Binding txtSearchCtrl,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                  Width="405" 
+                                  VerticalAlignment="Center" 
+                                  HorizontalAlignment="Left"    Focusable="True" IsEnabled="true"  FontSize="30"  MaxLength="12" 
+                                  Controls:TextBoxHelper.Watermark="Enter value to search" Controls:TextBoxHelper.ClearTextButton="True" AcceptsReturn="True"  >
+                            <TextBox.InputBindings>
+                                <KeyBinding Key="Enter" Command="{Binding searchTxtGotCR}"/>
+                            </TextBox.InputBindings>
+                        </TextBox>
+                        <Button  Command="{Binding btClearSelection}" Visibility="Visible" Width="165"  Height="44" BorderThickness="1,1,1,1" BorderBrush="Gainsboro"   Margin="10,5,5,5"  Content=" Clear Selection " Style="{StaticResource DefaultButton2}"  />
+                    </StackPanel>
+                    <syncfusion:SfDataGrid Name="myDatagrid" 
+                                               Grid.Row="1"
+                                               HeaderRowHeight="60"
+                                               VerticalAlignment="Stretch"  
+                                               HorizontalAlignment="Stretch"
+                                               AutoGenerateColumns="False"                                                                             
+                                               SelectionMode="Multiple"   
+                                               SelectionUnit="Row"
+                                               Foreground="#000000"
+                                               RowSelectionBrush="#5A33BCBA"
+                                               SelectionForegroundBrush="#000000"
+                                               AllowDraggingColumns="False"                                           
+                                               AllowEditing="False"
+                                               AllowFiltering="True"
+                                               AllowGrouping="True"  
+                                               ShowGroupDropArea="True" 
+                                               EnableDataVirtualization="True"
+                                               NavigationMode="Row"  
+                                               ShowBusyIndicator="True"
+                                               FontFamily="./Fonts/Roboto-Regular.ttf" 
+                                               FontSize="18" 
+                                               Loaded="myDatagrid_Loaded"
+                                               ItemsSource="{Binding SourceTable}"
+                                               SelectedItems="{Binding SelectedItems, Mode=TwoWay}"                                     
+                                               sfHelper:SfDataGridHelper.SelectedItems="{Binding SelectedItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
+                                               AlternationCount="2"
+                                               HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star">
+
+                        <syncfusion:SfDataGrid.Columns>
+                            <syncfusion:GridTextColumn  x:Name="ColTagUid"
+                                                                 HeaderText="Tag UID"
+                                                                 MappingName="UID"
+                                                                 IsHidden="true">
+
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column1"
+                                                                 HeaderText="Column1"
+                                                                 MappingName="Column1"
+                                                                 IsHidden="True">
+
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column2"
+                                                                 HeaderText="Column2"
+                                                                 MappingName="Column2"
+                                                                IsHidden="True">
+
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column3"
+                                                                 HeaderText="Column3"
+                                                                 MappingName="Column3"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column4"
+                                                                 HeaderText="Column4"
+                                                                 MappingName="Column4"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column5"
+                                                                 HeaderText="Column5"
+                                                                 MappingName="Column5"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column6"
+                                                                 HeaderText="Column6"
+                                                                 MappingName="Column6"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column7"
+                                                                 HeaderText="Column7"
+                                                                 MappingName="Column7"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column8"
+                                                                 HeaderText="Column8"
+                                                                 MappingName="Column8"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column9"
+                                                                 HeaderText="Column9"
+                                                                 MappingName="Column9"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column10"
+                                                                 HeaderText="Column10"
+                                                                 MappingName="Column10"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column11"
+                                                                 HeaderText="Column11"
+                                                                 MappingName="Column11"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column12"
+                                                                 HeaderText="Column12"
+                                                                 MappingName="Column12"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column13"
+                                                                 HeaderText="Column13"
+                                                                 MappingName="Column13"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column14"
+                                                                 HeaderText="Column14"
+                                                                 MappingName="Column14"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column15"
+                                                                 HeaderText="Column15"
+                                                                 MappingName="Column15"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column16"
+                                                                 HeaderText="Column16"
+                                                                 MappingName="Column16"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column17"
+                                                                 HeaderText="Column17"
+                                                                 MappingName="Column17"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column18"
+                                                                 HeaderText="Column18"
+                                                                 MappingName="Column18"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Column19"
+                                                                 HeaderText="Column19"
+                                                                 MappingName="Column19"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                            <syncfusion:GridTextColumn  x:Name="Drawer"
+                                                                 HeaderText="Drawer"
+                                                                 MappingName="Drawer"
+                                                                IsHidden="True">
+                            </syncfusion:GridTextColumn>
+                        </syncfusion:SfDataGrid.Columns>
+                    </syncfusion:SfDataGrid>
+                </Grid>
             </TabItem>
-            <TabItem Header="Drawer Mode" Width="165" Height="44">
+            <!-- Drawer Mode -->
+            <TabItem Header="Drawer Mode" Width="200" Height="44" Visibility="Visible" x:Name="tabListPerDrawer">
+                <Grid Margin="20,20,20,20">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel  Grid.Row="0" Grid.Column="0" Orientation="Vertical">
+                        <Label x:Name="lblDrawer" Content="{Binding DrawerSelected}" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="ExtraBold" FontSize="15" FontFamily="Verdana"/>
+                        <Label x:Name="lblDrawerCount" Content="{Binding DrawerCtrlCount}" VerticalAlignment="Center" HorizontalAlignment="Center" FontWeight="ExtraBold" FontSize="15" FontFamily="Verdana"/>
+                    </StackPanel>
+                    <Label x:Name="lblNbCtrl" Content="Control Number : " VerticalAlignment="Center" HorizontalAlignment="Center" Grid.Row="0" Grid.Column="1" Foreground="{DynamicResource AccentColorBrush}" FontWeight="ExtraBold" FontSize="25" FontFamily="Verdana"/>
+
+                    <Button x:Name="btLightAll" Grid.Row="2" Grid.Column="0" Height="50" Margin="5,0,5,0" Content="Light All"  VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Command="{Binding BtLighAllPerDrawer}" ></Button>
+                    <Button x:Name="btLightList" Grid.Row="4" Grid.Column="0" Height="50" Margin="5,0,5,0" Content="Light List"  VerticalAlignment="Stretch" HorizontalAlignment="Stretch" Command="{Binding BtLighListPerDrawer}" ></Button>
+                    <ListBox x:Name="lstCtl" Grid.Row="1"  Grid.Column="1" Grid.RowSpan="6 " Margin="10,0,0,0"                                         
+                                            ItemsSource="{Binding ListCtrlPerDrawer}"
+                                             ScrollViewer.VerticalScrollBarVisibility="Auto" BorderBrush="{DynamicResource AccentColorBrush}" BorderThickness="2" >
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Height" Value="20" />
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontSize="15" />
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                        <ListBox.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Columns="3" VerticalAlignment="Top"/>
+                            </ItemsPanelTemplate>
+                        </ListBox.ItemsPanel>
+                    </ListBox>
+                </Grid>
             </TabItem>
-            <TabItem Header="Admin Mode" Width="165" Height="44">
+            <!-- Admin Mode -->
+            <TabItem Header="Admin Mode" Width="200" Height="44" >
             </TabItem>
         </TabControl>
-    </Grid>
+    </Grid>   
 </Controls:MetroWindow>
