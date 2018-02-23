@@ -82,5 +82,29 @@ namespace SmartDrawerWpfApp.Properties {
                 this["RfidSerial"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("45.114.157.223")]
+        public string ServerIp {
+            get {
+                return ((string)(this["ServerIp"]));
+            }
+            set {
+                this["ServerIp"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3000")]
+        public int serverPort {
+            get {
+                return ((int)(this["serverPort"]));
+            }
+            set {
+                this["serverPort"] = value;
+            }
+        }
     }
 }

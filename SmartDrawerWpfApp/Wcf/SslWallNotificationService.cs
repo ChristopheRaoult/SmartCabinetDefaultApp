@@ -369,6 +369,19 @@ namespace SmartDrawerWpfApp.Wcf
                 }
             }
 
+        [OperationContract]
+        [WebInvoke(Method = "PUT",
+        UriTemplate = "/PullItemsRequest",
+        BodyStyle = WebMessageBodyStyle.WrappedRequest,
+        ResponseFormat = WebMessageFormat.Json)]
+        public async Task<string> PullItemByPut(Stream streamdata)
+        {
+            //TO DO - Notification
+            if (MyHostEvent != null)
+                MyHostEvent(this, new MyHostEventArgs("PullItemsRequestbyPut", null));
+            return "Successful refresh selection received";
+        }
+
          [OperationContract]
          [WebInvoke(Method = "POST",
          UriTemplate = "/RemovePullItemsRequest",
@@ -478,6 +491,18 @@ namespace SmartDrawerWpfApp.Wcf
                     return "Exception : " + exp.InnerException + "-" + exp.Message;
                 }
             }
+
+        [OperationContract]
+        [WebInvoke(Method = "PUT",
+        UriTemplate = "/AddOrUpdateUser",
+        BodyStyle = WebMessageBodyStyle.WrappedRequest,
+        ResponseFormat = WebMessageFormat.Json)]
+        public async Task<string> AddOrUpdateUserByPut(Stream streamdata)
+        {
+            if (MyHostEvent != null)
+                MyHostEvent(this, new MyHostEventArgs("UpdateUserInfoList", null));
+            return "Successful refresh user received";
+        }
 
          [OperationContract]
          [WebInvoke(Method = "POST",

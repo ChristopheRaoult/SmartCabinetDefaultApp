@@ -20,5 +20,10 @@ namespace SmartDrawerDatabase.DAL
             return pullItems.SingleOrDefault(gu => gu.ServerPullItemId == serverId);
         }
 
+        public static void Clear<T>(this DbSet<T> dbSet) where T : class
+        {
+            dbSet.RemoveRange(dbSet);
+        }
+
     }
 }
