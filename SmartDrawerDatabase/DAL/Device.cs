@@ -31,6 +31,8 @@ namespace SmartDrawerDatabase.DAL
         public string RfidSerial { get; set; }
         [StringLength(20)]
         public string IpAddress { get; set; }
+        [Required]
+        public DateTime UpdateAt { get; set; }
 
         public virtual DeviceType DeviceType { get; set; }
         public virtual ICollection<GrantedAccess> GrantedAccesses { get; set; }

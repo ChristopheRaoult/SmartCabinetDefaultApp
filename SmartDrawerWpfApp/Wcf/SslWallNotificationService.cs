@@ -369,6 +369,8 @@ namespace SmartDrawerWpfApp.Wcf
                 }
             }
 
+
+        //Receive to notify wall has to update the selection on server Side
         [OperationContract]
         [WebInvoke(Method = "PUT",
         UriTemplate = "/PullItemsRequest",
@@ -492,6 +494,7 @@ namespace SmartDrawerWpfApp.Wcf
                 }
             }
 
+        //SReceive to notify wall has to update the user on server Side
         [OperationContract]
         [WebInvoke(Method = "PUT",
         UriTemplate = "/AddOrUpdateUser",

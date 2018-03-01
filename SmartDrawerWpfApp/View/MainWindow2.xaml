@@ -620,6 +620,99 @@
             </TabItem>
             <!-- Admin Mode -->
             <TabItem Header="Admin Mode" Width="200" Height="44" >
+                <Grid Visibility="{Binding btAdminVisibility}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <syncfusion:SfDataGrid Name="myUserDevice"     
+                                       Grid.Row="0"
+                                       HeaderRowHeight="80"
+                                       RowHeight="60"
+                                       VerticalAlignment="Stretch"  
+                                       HorizontalAlignment="Stretch"
+                                       AutoGenerateColumns="False"                                                                             
+                                       SelectionMode="Single"   
+                                       SelectionUnit="Row"                                      
+                                       AllowDraggingColumns="False"                                           
+                                       AllowEditing="False"
+                                       AllowFiltering="False"
+                                       AllowGrouping="False"  
+                                       ShowGroupDropArea="False" 
+                                       EnableDataVirtualization="True"
+                                       NavigationMode="Row"  
+                                       ShowBusyIndicator="True"
+                                       FontFamily="./Fonts/Roboto-Regular.ttf" 
+                                       FontSize="18" 
+                                       Foreground="#000000"
+                                       RowSelectionBrush="#1A33BCBA"
+                                       SelectionForegroundBrush="#000000"                               
+                                       AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
+                                       AlternationCount="2"
+                                       HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star"
+                                       ItemsSource="{Binding DataUser}"
+                                       SelectedItem="{Binding SelectedUser , Mode=TwoWay}">
+                        <syncfusion:SfDataGrid.Columns>
+                            <syncfusion:GridTextColumn  x:Name="UserId"
+                                                         HeaderText="Id"
+                                                         MappingName="Id"
+                                                         TextAlignment="Center"
+                                                         Width="50"/>
+
+                            <syncfusion:GridTextColumn  x:Name="Login"
+                                                         HeaderText="Login"
+                                                         MappingName="Login"
+                                                         TextAlignment="Center"/>
+                            <syncfusion:GridTextColumn  x:Name="FirstName"
+                                                         HeaderText="FirstName"
+                                                         MappingName="FirstName"
+                                                         TextAlignment="Center"/>
+                            <syncfusion:GridTextColumn  x:Name="LastName"
+                                                         HeaderText="LastName"
+                                                         MappingName="LastName"
+                                                         TextAlignment="Center" />
+
+                            <syncfusion:GridTextColumn  x:Name="BadgeNumber"
+                                                         HeaderText="Badge Number"
+                                                         MappingName="BadgeId"
+                                                         TextAlignment="Center"  />
+                            <syncfusion:GridTextColumn  x:Name="Fingerprints"
+                                                         HeaderText="Fingerprints"
+                                                         MappingName="Fingerprints"
+                                                         TextAlignment="Center"  />
+                        </syncfusion:SfDataGrid.Columns>
+                    </syncfusion:SfDataGrid>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>                           
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Login :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
+                        <TextBox Grid.Row="0" Grid.Column="1"  Margin="10" Text="{Binding EditedUser.Login , Mode=TwoWay}" IsReadOnly="True" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                        <!--TextBlock Grid.Row="1" Grid.Column="0" Text="Password :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"  Margin="10" Text="{Binding EditedUser.Password , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center"  / -->
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="First Name :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
+                        <TextBox Grid.Row="1" Grid.Column="1"  Margin="10" Text="{Binding EditedUser.FirstName, Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Last Name :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
+                        <TextBox Grid.Row="2" Grid.Column="1"  Margin="10" Text="{Binding EditedUser.LastName , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Badge Number :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
+                        <TextBox Grid.Row="3" Grid.Column="1"  Margin="10" Text="{Binding EditedUser.BadgeId , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+
+                        <StackPanel Orientation="Horizontal" Grid.Row="4" Grid.Column="1">
+                            <Button  Command="{Binding btEnrollUser}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" FingerPrints " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
+                            <Button  Command="{Binding btSaveUser}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content="       Save       " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
+                            <Button  Command="{Binding btDeleteUser}" Visibility="Collapsed" Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content=" Delete " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
+                            <Button  Command="{Binding btResetUser}"  Grid.Column="5"  Margin="10,5,5,5"  Height="35" Content="       Reset       " VerticalAlignment="Stretch" HorizontalAlignment="Right"   FontSize="15"   />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
             </TabItem>
         </TabControl>
     </Grid>   

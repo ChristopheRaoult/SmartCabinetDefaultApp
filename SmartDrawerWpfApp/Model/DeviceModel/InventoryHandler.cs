@@ -2,6 +2,7 @@
 using SmartDrawerDatabase.DAL;
 using SmartDrawerWpfApp.StaticHelpers;
 using SmartDrawerWpfApp.StaticHelpers.Security;
+using SmartDrawerWpfApp.WcfServer;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -110,6 +111,11 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 //Update event drawer
                 ctx.EventDrawerDetails.UpdateInventoryForEventDrawer(_deviceEntity, drawerId, newInventory);
                 ctx.SaveChanges();
+
+                Task.Run(() =>
+                {
+                    ProcessSelectionFromServer.PostInventoryForDrawer(_deviceEntity, drawerId, newInventory);
+                });
 
                 var handler = InventoryCompleted;
                 if (handler != null)

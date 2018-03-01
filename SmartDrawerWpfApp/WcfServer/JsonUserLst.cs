@@ -40,4 +40,8 @@ namespace SmartDrawerWpfApp.WcfServer
             return jsSerializer.Serialize(jsl);
         }
     }
+
+   
+
+  
 }

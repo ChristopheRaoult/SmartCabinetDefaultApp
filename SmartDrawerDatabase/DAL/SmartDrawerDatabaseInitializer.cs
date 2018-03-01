@@ -82,11 +82,11 @@ namespace SmartDrawerDatabase.DAL
                 context.UserRanks.Add(ur);
 
             //seed Admin User
-            GrantedUser adminUser = new GrantedUser() { GrantedUserId = 1, Login = "Admin", Password = PasswordHashing.Sha256Of("Rfid123456") , UserRankId = 1 };
+            GrantedUser adminUser = new GrantedUser() { GrantedUserId = 1, Login = "Admin", Password = PasswordHashing.Sha256Of("Rfid123456") , UserRankId = 1 , UpdateAt = DateTime.Now };
             context.GrantedUsers.Add(adminUser);
 
-            //see device
-            Device newDev = new Device() { DeviceTypeId = 15 , Name = "Wall Test Lab Paris", SerialNumber = "Wall-V2-0013", RfidSerial = "14100258" };
+            //seed device
+            Device newDev = new Device() { DeviceTypeId = 15, Name = "Wall Test Lab Paris", SerialNumber = "Wall-V2-0013", RfidSerial = "14100258", UpdateAt = DateTime.Now };
             context.Devices.Add(newDev);
 
             base.Seed(context);

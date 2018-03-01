@@ -35,6 +35,9 @@ using System.Globalization;
 using MahApps.Metro;
 using SmartDrawerWpfApp.View;
 using SmartDrawerWpfApp.WcfServer;
+using SmartDrawerAdmin.ViewModel;
+using SmartDrawerDatabase;
+using System.Data.Entity;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -465,6 +468,9 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
+        bool _IsUser;
+        public bool IsUser { get { return _IsUser; } set { _IsUser = value; RaisePropertyChanged(() => IsUser); } }
+
         private string _txtSearchCtrl;
         public string txtSearchCtrl
         {
@@ -513,8 +519,236 @@ namespace SmartDrawerWpfApp.ViewModel
                 RaisePropertyChanged(() => DrawerCtrlCount);
             }
         }
+        #endregion
+        #region admin
+        public bool isAdmin = false;
+        Visibility _btAdminVisibility;
+        public Visibility btAdminVisibility
+        {
+            get { return _btAdminVisibility; }
+            set
+            {
+                _btAdminVisibility = value;
+                RaisePropertyChanged(() => btAdminVisibility);
+            }
+        }
+
+        private ObservableCollection<UsersViewModel> _dataUser = new ObservableCollection<UsersViewModel>();
+        public ObservableCollection<UsersViewModel> DataUser
+        {
+            get { return _dataUser; }
+            set
+            {
+                _dataUser = value;
+                RaisePropertyChanged(() => DataUser);
+            }
+        }
+        private UsersViewModel _selectedUser;
+        public UsersViewModel SelectedUser
+        {
+            get { return _selectedUser; }
+            set
+            {
+                _selectedUser = value;
+                EditedUser = SelectedUser;
+                RaisePropertyChanged(() => SelectedUser);
+            }
+        }
+        private UsersViewModel _editedUser = new UsersViewModel();
+        public UsersViewModel EditedUser
+        {
+            get { return _editedUser; }
+            set
+            {
+                _editedUser = value;
+                RaisePropertyChanged(() => EditedUser);
+            }
+        }
+
+        public async void PopulateUser(int? userId)
+        {
+            try
+            {
+                var ctx = await RemoteDatabase.GetDbContextAsync();
+                var lstDev = ctx.GrantedUsers
+                    .Where(u => u.UserRankId > 1).ToList();
+
+                EditedUser = new UsersViewModel();
+                DataUser.Clear();
+                foreach (var dv in lstDev)
+                {
+
+                    if (userId.HasValue)
+                    {
+                        if (dv.ServerGrantedUserId != userId.Value) continue;
+                    }
+
+                    UsersViewModel uvm = new UsersViewModel()
+                    {
+                        Id = dv.GrantedUserId,
+                        ServerId = dv.ServerGrantedUserId,
+                        Login = dv.Login,
+                        FirstName = dv.FirstName,
+                        LastName = dv.LastName,
+                        BadgeId = dv.BadgeNumber,
+                        Fingerprints = dv.Fingerprints.Count
+                    };
+                    DataUser.Add(uvm);
+                }
+                ctx.Database.Connection.Close();
+                ctx.Dispose();
+            }
+            catch (Exception error)
+            {
+                await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                {
+                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Populate Device");
+                    exp.ShowDialog();
+                }));
+            }
+
+        }
+
+        public RelayCommand btEnrollUser { get; set; }
+        private async void EnrollUser()
+        {
+
+            if (SelectedUser != null)  //Update existing
+            {
+                var ctx = await RemoteDatabase.GetDbContextAsync();
+                var original = ctx.GrantedUsers.Find(SelectedUser.Id);
+                if (original != null)
+                {
+                    var enrollForm = new EnrollFingersForm(original);
+                    if (!enrollForm.IsDisposed)
+                    {
+                        enrollForm.ShowDialog();
+                    }
+                    await ProcessSelectionFromServer.UpdateUserAsync(original.Login);
+                }
+            }
+            else
+            {
+                await mainview0.ShowMessageAsync("INFORMATION", "Please create and save an user before enroll any fingerprint");
+                return;
+            }
+            if (isAdmin)
+                PopulateUser(null);
+            else
+                PopulateUser(SelectedUser.ServerId);
+
+
+        }
+
+        public RelayCommand btSaveUser { get; set; }
+        private async void SaveUser()
+        {
+            if (EditedUser != null)
+            {
+                var ctx = await RemoteDatabase.GetDbContextAsync();
+                if (SelectedUser != null)  //Update existing
+                {
+                    if (string.IsNullOrEmpty(EditedUser.Login) || string.IsNullOrEmpty(EditedUser.FirstName) || string.IsNullOrEmpty(EditedUser.LastName))
+                    {
+                        await mainview0.ShowMessageAsync("INFORMATION", "Please Fill user Login , Firstname and Lastname before saving");
+                        return;
+                    }
+                    var original = ctx.GrantedUsers.Find(SelectedUser.Id);
+                    if (original != null)
+                    {
+                        original.Login = SelectedUser.Login;
+                        if (!string.IsNullOrWhiteSpace(SelectedUser.Password))
+                            original.Password = PasswordHashing.Sha256Of(SelectedUser.Password);
+                        original.LastName = SelectedUser.LastName;
+                        original.FirstName = SelectedUser.FirstName;
+                        original.BadgeNumber = SelectedUser.BadgeId;
+                        ctx.Entry(original).State = EntityState.Modified;
+                        ctx.SaveChanges();
+
+                        // Update server
+                        await ProcessSelectionFromServer.UpdateUserAsync(original.Login);
+                    }
+                }
+                else //save new
+                {
+                    if (string.IsNullOrEmpty(EditedUser.Login) || string.IsNullOrEmpty(EditedUser.FirstName) || string.IsNullOrEmpty(EditedUser.LastName))
+                    {
+                        await mainview0.ShowMessageAsync("INFORMATION", "Please Fill user Login , Firstname and Lastname before saving");
+                        return;
+                    }
+                    else
+                    {
+                        GrantedUser newUser = null;
+                        if (!string.IsNullOrWhiteSpace(EditedUser.Password))
+                        {
+                            newUser = new GrantedUser()
+                            {
+                                Login = EditedUser.Login,
+                                Password = PasswordHashing.Sha256Of(EditedUser.Password),
+                                FirstName = EditedUser.FirstName,
+                                LastName = EditedUser.LastName,
+                                BadgeNumber = EditedUser.BadgeId,
+                                UserRankId = 3,
+                            };
+
+                            ctx.GrantedUsers.Add(newUser);
+                        }
+                        else
+                        {
+                            newUser = new GrantedUser()
+                            {
+                                Login = EditedUser.Login,
+                                FirstName = EditedUser.FirstName,
+                                LastName = EditedUser.LastName,
+                                BadgeNumber = EditedUser.BadgeId,
+                                UserRankId = 3,
+                            };
+
+                            ctx.GrantedUsers.Add(newUser);
+                        }
+                        ctx.SaveChanges();
+
+                        // Update server
+                        await ProcessSelectionFromServer.UpdateUserAsync(newUser.Login);
+
+                    }
+                }
+                ctx.Database.Connection.Close();
+                ctx.Dispose();
+                if (isAdmin)
+                    PopulateUser(null);
+                else
+                    PopulateUser(SelectedUser.ServerId);
+            }
+        }
+        public RelayCommand btDeleteUser { get; set; }
+        private async void DeleteUser()
+        {
+            if (SelectedUser != null)  //Update existing
+            {
+                var ctx = await RemoteDatabase.GetDbContextAsync();
+                var original = ctx.GrantedUsers.Find(SelectedUser.Id);
+                if (original != null)
+                    ctx.GrantedUsers.Remove(original);
+                ctx.SaveChanges();
+                ctx.Database.Connection.Close();
+                ctx.Dispose();
+                if (isAdmin)
+                    PopulateUser(null);
+                else
+                    PopulateUser(SelectedUser.ServerId);
+            }
+        }
+        public RelayCommand btResetUser { get; set; }
+        private void ResetUser()
+        {
+            SelectedUser = null;
+            EditedUser = new UsersViewModel();
+        }
 
         #endregion
+
+
         #region Datagrid
 
         private ObservableCollection<BaseObject> _data = new ObservableCollection<BaseObject>();
@@ -1022,33 +1256,23 @@ namespace SmartDrawerWpfApp.ViewModel
                     GrantedUser adminUser = ctx.GrantedUsers.GetByLogin(result.Username);
                     if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
                     {
-                        string path = string.Concat(Environment.GetFolderPath(Environment.SpecialFolder.Programs), "\\", "Spacecode", "\\", "SmartDrawerAdmin", "\\", "SmartDrawerAdmin", ".appref-ms");
-                        if (File.Exists(path))
+                        if (adminUser.UserRank == ctx.UserRanks.Administrator())
                         {
-                            var process = Process.Start(path);
-                            Thread.Sleep(5000);
-
-                            Process[] pname = Process.GetProcessesByName("SmartDrawerAdmin");
-                            do
-                            {
-                                pname = Process.GetProcessesByName("SmartDrawerAdmin");
-                                mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                                Thread.Sleep(500);
-                            }
-                            while (pname.Length > 0);
-
-                            ProcessStartInfo Info = new ProcessStartInfo();
-                            Info.Arguments = "/C choice /C Y /N /D Y /T 1 & START \"\" \"" + Assembly.GetExecutingAssembly().Location + "\"";
-                            Info.WindowStyle = ProcessWindowStyle.Hidden;
-                            Info.CreateNoWindow = true;
-                            Info.FileName = "cmd.exe";
-                            Process.Start(Info);
-                            Application.Current.Shutdown();
+                            isAdmin = true;
+                            IsUser = false;
                         }
+
                         else
                         {
-                            MessageDialogResult messageResult = await mainview0.ShowMessageAsync("Authentication Information", "Administration Program not found ...");
+                            IsUser = true;
+                            isAdmin = false;
                         }
+                            btAdminVisibility = Visibility.Visible;
+                        if (isAdmin)
+                            PopulateUser(null);
+                        else
+                            PopulateUser(adminUser.ServerGrantedUserId);
+
                     }
                     ctx.Database.Connection.Close();
                     ctx.Dispose();
@@ -1506,6 +1730,11 @@ namespace SmartDrawerWpfApp.ViewModel
                 ctx.Dispose();
 
             }));
+
+            await mainview0.Dispatcher.BeginInvoke(new System.Action( () =>
+            {
+                refreshUserFromServer();
+            }));
         }
         private void AutoConnectTimer_Tick(object sender, EventArgs e)
         {
@@ -1836,6 +2065,24 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         #endregion
+        #region Users
+        private async  void  refreshUserFromServer()
+        {
+            bool gotUsers = false;
+            try
+            {
+                gotUsers = await ProcessSelectionFromServer.GetAndStoreUserAsync();               
+            }
+            catch (Exception error)
+            {
+                await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                {
+                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Get User from server");
+                    exp.ShowDialog();
+                }));               
+            }            
+        }
+        #endregion
         #region WCF Service
         private ServiceHost host = null;
         SslWallNotificationService WallService = new SslWallNotificationService();
@@ -1905,6 +2152,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     case "UpdateUserInfoListNotification":
                         break;
                     case "UpdateUserInfoList":
+                        refreshUserFromServer();
                         GrantedUsersCache.Reload();
                         break;
                     case "UpdateCriteria":
@@ -2612,6 +2860,12 @@ namespace SmartDrawerWpfApp.ViewModel
             BtLighListPerDrawer = new RelayCommand(() => BtLighListPerDrawerFn());
             BtRemoveCardSelection = new RelayCommand(() => DeleteCard());
 
+            /**** admin ***/
+            btSaveUser = new RelayCommand(() => SaveUser());
+            btResetUser = new RelayCommand(() => ResetUser());
+            btDeleteUser = new RelayCommand(() => DeleteUser());
+            btEnrollUser = new RelayCommand(() => EnrollUser());
+
             #endregion
         }
         private void Mainview0_NotifyM2MCardEvent(object sender, string CardID)
@@ -2752,6 +3006,8 @@ namespace SmartDrawerWpfApp.ViewModel
         private void Mainview0_Loaded(object sender, RoutedEventArgs e)
         {
             btUserVisibility = Visibility.Collapsed;
+            btAdminVisibility = Visibility.Hidden;
+            isAdmin = false;
 
             NetworkStatus = false;
             GpioStatus = false;

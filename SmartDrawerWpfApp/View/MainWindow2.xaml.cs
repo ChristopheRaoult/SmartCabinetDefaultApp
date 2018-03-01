@@ -154,7 +154,12 @@ namespace SmartDrawerWpfApp.View
                         theModel.Settings();
                     break;
                 default:
-                    return;
+                    {
+                        theModel.isAdmin = false;
+                        theModel.btAdminVisibility = Visibility.Hidden;                        
+                        break;
+                    }
+                   
             }
 
             

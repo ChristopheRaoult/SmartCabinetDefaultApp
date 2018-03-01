@@ -24,7 +24,7 @@ namespace SmartDrawerDatabase.DAL
         public static GrantedAccess AddOrUpdateAccess(this DbSet<GrantedAccess> accesses, GrantedUser user,
            Device device, GrantType type)
         {
-            var access = accesses.SingleOrDefault(ga => ga.GrantedUserId == user.GrantedUserId && ga.DeviceId == device.DeviceId);
+            var access = accesses.FirstOrDefault(ga => ga.GrantedUserId == user.GrantedUserId && ga.DeviceId == device.DeviceId);
 
             if (access == null)
             {
@@ -40,13 +40,13 @@ namespace SmartDrawerDatabase.DAL
 
             access.DeviceId = device.DeviceId;
             access.GrantedUserId = user.GrantedUserId;
-            access.GrantTypeId = type.GrantTypeId;
+            access.GrantTypeId = type.GrantTypeId;   
 
             return access;
         }
         public static void RemoveAccess(this DbSet<GrantedAccess> accesses, GrantedUser user, Device device)
         {
-            var access = accesses.SingleOrDefault(ga => ga.GrantedUserId == user.GrantedUserId && ga.DeviceId == device.DeviceId);
+            var access = accesses.FirstOrDefault(ga => ga.GrantedUserId == user.GrantedUserId && ga.DeviceId == device.DeviceId);
 
             if (access != null)
             {

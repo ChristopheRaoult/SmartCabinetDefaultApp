@@ -147,7 +147,7 @@ namespace SmartDrawerAdmin.ViewModel
         #endregion
 
         #region Fonctions
-        private async void PopulateDevice()
+         async void PopulateDevice()
         {
             try
             {
