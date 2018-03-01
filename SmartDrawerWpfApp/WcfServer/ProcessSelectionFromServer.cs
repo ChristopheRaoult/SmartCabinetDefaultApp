@@ -278,7 +278,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     }
                                     await ctx.SaveChangesAsync();
                                 }
-                                ctx.GrantedAccesses.AddOrUpdateAccess(original, mydev, ctx.GrantTypes.All());
+                                ctx.GrantedAccesses.AddOrUpdateAccess(newUser, mydev, ctx.GrantTypes.All());
                                 await ctx.SaveChangesAsync();
                             }
 
