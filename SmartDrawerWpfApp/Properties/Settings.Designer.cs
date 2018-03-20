@@ -98,12 +98,48 @@ namespace SmartDrawerWpfApp.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("3000")]
-        public int serverPort {
+        public int ServerPort {
             get {
-                return ((int)(this["serverPort"]));
+                return ((int)(this["ServerPort"]));
             }
             set {
-                this["serverPort"] = value;
+                this["ServerPort"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WallSerial {
+            get {
+                return ((string)(this["WallSerial"]));
+            }
+            set {
+                this["WallSerial"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WallLocation {
+            get {
+                return ((string)(this["WallLocation"]));
+            }
+            set {
+                this["WallLocation"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string WallName {
+            get {
+                return ((string)(this["WallName"]));
+            }
+            set {
+                this["WallName"] = value;
             }
         }
     }

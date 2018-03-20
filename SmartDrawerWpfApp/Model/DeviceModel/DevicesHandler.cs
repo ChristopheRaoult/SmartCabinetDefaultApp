@@ -24,6 +24,8 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         public const int NbInventoryToKeep = 50;
         public static Dictionary<string, int> DeviceList { get; private set; }
 
+        private static bool isVersionV3 = true;
+
         public static RfidReader Device;
         public static FingerprintReader FPReader { get; private set; }
         public static ReaderData[] DrawerInventoryData = new ReaderData[NbDrawer + 1];        
@@ -601,12 +603,34 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         public static void UnlockWall()
         {
             if (Device == null) return;
-            Device.OpenDoor();
+
+            if (!isVersionV3)
+                Device.OpenDoor();
+            else
+            {
+                if (GpioCardObject != null)
+                {
+                    GpioCardObject.SetOut(1);
+                    Thread.Sleep(500);
+                    GpioCardObject.ClearOut(1);
+                }
+            }
         }
         public static void LockWall()
         {
             if (Device == null) return;
-            Device.CloseDoor();
+
+            if (!isVersionV3)
+                Device.CloseDoor();
+            else
+            {
+                if (GpioCardObject != null)
+                {
+                    GpioCardObject.SetOut(2);
+                    Thread.Sleep(500);
+                    GpioCardObject.ClearOut(2);
+                }
+            }
         }
 
         #endregion

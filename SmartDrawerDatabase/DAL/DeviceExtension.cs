@@ -9,22 +9,26 @@ namespace SmartDrawerDatabase.DAL
 {
     public static class DeviceExtension
     {
-        public static Device AddNewdDevice(this DbSet<Device> devices, string serialNumber, string name,
-           DeviceType deviceType, string newIpAddress)
+        public static Device AddNewdDevice(this DbSet<Device> devices, string serialNumber, string name,string location, int deviceTypeId, string newIpAddress)
         {
             var device = new Device
             {
-                SerialNumber = serialNumber,
-                Name = name,
-                DeviceType = deviceType,
+                DeviceSerial = serialNumber,
+                DeviceName = name,
+                DeviceLocation = location,
+                DeviceTypeId = deviceTypeId,
                 IpAddress = newIpAddress
             };
 
             return devices.Add(device);
         }
-        public static Device GetByRfidSerialNumber(this DbSet<Device> devices, string rfidSerialNumber)
+        public static Device GetBySerialNumber(this DbSet<Device> devices, string serialNumber)
         {
-            return devices.SingleOrDefault(d => d.RfidSerial == rfidSerialNumber);
+            return devices.FirstOrDefault(d => d.DeviceSerial == serialNumber);
+        }
+        public static Device GetByRfidSerialNumber(this DbSet<Device> devices, string rfidSerial)
+        {
+            return devices.FirstOrDefault(d => d.RfidSerial == rfidSerial);
         }
     }
 }

@@ -20,8 +20,17 @@
     <Setting Name="ServerIp" Type="System.String" Scope="User">
       <Value Profile="(Default)">45.114.157.223</Value>
     </Setting>
-    <Setting Name="serverPort" Type="System.Int32" Scope="User">
+    <Setting Name="ServerPort" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">3000</Value>
+    </Setting>
+    <Setting Name="WallSerial" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="WallLocation" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="WallName" Type="System.String" Scope="User">
+      <Value Profile="(Default)" />
     </Setting>
   </Settings>
 </SettingsFile>

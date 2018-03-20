@@ -142,11 +142,15 @@ namespace SmartDrawerWpfApp.View
             }
         }
 
-       
+
+        string LastHeader = string.Empty;
 
         private void TabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             string tabItem = ((sender as TabControl).SelectedItem as TabItem).Header as string;
+
+            if (LastHeader == tabItem) return;
+
             switch (tabItem)
             {
                 case "Admin Mode":
@@ -161,8 +165,14 @@ namespace SmartDrawerWpfApp.View
                     }
                    
             }
+            LastHeader = tabItem;
 
             
+        }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            GeneralTabControl.SelectedIndex = 0;
         }
     }
 }

@@ -18,18 +18,25 @@ namespace SmartDrawerDatabase.DAL
             this.Authentications = new HashSet<Authentication>();
         }
         [Key]
-        public int DeviceId { get; set; }
-        public int ServerDeviceID { get; set; }
+        public int DeviceId { get; set; }       
         [Required]
         public int DeviceTypeId { get; set; }
+        [Required]       
+        [StringLength(20)]
+        public string DeviceSerial { get; set; }
+        
         [Required]
         [StringLength(20)]
-        public string Name { get; set; }
+        public string DeviceName { get; set; }
+
+        [Required]
         [StringLength(20)]
-        public string SerialNumber { get; set; }        
+        public string DeviceLocation { get; set; }
+
         [StringLength(20)]
         public string RfidSerial { get; set; }
         [StringLength(20)]
+
         public string IpAddress { get; set; }
         [Required]
         public DateTime UpdateAt { get; set; }

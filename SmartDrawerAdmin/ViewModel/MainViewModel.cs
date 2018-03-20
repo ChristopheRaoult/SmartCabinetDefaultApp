@@ -269,7 +269,7 @@ namespace SmartDrawerAdmin.ViewModel
                 var ctx = await RemoteDatabase.GetDbContextAsync();
                 if (SelectedDevice != null)  //Update existing
                 {
-                    if (string.IsNullOrEmpty(EditedDevice.Name) || string.IsNullOrEmpty(EditedDevice.RfidSerial))
+                    if (string.IsNullOrEmpty(EditedDevice.DeviceName) || string.IsNullOrEmpty(EditedDevice.DeviceSerial))
                     {
                         await mainview0.ShowMessageAsync("INFORMATION", "Please Fill device Name and RFID Serial before saving");
                         return;
@@ -279,8 +279,8 @@ namespace SmartDrawerAdmin.ViewModel
                         var original = ctx.Devices.Find(SelectedDevice.DeviceId);
                         if (original != null)
                         {
-                            original.Name = EditedDevice.Name;
-                            original.SerialNumber = EditedDevice.SerialNumber;
+                            original.DeviceName = EditedDevice.DeviceName;
+                            original.DeviceSerial = EditedDevice.DeviceSerial;
                             original.RfidSerial = EditedDevice.RfidSerial;
                             original.IpAddress = EditedDevice.IpAddress;
                             ctx.Entry(original).State = EntityState.Modified;
@@ -290,7 +290,7 @@ namespace SmartDrawerAdmin.ViewModel
                 }
                 else //save new
                 {
-                    if (string.IsNullOrEmpty(EditedDevice.Name) || string.IsNullOrEmpty(EditedDevice.RfidSerial))
+                    if (string.IsNullOrEmpty(EditedDevice.DeviceName) || string.IsNullOrEmpty(EditedDevice.RfidSerial))
                     {
                         await mainview0.ShowMessageAsync("INFORMATION", "Please Fill device Name and RFID Serial before saving");
                         return;
@@ -300,8 +300,8 @@ namespace SmartDrawerAdmin.ViewModel
                         ctx.Devices.Add(new Device
                         {
                             DeviceTypeId = 15,
-                            Name = EditedDevice.Name,
-                            SerialNumber = EditedDevice.SerialNumber,
+                            DeviceName = EditedDevice.DeviceName,
+                            DeviceSerial = EditedDevice.DeviceSerial,
                             RfidSerial = EditedDevice.RfidSerial,
                             IpAddress = EditedDevice.IpAddress
                         });
@@ -411,6 +411,7 @@ namespace SmartDrawerAdmin.ViewModel
                 ctx.Dispose();
                 PopulateUser();            
             }
+
         }
         public RelayCommand btDeleteUser { get; set; }
         private async void DeleteUser()

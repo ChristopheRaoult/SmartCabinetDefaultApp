@@ -27,7 +27,7 @@ namespace SmartDrawerWpfApp.WcfServer
             try
             {
                 string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.serverPort;
+                int serverPort = Properties.Settings.Default.ServerPort;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
@@ -112,7 +112,7 @@ namespace SmartDrawerWpfApp.WcfServer
             try
             {
                 string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.serverPort;
+                int serverPort = Properties.Settings.Default.ServerPort;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
@@ -126,7 +126,7 @@ namespace SmartDrawerWpfApp.WcfServer
                     if (Selection != null)
                     {
 
-                        if (Selection.state == "closed") return false;                      
+                        if (Selection.state == "closed") return false;
 
                         var request2 = new RestRequest("/selections/" + IdSel, Method.PUT);
 
@@ -155,7 +155,7 @@ namespace SmartDrawerWpfApp.WcfServer
             try
             {
                 string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.serverPort;
+                int serverPort = Properties.Settings.Default.ServerPort;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
@@ -181,7 +181,7 @@ namespace SmartDrawerWpfApp.WcfServer
             {
 
                 string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.serverPort;
+                int serverPort = Properties.Settings.Default.ServerPort;
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
@@ -196,7 +196,9 @@ namespace SmartDrawerWpfApp.WcfServer
                     await ctx.SaveChangesAsync();
 
                     //get device
-                    Device mydev = ctx.Devices.GetByRfidSerialNumber(Properties.Settings.Default.RfidSerial);
+                    Device mydev = ctx.Devices.GetByRfidSerialNumber(Properties.Settings.Default.WallSerial);
+
+                    if (mydev == null) return false;
 
                     var lstUser = JsonUserList.DeserializedJsonList(response.Content);
                     if ((lstUser != null) && (lstUser.Length > 0))
@@ -320,7 +322,7 @@ namespace SmartDrawerWpfApp.WcfServer
             try
             {
                 string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.serverPort;
+                int serverPort = Properties.Settings.Default.ServerPort;
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
@@ -370,19 +372,19 @@ namespace SmartDrawerWpfApp.WcfServer
 
         #endregion
         #region Inventory
-        public static async Task<bool> PostInventoryForDrawer(Device device, int drawerId , Inventory inventory)
+        public static async Task<bool> PostInventoryForDrawer(Device device, int drawerId, Inventory inventory)
         {
             try
             {
                 string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.serverPort;
+                int serverPort = Properties.Settings.Default.ServerPort;
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
                 client.Authenticator = new HttpBasicAuthenticator(privateApiLogin, privateApiMdp);
 
                 var request = new RestRequest("stockhistories", Method.POST);
 
-                request.AddParameter("serial_num", device.RfidSerial);
+                request.AddParameter("serial_num", device.DeviceSerial);
                 request.AddParameter("drawer", drawerId.ToString());
                 request.AddParameter("created_at", inventory.InventoryDate);
 
@@ -403,9 +405,9 @@ namespace SmartDrawerWpfApp.WcfServer
                 }
 
                 var ctx = await RemoteDatabase.GetDbContextAsync();
-                var invUser = ctx.EventDrawerDetails.GetEventForDrawerByInventoryID(device, drawerId ,inventory.InventoryId);
+                var invUser = ctx.EventDrawerDetails.GetEventForDrawerByInventoryID(device, drawerId, inventory.InventoryId);
                 if (invUser != null)
-                foreach (EventDrawerDetail edd in invUser)
+                    foreach (EventDrawerDetail edd in invUser)
                         request.AddParameter("user_login", edd.GrantedUser.Login);
                 var response = await client.ExecuteTaskAsync(request);
                 return response.IsSuccessful;
@@ -419,5 +421,195 @@ namespace SmartDrawerWpfApp.WcfServer
             return false;
         }
         #endregion
+        #region device
+
+        public static async Task<List<Device>> GetCabinets()
+        {
+            try
+            {
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                var request = new RestRequest("cabinets", Method.GET);
+                var response = await client.ExecuteTaskAsync(request);
+                if (response.IsSuccessful)
+                {
+                    List<Device> lstDevice = new List<Device>();
+                    var devices = JsonDevice.DeserializedJsonList(response.Content);
+                    if ((devices != null) && (devices.Count() > 0))
+                    {
+                        foreach (JsonDevice jd in devices)
+                        {
+                            Device newDev = new Device
+                            {
+                                DeviceName = jd.name,
+                                DeviceSerial = jd.serial_num,
+                                DeviceLocation = jd.Location,
+                                IpAddress = jd.IP_addr,
+                            };
+                            lstDevice.Add(newDev);
+                        }
+                    }
+                    return lstDevice;
+
+                }
+                else
+                    return null;
+
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
+                exp.ShowDialog();
+                return null;
+            }
+        }
+        public static async Task<Device> GetCabinet(string serial)
+        {
+            try
+            {
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                var request = new RestRequest("cabinets/" + serial, Method.GET);
+                var response = await client.ExecuteTaskAsync(request);
+                if (response.IsSuccessful)
+                {
+                    
+                    var device = JsonDevice.DeserializedJsonAlone(response.Content);
+                    if (device != null) 
+                    {                       
+                        Device newDev = new Device
+                        {
+                            DeviceName = device.name,
+                            DeviceSerial = device.serial_num,
+                            DeviceLocation = device.Location,
+                            IpAddress = device.IP_addr,
+                        };
+                        return newDev;
+                      
+                    }
+                    return null;
+                }
+                else
+                    return null;
+
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
+                exp.ShowDialog();
+                return null;
+            }
+
+           /* try
+            {
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                var request = new RestRequest("cabinets", Method.GET);
+                var response = await client.ExecuteTaskAsync(request);
+                if (response.IsSuccessful)
+                {                  
+                    var devices = JsonDevice.DeserializedJsonList(response.Content);
+                    if ((devices != null) && (devices.Count() > 0))
+                    {
+                        foreach (JsonDevice jd in devices)
+                        {
+                            if (jd.serial_num == serial)
+                            {
+                                Device newDev = new Device
+                                {
+                                    DeviceName = jd.name,
+                                    DeviceSerial = jd.serial_num,
+                                    DeviceLocation = jd.Location,
+                                    IpAddress = jd.IP_addr,
+                                };
+                                return newDev;
+                            }
+                        }
+                    }
+                    return null;
+                }
+                else
+                    return null;
+
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
+                exp.ShowDialog();
+                return null;
+            }*/
+
+        }
+        public static async Task<bool> CreateCabinet(Device dev)
+        {
+            try
+            {
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                var request = new RestRequest("cabinets/", Method.POST);
+
+                request.AddParameter("serial_num", dev.DeviceSerial);
+                request.AddParameter("name", dev.DeviceName);
+                request.AddParameter("location", dev.DeviceLocation);
+                request.AddParameter("IP_addr", dev.IpAddress);
+
+                var response = await client.ExecuteTaskAsync(request);
+                return response.IsSuccessful;
+
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
+                exp.ShowDialog();
+                return false;
+            }
+        }
+
+        public static async Task<bool> UpdateCabinet(Device dev)
+        {
+            try
+            {
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                var request = new RestRequest("cabinets/" + dev.DeviceSerial, Method.PUT);
+
+                request.AddParameter("name", dev.DeviceName);
+                request.AddParameter("location", dev.DeviceLocation);
+                request.AddParameter("IP_addr", dev.IpAddress);
+
+                var response = await client.ExecuteTaskAsync(request);
+                return response.IsSuccessful;
+
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
+                exp.ShowDialog();
+                return false;
+            }
+        }
     }
+
+        #endregion
+        
 }

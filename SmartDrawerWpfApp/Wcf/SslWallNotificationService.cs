@@ -779,7 +779,7 @@ namespace SmartDrawerWpfApp.Wcf
                     {
                         JsonDrawerInventory ret = new JsonDrawerInventory();
                         ret.Status = "Success";
-                        ret.ServerDeviceId = LastDrawerInv.Device.ServerDeviceID;
+                        //ret.ServerDeviceId = LastDrawerInv.Device.ServerDeviceID;
                         ret.DrawerNumber = LastDrawerInv.DrawerNumber;
                         ret.InventoryDate = LastDrawerInv.InventoryDate;
                         ret.TotalAdded = LastDrawerInv.TotalAdded;

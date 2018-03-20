@@ -86,8 +86,8 @@ namespace SmartDrawerDatabase.DAL
             context.GrantedUsers.Add(adminUser);
 
             //seed device
-            Device newDev = new Device() { DeviceTypeId = 15, Name = "Wall Test Lab Paris", SerialNumber = "Wall-V2-0013", RfidSerial = "14100258", UpdateAt = DateTime.Now };
-            context.Devices.Add(newDev);
+            //Device newDev = new Device() { DeviceTypeId = 15, DeviceName = "Wall Test Lab Paris", DeviceSerial = "Wall-V2-0013", RfidSerial = "14100258", UpdateAt = DateTime.Now };
+            //context.Devices.Add(newDev);
 
             base.Seed(context);
         }

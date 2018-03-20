@@ -38,6 +38,7 @@ using SmartDrawerWpfApp.WcfServer;
 using SmartDrawerAdmin.ViewModel;
 using SmartDrawerDatabase;
 using System.Data.Entity;
+using System.Data.Entity.Validation;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -136,14 +137,64 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
+        string _ServerIp;
+        public string ServerIp
+        {
+            get
+            {
+                _ServerIp = Properties.Settings.Default.ServerIp;
+                return _ServerIp;
+            }
+            set
+            {
+                if (_ServerIp != value)
+                {
+                    _ServerIp = value;
+                    Properties.Settings.Default.ServerIp = _ServerIp;
+                    Properties.Settings.Default.Save();
+                    RaisePropertyChanged(() => ServerIp);
+                }
+            }
+        }
+
+        int _ServerPort;
+        public int ServerPort
+        {
+            get
+            {
+                _ServerPort = Properties.Settings.Default.ServerPort;
+                return _ServerPort;
+            }
+            set
+            {
+                if (_ServerPort != value)
+                {
+                    _ServerPort = value;
+                    Properties.Settings.Default.ServerPort = _ServerPort;
+                    Properties.Settings.Default.Save();
+                    RaisePropertyChanged(() => ServerPort);
+                }
+            }
+        }
+
+
         string _WallSerial;
         public string WallSerial
         {
-            get { return _WallSerial; }
+            get
+            {
+                _WallSerial = Properties.Settings.Default.WallSerial;
+                return _WallSerial;
+            }
             set
             {
-                _WallSerial = value;
-                RaisePropertyChanged(() => WallSerial);
+                if (_WallSerial != value)
+                {
+                    _WallSerial = value;
+                    Properties.Settings.Default.WallSerial = _WallSerial;
+                    Properties.Settings.Default.Save();
+                    RaisePropertyChanged(() => WallSerial);
+                }
             }
         }
 
@@ -152,14 +203,61 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             get
             {
+                _WallName = Properties.Settings.Default.WallName;
                 return _WallName;
             }
             set
             {
-                _WallName = value;
-                RaisePropertyChanged(() => WallName);
+                if (_WallName != value)
+                {
+                    _WallName = value;
+                    Properties.Settings.Default.WallName = _WallName;
+                    Properties.Settings.Default.Save();
+                    RaisePropertyChanged(() => WallName);
+                }
             }
         }
+
+        string _WallLocation;
+        public string WallLocation
+        {
+            get
+            {
+                _WallLocation = Properties.Settings.Default.WallLocation;
+                return _WallLocation;
+            }
+            set
+            {
+                if (_WallLocation != value)
+                {
+                    _WallLocation = value;
+                    Properties.Settings.Default.WallLocation = _WallLocation;
+                    Properties.Settings.Default.Save();
+                    RaisePropertyChanged(() => WallLocation);
+                }
+            }
+        }
+
+        string _RfidSerial;
+        public string RfidSerial
+        {
+            get
+            {
+                _RfidSerial = Properties.Settings.Default.RfidSerial;
+                return _RfidSerial;
+            }
+            set
+            {
+                if (_RfidSerial != value)
+                {
+                    _RfidSerial = value;                   
+                    Properties.Settings.Default.RfidSerial = _RfidSerial;
+                    Properties.Settings.Default.Save();
+                    RaisePropertyChanged(() => RfidSerial);
+                }
+            }
+        }
+
         private string _wallStatus;
         public string wallStatus
         {
@@ -810,23 +908,33 @@ namespace SmartDrawerWpfApp.ViewModel
                    {
                        Data.Clear();
                        var ctx = RemoteDatabase.GetDbContext();
-                       int nbCol = ctx.Columns.Count();
-                       foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
-                       {
+                       int nbCol = ctx.Columns.Count();                      
+
+                        foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
+                        {
                            RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
-                           Product pct = ctx.Products.GetByTagUid(entry.Key);
-                           if (pct != null)
-                           {
-                               Data.Add(new BaseObject(pct, entry.Value));
+                           if (nbCol > 1) // No need to go in DB if no column unless tag UID
+                           {                             
+                               Product pct = ctx.Products.GetByTagUid(entry.Key);
+                               if (pct != null)
+                               {
+                                   Data.Add(new BaseObject(pct, entry.Value));
+                               }
+                               else
+                               {
+                                   Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
+                                   Data.Add(new BaseObject(tmpProd, entry.Value));
+                               }
                            }
                            else
-                           {
+                           {                              
                                Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
                                Data.Add(new BaseObject(tmpProd, entry.Value));
                            }
-                       }
-                       ctx.Database.Connection.Close();
-                       ctx.Dispose();
+                        }
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+                       
 
                        if (Data.Count != 0)
                            SourceTable = PopulateDataGrid(Data);
@@ -919,6 +1027,18 @@ namespace SmartDrawerWpfApp.ViewModel
             return tmpDt;
         }
 
+        private int _SelectedTabIndex;
+        public int SelectedTabIndex
+        {
+            get { return _SelectedTabIndex; }
+            set
+            {
+                _SelectedTabIndex = value;
+                RaisePropertyChanged(() => SelectedTabIndex);
+            }
+        }
+        
+
         #endregion
         #region Selection
         private ObservableCollection<SelectionViewModel> _selection = new ObservableCollection<SelectionViewModel>();
@@ -958,6 +1078,81 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Command
 
+        public RelayCommand btSaveDevice { get; set; }
+        public async void ReloadDevice()
+        {
+            Properties.Settings.Default.Upgrade();
+
+            // Add device in local DB
+            try
+            {
+                var ctx = await RemoteDatabase.GetDbContextAsync();
+                ctx.Devices.Clear();
+                Device newDev = new Device()
+                {
+                    DeviceTypeId = 15,
+                    DeviceName = Properties.Settings.Default.WallName,
+                    DeviceSerial = Properties.Settings.Default.WallSerial,
+                    DeviceLocation = Properties.Settings.Default.WallLocation,                    
+                    RfidSerial = Properties.Settings.Default.RfidSerial,
+                    UpdateAt = DateTime.Now,
+                };
+
+
+                ctx.Devices.Add(newDev);
+                await ctx.SaveChangesAsync();
+                ctx.Database.Connection.Close();
+                ctx.Dispose();
+
+            }
+            catch (DbEntityValidationException ex)
+            {
+                foreach (var eve in ex.EntityValidationErrors)
+                {
+                    Console.WriteLine(@"Entity of type ""{0}"" in state ""{1}"" 
+                           has the following validation errors:",
+                        eve.Entry.Entity.GetType().Name,
+                        eve.Entry.State);
+                    foreach (var ve in eve.ValidationErrors)
+                    {
+                        Console.WriteLine(@"- Property: ""{0}"", Error: ""{1}""",
+                            ve.PropertyName, ve.ErrorMessage);
+                    }
+                }
+                throw;
+            }
+            catch(Exception exp)
+            {
+                Console.WriteLine(exp.Message);
+            }
+
+            Device myDev = await ProcessSelectionFromServer.GetCabinet(Properties.Settings.Default.WallSerial);
+            if (myDev == null)
+            {
+                Device CreatedDev = new Device()
+                {
+                    DeviceSerial = Properties.Settings.Default.WallSerial,
+                    DeviceName = Properties.Settings.Default.WallName,
+                    DeviceLocation = Properties.Settings.Default.WallLocation,
+                    IpAddress = Utils.GetLocalIp(),
+                };
+                await ProcessSelectionFromServer.CreateCabinet(CreatedDev);
+            }
+            else
+            {
+
+                myDev.DeviceName = Properties.Settings.Default.WallName;
+                myDev.DeviceLocation = Properties.Settings.Default.WallLocation;
+                myDev.IpAddress = Utils.GetLocalIp();
+                await ProcessSelectionFromServer.UpdateCabinet(myDev);
+
+            }
+
+
+            startTimer.Start();
+            startTimer.IsEnabled = true;
+
+        }
         public RelayCommand BtRemoveCardSelection { get; set; }
         public async void DeleteCard()
         {
@@ -1254,7 +1449,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     var ctx = await RemoteDatabase.GetDbContextAsync();
                     GrantedUser adminUser = ctx.GrantedUsers.GetByLogin(result.Username);
-                    if (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password))
+                    if ((adminUser.Password == result.Password) || (adminUser.Password == SmartDrawerDatabase.PasswordHashing.Sha256Of(result.Password)))
                     {
                         if (adminUser.UserRank == ctx.UserRanks.Administrator())
                         {
@@ -1268,6 +1463,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             isAdmin = false;
                         }
                             btAdminVisibility = Visibility.Visible;
+                       
                         if (isAdmin)
                             PopulateUser(null);
                         else
@@ -1697,10 +1893,11 @@ namespace SmartDrawerWpfApp.ViewModel
             startTimer.IsEnabled = false;
 
             // No serial in Configuration - Conenct to get rfid serial
-            if (string.IsNullOrEmpty(Properties.Settings.Default.RfidSerial))
+            
+            DevicesHandler.FindAndConnectDevice();
+            if ((DevicesHandler.Device != null) &&(DevicesHandler.Device.IsConnected))
             {
-                DevicesHandler.FindAndConnectDevice();
-                if (DevicesHandler.Device.IsConnected)
+                if (Properties.Settings.Default.RfidSerial != DevicesHandler.Device.SerialNumber)
                 {
                     Properties.Settings.Default.RfidSerial = DevicesHandler.Device.SerialNumber;
                     Properties.Settings.Default.Save();
@@ -1708,28 +1905,99 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 DevicesHandler.Device.DisconnectReader();
             }
+        
+          
+            // Is Wall In database - refer to Rfid serial so need connection to get number
+           // await mainview0.Dispatcher.BeginInvoke(new System.Action(async () =>
+           // {
 
-            // Is Wall In database - refer to Rfid serial so need conenction to get number
-            await mainview0.Dispatcher.BeginInvoke(new System.Action(async () =>
-            {
-                var ctx = await RemoteDatabase.GetDbContextAsync();
-                Device mydev = ctx.Devices.GetByRfidSerialNumber(Properties.Settings.Default.RfidSerial);
-                if (mydev == null)
+                // Test If serial exist in app
+                bool bNeedQuit = false;
+
+                if ((string.IsNullOrEmpty (Properties.Settings.Default.WallSerial)) || (string.IsNullOrEmpty(Properties.Settings.Default.WallName)))
                 {
-                    await mainview0.ShowMessageAsync("Wall Information", "Wall Unknow in Database ! \r\n Please Add device " + Properties.Settings.Default.RfidSerial + " it before continue \r\n Application will quit !");
-                    Application.Current.Shutdown();
+                    bNeedQuit = true;
+                    await mainview0.ShowMessageAsync("Wall Information", "Wall Not define in app! \r\n Please Add device ");
+                    SelectedTabIndex = 3;           
+                }
+
+                if (bNeedQuit) return;
+
+                Device myDev = await ProcessSelectionFromServer.GetCabinet(Properties.Settings.Default.WallSerial);
+                if ( (myDev == null) || (myDev.DeviceSerial != Properties.Settings.Default.WallSerial))
+                {
+                    bNeedQuit = true;
+                    await mainview0.ShowMessageAsync("Wall Information", "Wall not found in server or server not found - You have to go in admin mode to setup device");
+                    SelectedTabIndex = 3;
                 }
                 else
                 {
-                    WallSerial = mydev.SerialNumber;
-                    WallName = mydev.Name;                    
-                    InitValue();
+                    if ((myDev.DeviceSerial != Properties.Settings.Default.WallSerial) || (myDev.DeviceName != Properties.Settings.Default.WallName) || (myDev.IpAddress != Utils.GetLocalIp()))
+                    {
+                        bNeedQuit = true;
+
+                        Device updDev = new Device()
+                        {
+                            DeviceSerial = Properties.Settings.Default.WallSerial,
+                            DeviceName = Properties.Settings.Default.WallName,
+                            DeviceLocation = Properties.Settings.Default.WallLocation,
+                            IpAddress = Utils.GetLocalIp(),
+
+                        };
+                        bool x = await ProcessSelectionFromServer.UpdateCabinet(updDev);
+
+                        if (!x)
+                        {
+                            await mainview0.ShowMessageAsync("Wall Information", "Unable to update wall device inforamtion - You have to go in admin mode to setup device");
+                            bNeedQuit = true;
+                        }
+                    }
+                    
                 }
 
-                ctx.Database.Connection.Close();
-                ctx.Dispose();
+                if (bNeedQuit) return;
 
-            }));
+
+                 var ctx = await RemoteDatabase.GetDbContextAsync();
+                 Device mydev = ctx.Devices.GetByRfidSerialNumber(Properties.Settings.Default.RfidSerial);
+                 if (mydev == null)
+                 {
+                        Device newDev = new Device() { DeviceTypeId = 15, DeviceName = Properties.Settings.Default.WallName, DeviceSerial = Properties.Settings.Default.WallSerial, RfidSerial = Properties.Settings.Default.RfidSerial,DeviceLocation = Properties.Settings.Default.WallLocation, UpdateAt = DateTime.Now };
+                        ctx.Devices.Add(newDev);
+
+                        try
+                        {
+                            await ctx.SaveChangesAsync();
+                        }
+                        catch (DbEntityValidationException ex)
+                        {
+                            foreach (var eve in ex.EntityValidationErrors)
+                            {
+                                Console.WriteLine(@"Entity of type ""{0}"" in state ""{1}"" 
+                           has the following validation errors:",
+                                    eve.Entry.Entity.GetType().Name,
+                                    eve.Entry.State);
+                                foreach (var ve in eve.ValidationErrors)
+                                {
+                                    Console.WriteLine(@"- Property: ""{0}"", Error: ""{1}""",
+                                        ve.PropertyName, ve.ErrorMessage);
+                                }
+                            }
+                            throw;
+                        }
+
+                       
+                 }
+                
+                WallSerial = Properties.Settings.Default.WallSerial;
+                WallName = Properties.Settings.Default.WallName;                    
+                InitValue();
+                 
+
+                 ctx.Database.Connection.Close();
+                 ctx.Dispose();
+
+           // }));
 
             await mainview0.Dispatcher.BeginInvoke(new System.Action( () =>
             {
@@ -2403,6 +2671,11 @@ namespace SmartDrawerWpfApp.ViewModel
                         myConTroller.CloseAsync();
                     _recheckLightDrawer = -1;
                 }
+                else
+                {
+                    StopWallScan();
+                }
+
                 _lastDrawerOpen = e.DrawerId;
                 wallStatus = "Drawer " + e.DrawerId + " opened";
 
@@ -2860,6 +3133,8 @@ namespace SmartDrawerWpfApp.ViewModel
             BtLighListPerDrawer = new RelayCommand(() => BtLighListPerDrawerFn());
             BtRemoveCardSelection = new RelayCommand(() => DeleteCard());
 
+            btSaveDevice = new RelayCommand(() => ReloadDevice());
+
             /**** admin ***/
             btSaveUser = new RelayCommand(() => SaveUser());
             btResetUser = new RelayCommand(() => ResetUser());
@@ -2875,7 +3150,7 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void Mainview0_NotifyBadgeReaderEvent(object sender, string badgeID)
         {            
-            LastScanInfo = "Badge: " + badgeID;
+            LastScanInfo = "Badge: " + badgeID; 
             AutoConnectTimer.Stop();
             AutoConnectTimer.Start();
             foreach (var user in GrantedUsersCache.Cache)
