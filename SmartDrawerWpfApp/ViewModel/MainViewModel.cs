@@ -913,24 +913,17 @@ namespace SmartDrawerWpfApp.ViewModel
                         foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
                         {
                            RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
-                           if (nbCol > 1) // No need to go in DB if no column unless tag UID
-                           {                             
-                               Product pct = ctx.Products.GetByTagUid(entry.Key);
-                               if (pct != null)
-                               {
-                                   Data.Add(new BaseObject(pct, entry.Value));
-                               }
-                               else
-                               {
-                                   Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
-                                   Data.Add(new BaseObject(tmpProd, entry.Value));
-                               }
-                           }
-                           else
-                           {                              
-                               Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
-                               Data.Add(new BaseObject(tmpProd, entry.Value));
-                           }
+                           Product pct = ctx.Products.GetByTagUid(entry.Key);
+                            if (pct != null)
+                            {
+                                Data.Add(new BaseObject(pct, entry.Value));
+                            }
+                            else
+                            {
+                                Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
+                                Data.Add(new BaseObject(tmpProd, entry.Value));
+                            }
+                           
                         }
                         ctx.Database.Connection.Close();
                         ctx.Dispose();
@@ -2179,7 +2172,10 @@ namespace SmartDrawerWpfApp.ViewModel
                                 DevicesHandler.AddTagListForDrawer(_bckrecheckLightDrawer, rd.strListTag);
                                 DevicesHandler.UpdateAddedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
                                 DevicesHandler.UpdateremovedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
-                                InventoryHandler.HandleNewScanCompleted(_bckrecheckLightDrawer);
+                                Task.Run(() =>
+                               {
+                                   InventoryHandler.HandleNewScanCompleted(_bckrecheckLightDrawer);
+                               });
 
                                 //Update GUI INFO 
                                 SelectedCassette.CassetteDrawer1Number = SelectedCassette.TagToLight[1].Count.ToString(); ;
@@ -2207,7 +2203,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     });
 
                     /*****   Update API ****/
-                    Task.Run(() =>
+                    await Task.Run(() =>
                     {
                         if (SelectionSelected != null)
                         {
@@ -2367,6 +2363,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
                 WallService.mainview0 = mainview0;
                 host = new ServiceHost(WallService);
+                
                 host.Opened += Host_Opened;
                 host.Closed += Host_Closed;
                 host.Faulted += Host_Faulted;
@@ -2828,14 +2825,19 @@ namespace SmartDrawerWpfApp.ViewModel
             try
             {
 
-                InventoryHandler.HandleNewScanCompleted(e.DrawerId);
+                Task.Run(() =>
+               {
+                   InventoryHandler.HandleNewScanCompleted(e.DrawerId);
 
+               });
                 DevicesHandler.IsDrawerWaitScan[e.DrawerId] = false;
                 DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                 BrushDrawer[e.DrawerId] = _borderReady;
                 CountTotalStones();
-                bNeedUpdateCriteriaAfterScan = true;
+                bNeedUpdateCriteriaAfterScan = true;         
+
+               
             }
             catch (Exception error)
             {

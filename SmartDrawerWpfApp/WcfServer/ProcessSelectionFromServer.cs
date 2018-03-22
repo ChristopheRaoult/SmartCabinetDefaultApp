@@ -98,7 +98,8 @@ namespace SmartDrawerWpfApp.WcfServer
                             ve.PropertyName, ve.ErrorMessage);
                     }
                 }
-                throw;
+                return false;
+                
             }
             catch (Exception error)
             {
@@ -386,7 +387,7 @@ namespace SmartDrawerWpfApp.WcfServer
 
                 request.AddParameter("serial_num", device.DeviceSerial);
                 request.AddParameter("drawer", drawerId.ToString());
-                request.AddParameter("created_at", inventory.InventoryDate);
+                request.AddParameter("created_at", inventory.InventoryDate.ToUniversalTime().ToString("u"));
 
                 foreach (InventoryProduct ip in inventory.InventoryProducts)
                 {
@@ -410,13 +411,16 @@ namespace SmartDrawerWpfApp.WcfServer
                     foreach (EventDrawerDetail edd in invUser)
                         request.AddParameter("user_login", edd.GrantedUser.Login);
                 var response = await client.ExecuteTaskAsync(request);
+                LogToFile.LogMessageToFile(response.ResponseStatus.ToString());
+                LogToFile.LogMessageToFile(response.Content.ToString());              
+
                 return response.IsSuccessful;
 
             }
             catch (Exception error)
             {
-                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error post inventory");
-                exp.ShowDialog();
+                LogToFile.LogMessageToFile(error.Message);
+             
             }
             return false;
         }

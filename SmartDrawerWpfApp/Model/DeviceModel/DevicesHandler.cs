@@ -55,7 +55,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         }
 
         public static string LastScanAccessTypeName { get; set; }
-        public static DateTime LastScanTime;
+        public static DateTime LastScanTime = DateTime.Now;
 
         private static int _LastDrawerOpened = 0;
         private static int _LastDrawerClosed = 0;
