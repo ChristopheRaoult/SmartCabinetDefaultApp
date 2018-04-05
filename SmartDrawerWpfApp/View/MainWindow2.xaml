@@ -9,7 +9,11 @@
         xmlns:syncfusion="http://schemas.syncfusion.com/wpf"
         DataContext="{Binding Main, Source={StaticResource Locator}}"
         mc:Ignorable="d"
-        Title="SmartDrawer Application"  MinHeight="980" MinWidth="1600" d:DesignWidth="1920" d:DesignHeight="1080" WindowStartupLocation="CenterScreen" WindowState="Maximized"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp">
+        Title="SmartDrawer Application"  
+        MinHeight="980" MinWidth="1600" 
+        d:DesignWidth="1920" d:DesignHeight="1080"
+        WindowStartupLocation="CenterScreen" WindowState="Maximized" IgnoreTaskbarOnMaximize="True" 
+        PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp">
     <Controls:MetroWindow.Resources>
         <Image x:Key="ButtonDelete" Source="/Resources/icon-delete.png" />
         <Image x:Key="ButtonLight" Source="/Resources/light_on.png" />
@@ -636,6 +640,8 @@
                                 <RowDefinition Height="75"/>
                                 <RowDefinition Height="75"/>
                                 <RowDefinition Height="75"/>
+                                <RowDefinition Height="75"/>
+                                <RowDefinition Height="75"/>
                             </Grid.RowDefinitions>
                             <TextBlock Grid.Row="0" Grid.Column="0" Text="Server IP :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
                             <TextBox Grid.Row="0" Grid.Column="1"  Margin="10" Text="{Binding ServerIp , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
@@ -647,7 +653,11 @@
                             <TextBox Grid.Row="3" Grid.Column="1"  Margin="10" Text="{Binding WallName , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Device location :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
                             <TextBox Grid.Row="4" Grid.Column="1"  Margin="10" Text="{Binding WallLocation , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
-                            <Button  Command="{Binding btSaveDevice}"  Grid.Row="5" Grid.Column="2" Margin="10,5,5,5"  Height="35" Content=" Save and Reload " VerticalAlignment="Stretch" HorizontalAlignment="Left"   FontSize="15" Click="Button_Click"   />
+                            <TextBlock Grid.Row="5" Grid.Column="0" Text="Server Notification IP :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
+                            <TextBox Grid.Row="5" Grid.Column="1"  Margin="10" Text="{Binding NotificationIp , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                            <TextBlock Grid.Row="6" Grid.Column="0" Text="Server Notification Port :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
+                            <TextBox Grid.Row="6" Grid.Column="1"  Margin="10" Text="{Binding NotificationPort , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                            <Button  Command="{Binding btSaveDevice}"  Grid.Row="7" Grid.Column="2" Margin="10,5,5,5"  Height="35" Content=" Save and Reload " VerticalAlignment="Stretch" HorizontalAlignment="Left"   FontSize="15" Click="Button_Click"   />
                         </Grid>
                     </TabItem>
                     <TabItem Header="Users" Width="150">

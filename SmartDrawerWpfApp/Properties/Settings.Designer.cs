@@ -142,5 +142,29 @@ namespace SmartDrawerWpfApp.Properties {
                 this["WallName"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("217.128.159.119")]
+        public string NotificationIp {
+            get {
+                return ((string)(this["NotificationIp"]));
+            }
+            set {
+                this["NotificationIp"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("9004")]
+        public int NotificationPort {
+            get {
+                return ((int)(this["NotificationPort"]));
+            }
+            set {
+                this["NotificationPort"] = value;
+            }
+        }
     }
 }

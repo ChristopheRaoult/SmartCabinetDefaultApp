@@ -139,9 +139,12 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                     }
 
                     //Update event drawer
-                    ctx.EventDrawerDetails.UpdateInventoryForEventDrawer(_deviceEntity, drawerId, newInventory);
-                    ctx.ChangeTracker.DetectChanges();
-                    ctx.SaveChanges();
+                    using (new PerfTimerLogger("Update Inventory"))
+                    {
+                        ctx.EventDrawerDetails.UpdateInventoryForEventDrawer(_deviceEntity, drawerId, newInventory);
+                        ctx.ChangeTracker.DetectChanges();
+                        ctx.SaveChanges();
+                    }
 
 
                     using (new PerfTimerLogger("Send to  Indian server"))

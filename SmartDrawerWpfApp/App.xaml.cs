@@ -18,9 +18,72 @@ namespace SmartDrawerWpfApp
     {
         public App()
         {
+            try
+            {
+                if (MultipleInstance()) // Check first multiple instance of application
+                {
+                    MessageBox.Show("More than one instance is running");
+                    System.Threading.Thread.Sleep(1000);
+                    ProcessKiller(); // Kill the current process
+                }
 
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
         }
-        private static void LogUnhandledException(Exception exception, string s)
+
+ 
+    /// <summary>
+    /// Check Multiple Instance
+    /// </summary>
+    /// <returns>Boolean</returns>
+    private static Boolean MultipleInstance()
+    {
+        Boolean Flag = false;
+        try
+        {
+            System.Diagnostics.Process[] ProcessObj = null; ;
+
+            // Name of Process module
+            String ModualName = System.Diagnostics.Process.GetCurrentProcess().MainModule.ModuleName.ToString();
+
+            // Get a process name
+            String ProcessName = System.IO.Path.GetFileNameWithoutExtension(ModualName);
+
+            // Get all instances of Current application running on the local computer.
+
+            ProcessObj = System.Diagnostics.Process.GetProcessesByName(ProcessName);
+
+            if (ProcessObj.Length > 1) // if multipal application is running then it is true otherwise it is false
+            {
+                Flag = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+
+        return Flag;
+    }
+    private static void ProcessKiller()
+    {
+
+        try
+        {
+            System.Diagnostics.Process ProcessObj = System.Diagnostics.Process.GetCurrentProcess();
+            ProcessObj.Kill(); // kill the current process
+        }
+        catch (Exception ex)
+        {
+            throw new Exception(ex.Message);
+        }
+
+    }
+
+    private static void LogUnhandledException(Exception exception, string s)
         {
             const string DirectoryName = @"C:\Temp\SmartDrawerLog\";
 

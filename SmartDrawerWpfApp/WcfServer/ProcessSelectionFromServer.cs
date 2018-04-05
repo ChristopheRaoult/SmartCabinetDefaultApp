@@ -197,7 +197,7 @@ namespace SmartDrawerWpfApp.WcfServer
                     await ctx.SaveChangesAsync();
 
                     //get device
-                    Device mydev = ctx.Devices.GetByRfidSerialNumber(Properties.Settings.Default.WallSerial);
+                    Device mydev = ctx.Devices.GetBySerialNumber(Properties.Settings.Default.WallSerial);
 
                     if (mydev == null) return false;
 
@@ -208,7 +208,8 @@ namespace SmartDrawerWpfApp.WcfServer
                         {
 
                             var original = ctx.GrantedUsers.GetByServerId(jsl.user_id);
-                            if (original != null)
+                            var original2 = ctx.GrantedUsers.GetByLogin(jsl.login);
+                            if ((original != null) && (original.Login != "Admin"))
                             {
                                 TimeSpan ts = jsl.updated_at - original.UpdateAt;
                                 if (Math.Abs(ts.TotalSeconds) > 1)  // Not the latest but avoid ms 
@@ -252,7 +253,50 @@ namespace SmartDrawerWpfApp.WcfServer
                                 await ctx.SaveChangesAsync();
 
                             }
-                            else if (original == null)
+                            else if (original2 != null)
+                            {
+                                TimeSpan ts = jsl.updated_at - original.UpdateAt;
+                                if (Math.Abs(ts.TotalSeconds) > 1)  // Not the latest but avoid ms 
+                                {
+                                    original2.ServerGrantedUserId = jsl.user_id;
+                                    original2.Login = jsl.login;
+                                    original2.Password = jsl.password;
+                                    original2.FirstName = jsl.fname;
+                                    original2.LastName = jsl.lname;
+                                    original2.BadgeNumber = jsl.badge_num;
+                                    original2.UserRankId = 3;
+                                    original2.UpdateAt = jsl.updated_at;
+                                    ctx.Entry(original2).State = EntityState.Modified;
+                                    await ctx.SaveChangesAsync();
+
+                                    //deletefingerprint for this user if exists
+
+                                    var fpUser = ctx.Fingerprints.Where(gu => gu.GrantedUserId == original.GrantedUserId).ToList();
+                                    if (fpUser != null)
+                                    {
+                                        foreach (SmartDrawerDatabase.DAL.Fingerprint fp in fpUser)
+                                            ctx.Fingerprints.Remove(fp);
+                                        await ctx.SaveChangesAsync();
+                                    }
+
+                                    if ((jsl.ftemplate != null) & (jsl.ftemplate.Count > 0))
+                                    {
+                                        for (int loop = 0; loop < jsl.ftemplate.Count; loop++)
+                                        {
+                                            ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                                            {
+                                                GrantedUserId = original2.GrantedUserId,
+                                                Index = Convert.ToInt32(jsl.finger_index[loop]),
+                                                Template = jsl.ftemplate[loop],
+                                            });
+                                        }
+                                        await ctx.SaveChangesAsync();
+                                    }
+                                }
+                                ctx.GrantedAccesses.AddOrUpdateAccess(original2, mydev, ctx.GrantTypes.All());
+                                await ctx.SaveChangesAsync();
+                            }
+                            else if ((original == null) && (original2 == null))
                             {
                                 GrantedUser newUser = new GrantedUser()
                                 {
@@ -409,7 +453,10 @@ namespace SmartDrawerWpfApp.WcfServer
                 var invUser = ctx.EventDrawerDetails.GetEventForDrawerByInventoryID(device, drawerId, inventory.InventoryId);
                 if (invUser != null)
                     foreach (EventDrawerDetail edd in invUser)
+                    {
+                        if ((edd.GrantedUser !=  null) && (!string.IsNullOrEmpty(edd.GrantedUser.Login)))
                         request.AddParameter("user_login", edd.GrantedUser.Login);
+                    }
                 var response = await client.ExecuteTaskAsync(request);
                 LogToFile.LogMessageToFile(response.ResponseStatus.ToString());
                 LogToFile.LogMessageToFile(response.Content.ToString());              
@@ -419,8 +466,10 @@ namespace SmartDrawerWpfApp.WcfServer
             }
             catch (Exception error)
             {
+                LogToFile.LogMessageToFile(error.InnerException.ToString());
                 LogToFile.LogMessageToFile(error.Message);
-             
+                LogToFile.LogMessageToFile(error.StackTrace);
+
             }
             return false;
         }
@@ -571,7 +620,8 @@ namespace SmartDrawerWpfApp.WcfServer
                 request.AddParameter("serial_num", dev.DeviceSerial);
                 request.AddParameter("name", dev.DeviceName);
                 request.AddParameter("location", dev.DeviceLocation);
-                request.AddParameter("IP_addr", dev.IpAddress);
+                request.AddParameter("IP_addr", Properties.Settings.Default.NotificationIp);
+                request.AddParameter("port", Properties.Settings.Default.NotificationPort);
 
                 var response = await client.ExecuteTaskAsync(request);
                 return response.IsSuccessful;
@@ -584,7 +634,6 @@ namespace SmartDrawerWpfApp.WcfServer
                 return false;
             }
         }
-
         public static async Task<bool> UpdateCabinet(Device dev)
         {
             try
@@ -599,7 +648,8 @@ namespace SmartDrawerWpfApp.WcfServer
 
                 request.AddParameter("name", dev.DeviceName);
                 request.AddParameter("location", dev.DeviceLocation);
-                request.AddParameter("IP_addr", dev.IpAddress);
+                request.AddParameter("IP_addr", Properties.Settings.Default.NotificationIp);
+                request.AddParameter("port", Properties.Settings.Default.NotificationPort);
 
                 var response = await client.ExecuteTaskAsync(request);
                 return response.IsSuccessful;

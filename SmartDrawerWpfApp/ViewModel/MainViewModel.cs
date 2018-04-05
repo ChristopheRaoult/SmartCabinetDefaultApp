@@ -152,6 +152,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     _ServerIp = value;
                     Properties.Settings.Default.ServerIp = _ServerIp;
                     Properties.Settings.Default.Save();
+                    Properties.Settings.Default.Upgrade();
                     RaisePropertyChanged(() => ServerIp);
                 }
             }
@@ -172,7 +173,49 @@ namespace SmartDrawerWpfApp.ViewModel
                     _ServerPort = value;
                     Properties.Settings.Default.ServerPort = _ServerPort;
                     Properties.Settings.Default.Save();
+                    Properties.Settings.Default.Upgrade();
                     RaisePropertyChanged(() => ServerPort);
+                }
+            }
+        }
+
+        string _NotificationIp;
+        public string NotificationIp
+        {
+            get
+            {
+                _NotificationIp = Properties.Settings.Default.NotificationIp;
+                return _NotificationIp;
+            }
+            set
+            {
+                if (_NotificationIp != value)
+                {
+                    _NotificationIp = value;
+                    Properties.Settings.Default.NotificationIp = _NotificationIp;
+                    Properties.Settings.Default.Save();
+                    Properties.Settings.Default.Upgrade();
+                    RaisePropertyChanged(() => NotificationIp);
+                }
+            }
+        }
+
+        int _NotificationPort;
+        public int NotificationPort
+        {
+            get
+            {
+                _NotificationPort = Properties.Settings.Default.NotificationPort;
+                return _NotificationPort;
+            }
+            set
+            {
+                if (_NotificationPort != value)
+                {
+                    _NotificationPort = value;
+                    Properties.Settings.Default.NotificationPort = _NotificationPort;
+                    Properties.Settings.Default.Save();
+                    RaisePropertyChanged(() => NotificationPort);
                 }
             }
         }
@@ -898,9 +941,9 @@ namespace SmartDrawerWpfApp.ViewModel
         private static Object thisLock = new Object();
         public async void getCriteria()
         {
+            var controller = await mainview0.ShowProgressAsync("Please wait", "Retrieving information from Database");
             try
-            {
-                var controller = await mainview0.ShowProgressAsync("Please wait", "Retrieving information from Database");
+            {               
                 controller.SetIndeterminate();
                 await Task.Run(() =>
                {
@@ -908,25 +951,37 @@ namespace SmartDrawerWpfApp.ViewModel
                    {
                        Data.Clear();
                        var ctx = RemoteDatabase.GetDbContext();
-                       int nbCol = ctx.Columns.Count();                      
+                       int nbCol = ctx.Columns.Count();
 
-                        foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
-                        {
-                           RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
-                           Product pct = ctx.Products.GetByTagUid(entry.Key);
-                            if (pct != null)
-                            {
-                                Data.Add(new BaseObject(pct, entry.Value));
-                            }
-                            else
-                            {
-                                Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
-                                Data.Add(new BaseObject(tmpProd, entry.Value));
-                            }
-                           
-                        }
-                        ctx.Database.Connection.Close();
-                        ctx.Dispose();
+                       if (nbCol > 1)
+                       {
+                           foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
+                           {
+                               RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
+                               Product pct = ctx.Products.GetByTagUid(entry.Key);
+                               if (pct != null)
+                               {
+                                   Data.Add(new BaseObject(pct, entry.Value));
+                               }
+                               else
+                               {
+                                   Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
+                                   Data.Add(new BaseObject(tmpProd, entry.Value));
+                               }
+
+                           }
+                           ctx.Database.Connection.Close();
+                           ctx.Dispose();
+                       }
+                       else //Only one column , as just tagUID no need to search in DB
+                       {
+                           foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
+                           {
+                               RfidTag tag = new RfidTag() { TagUid = entry.Key };
+                               Product tmpProd = new Product() { RfidTag = tag };
+                               Data.Add(new BaseObject(tmpProd, entry.Value));
+                           }
+                       }
                        
 
                        if (Data.Count != 0)
@@ -941,15 +996,23 @@ namespace SmartDrawerWpfApp.ViewModel
                });
                 mainview0.Data = Data;
                 mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                await controller.CloseAsync();
+                if ((controller != null) && (controller.IsOpen))
+                    await controller.CloseAsync();
             }
             catch (Exception error)
             {
+                if ((controller != null) && (controller.IsOpen))
+                    await controller.CloseAsync();
                 await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error getting criteria");
                     exp.ShowDialog();
                 }));
+            }
+            finally
+            {
+                if ((controller != null) && (controller.IsOpen))
+                    await controller.CloseAsync();
             }
         }
         public DataTable PopulateDataGrid(ObservableCollection<BaseObject> giaData)
@@ -1181,85 +1244,100 @@ namespace SmartDrawerWpfApp.ViewModel
 
             myConTroller = await mainview0.ShowProgressAsync("Please wait","Get Selection From server");
             myConTroller.SetIndeterminate();
-
-            /* Get Selection from API */
-            bool gotSel = await ProcessSelectionFromServer.GetAndStoreSelectionAsync();
-
-            if (gotSel)
+            try
             {
+                getCriteria();
 
-                List<PullItem> lstToRemove = new List<PullItem>();
-                var ctx = await RemoteDatabase.GetDbContextAsync();
-                Selection.Clear();
-                foreach (var sel in ctx.PullItems)
+                /* Get Selection from API */
+                bool gotSel = await ProcessSelectionFromServer.GetAndStoreSelectionAsync();
+
+                if (gotSel)
                 {
-                    SelectionViewModel svm = new SelectionViewModel();
-                    svm.IsSelected = false;
-                    svm.PullItemId = sel.PullItemId;
-                    svm.ServerPullItemId = sel.ServerPullItemId;
 
-                    TimeSpan ts = DateTime.Now - sel.PullItemDate;
-                    if (ts.TotalDays < 1)
-                        svm.PullItemDate = sel.PullItemDate.ToString("hh:mm tt");
-                    else if (ts.TotalDays == 2)
-                        svm.PullItemDate = "Yesterday\r\n" + sel.PullItemDate.ToString("hh:mm tt");
-                    else
-                        svm.PullItemDate = sel.PullItemDate.ToString("MMM dd") + "\r\n" + sel.PullItemDate.ToString("hh:mm tt");
-
-                    svm.Description = sel.Description;
-                    if (sel.GrantedUser != null)
-                        svm.User = sel.GrantedUser.FirstName + " " + sel.GrantedUser.LastName;
-                    svm.TotalToPull = sel.TotalToPull;
-
-                    svm.lstTopull = new List<string>();
-                    int nbInDevice = 0;
-
-                    foreach (var pit in sel.PullItems)
+                    List<PullItem> lstToRemove = new List<PullItem>();
+                    var ctx = await RemoteDatabase.GetDbContextAsync();
+                    Selection.Clear();
+                    foreach (var sel in ctx.PullItems)
                     {
-                        if (DevicesHandler.ListTagPerDrawer.ContainsKey(pit.RfidTag.TagUid))
+                        SelectionViewModel svm = new SelectionViewModel();
+                        svm.IsSelected = false;
+                        svm.PullItemId = sel.PullItemId;
+                        svm.ServerPullItemId = sel.ServerPullItemId;
+
+                        TimeSpan ts = DateTime.Now - sel.PullItemDate;
+                        if (ts.TotalDays < 1)
+                            svm.PullItemDate = sel.PullItemDate.ToString("hh:mm tt");
+                        else if (ts.TotalDays == 2)
+                            svm.PullItemDate = "Yesterday\r\n" + sel.PullItemDate.ToString("hh:mm tt");
+                        else
+                            svm.PullItemDate = sel.PullItemDate.ToString("MMM dd") + "\r\n" + sel.PullItemDate.ToString("hh:mm tt");
+
+                        svm.Description = sel.Description;
+                        if (sel.GrantedUser != null)
+                            svm.User = sel.GrantedUser.FirstName + " " + sel.GrantedUser.LastName;
+                        svm.TotalToPull = sel.TotalToPull;
+
+                        svm.lstTopull = new List<string>();
+                        int nbInDevice = 0;
+
+                        foreach (var pit in sel.PullItems)
                         {
-                            svm.lstTopull.Add(pit.RfidTag.TagUid);
-                            nbInDevice++;
+                            if (DevicesHandler.ListTagPerDrawer.ContainsKey(pit.RfidTag.TagUid))
+                            {
+                                svm.lstTopull.Add(pit.RfidTag.TagUid);
+                                nbInDevice++;
+                            }
+                        }
+                        // if (1 == 1)
+                        if (nbInDevice > 0)
+                        {
+                            svm.TotalToPullInDevice = nbInDevice;
+                            Selection.Add(svm);
+                        }
+                        else   //remove selection bigger thant 1 week having no selection
+                        {
+                            if (sel.PullItemDate.AddDays(7) < DateTime.Now)
+                                lstToRemove.Add(sel);
                         }
                     }
-                    // if (1 == 1)
-                    if (nbInDevice > 0)
-                    {
-                        svm.TotalToPullInDevice = nbInDevice;
-                        Selection.Add(svm);
-                    }
-                    else   //remove selection bigger thant 1 week having no selection
-                    {
-                        if (sel.PullItemDate.AddDays(7) < DateTime.Now)
-                            lstToRemove.Add(sel);
-                    }
-                }
 
-                if (lstToRemove.Count > 0)
+                    if (lstToRemove.Count > 0)
+                    {
+                        foreach (var sel in lstToRemove)
+                            ctx.PullItems.Remove(sel);
+                        await ctx.SaveChangesAsync();
+                    }
+                    ctx.Database.Connection.Close();
+                    ctx.Dispose();
+
+                    mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                        await myConTroller.CloseAsync();
+                }
+                else
                 {
-                    foreach (var sel in lstToRemove)
-                        ctx.PullItems.Remove(sel);
-                    await ctx.SaveChangesAsync();
+                    mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                        await myConTroller.CloseAsync();
+
+                    MessageDialogResult messageResult = await mainview0.ShowMessageAsync(" Information", "Error while updating selection ...");
+
+
                 }
-                ctx.Database.Connection.Close();
-                ctx.Dispose();
-
-                mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                if ((myConTroller != null) && (myConTroller.IsOpen))
-                    await myConTroller.CloseAsync();
             }
-            else
+            catch { }
+            finally
             {
-                mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                if ((myConTroller != null) && (myConTroller.IsOpen))
-                    await myConTroller.CloseAsync();
-
-                MessageDialogResult messageResult = await mainview0.ShowMessageAsync(" Information", "Error while updating selection ...");
-
-
+                try
+                {
+                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                        await myConTroller.CloseAsync();
+                }
+                catch
+                { }
             }
 
-           
+
         }
 
 
@@ -1925,7 +2003,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {
-                    if ((myDev.DeviceSerial != Properties.Settings.Default.WallSerial) || (myDev.DeviceName != Properties.Settings.Default.WallName) || (myDev.IpAddress != Utils.GetLocalIp()))
+                    if ((myDev.DeviceSerial != Properties.Settings.Default.WallSerial) || (myDev.DeviceName != Properties.Settings.Default.WallName) || (myDev.IpAddress != Properties.Settings.Default.NotificationIp))
                     {
                         bNeedQuit = true;
 
@@ -2009,7 +2087,7 @@ namespace SmartDrawerWpfApp.ViewModel
             if (RfidStatus)
             {
                 TimeSpan ts = DateTime.Now - DevicesHandler.LastScanTime;
-                LastScanInfo = string.Format("Last scan : {0} min ago", (int)ts.TotalMinutes);
+                LastScanInfo = string.Format("Last scan : {0} min(s) ago", (int)ts.TotalMinutes);
             }
 
             // 2 drawers open not possible meaning power cut 
@@ -2073,7 +2151,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 ScanTimer.Stop();
 
                 #region status
-
+              
                 if (!RfidStatus)
                 {
                     OverallStatus = false;
@@ -2316,6 +2394,8 @@ namespace SmartDrawerWpfApp.ViewModel
             }
             catch (Exception error)
             {
+                if ((myConTroller != null) && (myConTroller.IsOpen))
+                    await myConTroller.CloseAsync();
                 await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Scan Timer");
@@ -2324,6 +2404,9 @@ namespace SmartDrawerWpfApp.ViewModel
             }
             finally
             {
+                if ((myConTroller != null) && (myConTroller.IsOpen))
+                    await myConTroller.CloseAsync();
+
                 ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
                 ScanTimer.Start();
             }
@@ -2563,14 +2646,13 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
-                if (mainview0.tabListPerDrawer.IsVisible)
-                {
-                    List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
-                    ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
-                    ListCtrlPerDrawer = null;
-                    DrawerSelected = "";
-                    DrawerCtrlCount = "";
-                }
+               
+                List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
+                ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
+                ListCtrlPerDrawer = null;
+                DrawerSelected = "";
+                DrawerCtrlCount = "";
+              
 
 
                 if (string.IsNullOrEmpty(tagOnBadDrawer.TagId))
@@ -2618,6 +2700,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     {
                         DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
                         DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                        BrushDrawer[e.DrawerId] = _borderReady;
                     }
                 }
                 else
@@ -2648,36 +2731,37 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
             }
             catch (Exception error)
-            {
+            {               
                 mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOClosed");
                     exp.ShowDialog();
                 }));
-            }
+            }            
         }
         private void DevicesHandler_DrawerOpened(object sender, DrawerEventArgs e)
         {
             try
             {
-                if (_recheckLightDrawer != -1)
-                {
-                    DevicesHandler.StopLighting(_recheckLightDrawer);
-                    DevicesHandler.StopScan(_recheckLightDrawer);
-                    if ((myConTroller != null) && (myConTroller.IsOpen))
-                        myConTroller.CloseAsync();
-                    _recheckLightDrawer = -1;
-                }
-                else
-                {
-                    StopWallScan();
-                }
 
-                _lastDrawerOpen = e.DrawerId;
-                wallStatus = "Drawer " + e.DrawerId + " opened";
-
-                if (mainview0.tabListPerDrawer.IsVisible)
+                // wait open drawer to let time automatic trimming (max filed for comfirmation)
+                Thread.Sleep(1000);
+                if (_lastDrawerOpen == -1)
                 {
+
+                    if (_recheckLightDrawer != -1)
+                    {
+                        DevicesHandler.StopLighting(_recheckLightDrawer);
+                        DevicesHandler.StopScan(_recheckLightDrawer);
+                        if ((myConTroller != null) && (myConTroller.IsOpen))
+                            myConTroller.CloseAsync();
+                        _recheckLightDrawer = -1;
+                    }                   
+
+                    _lastDrawerOpen = e.DrawerId;
+                    wallStatus = "Drawer " + e.DrawerId + " opened";
+
+                    
 
                     if (_autoLightDrawer != -1) //switch of drawer
                     {
@@ -2691,88 +2775,128 @@ namespace SmartDrawerWpfApp.ViewModel
                     ListCtrlPerDrawer = new ObservableCollection<string>(TmpListCtrlPerDrawer.OrderBy(i => i));
                     DrawerSelected = "Drawer " + _lastDrawerOpen;
                     DrawerCtrlCount = " (" + ListCtrlPerDrawer.Count + ")";
-                }
+                 
 
 
-                //Store event drawer 
-                Task.Factory.StartNew(() =>
-                {
-                    var ctx = RemoteDatabase.GetDbContext();
-                    if (GrantedUsersCache.LastAuthenticatedUser != null)
-                        ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId, InventoryId = null, EventDrawerDate = DateTime.Now });
-                    else
-                        ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null, EventDrawerDate = DateTime.Now });
-
-                    ctx.SaveChanges();
-                    ctx.Database.Connection.Close();
-                    ctx.Dispose();
-                });
-
-                //When a search find stone on other drawer than one currently open
-                if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
-                {
-                    if (tagOnBadDrawer.DrawerToLight == e.DrawerId)
+                    //Store event drawer 
+                    Task.Factory.StartNew(() =>
                     {
-                        List<string> tags = new List<string>();
-                        tags.Add(tagOnBadDrawer.TagId);
+                        var ctx = RemoteDatabase.GetDbContext();
+                        if (GrantedUsersCache.LastAuthenticatedUser != null)
+                            ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId, InventoryId = null, EventDrawerDate = DateTime.Now });
+                        else
+                            ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null, EventDrawerDate = DateTime.Now });
 
-                        _lightDrawer = -1;
-                        DevicesHandler.StopLighting(tagOnBadDrawer.DrawerToLight);
-                        Thread.Sleep(50);
-                        DevicesHandler.LightTags(tagOnBadDrawer.DrawerToLight, tags, true);
-                        wallStatus = "Light in  wall (drawer " + tagOnBadDrawer.DrawerToLight + ")";
-                        DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight] = DrawerStatusList.InLight;
-                        DrawerStatus[tagOnBadDrawer.DrawerToLight] = DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight];
-                        BrushDrawer[tagOnBadDrawer.DrawerToLight] = _borderLight;
+                        ctx.SaveChanges();
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+                    });
 
-                        _lightDrawer = tagOnBadDrawer.DrawerToLight;
-                        bDrawerToLight[tagOnBadDrawer.DrawerToLight] = false;
-                        bDrawerToRefreshLight[tagOnBadDrawer.DrawerToLight] = false;
-                        tagOnBadDrawer.TagId = null;
+                    //When a search find stone on other drawer than one currently open
+                    if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
+                    {
+                        if (tagOnBadDrawer.DrawerToLight == e.DrawerId)
+                        {
+                            List<string> tags = new List<string>();
+                            tags.Add(tagOnBadDrawer.TagId);
+
+                            _lightDrawer = -1;
+                            DevicesHandler.StopLighting(tagOnBadDrawer.DrawerToLight);
+                            Thread.Sleep(50);
+                            DevicesHandler.LightTags(tagOnBadDrawer.DrawerToLight, tags, true);
+                            wallStatus = "Light in  wall (drawer " + tagOnBadDrawer.DrawerToLight + ")";
+                            DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight] = DrawerStatusList.InLight;
+                            DrawerStatus[tagOnBadDrawer.DrawerToLight] = DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight];
+                            BrushDrawer[tagOnBadDrawer.DrawerToLight] = _borderLight;
+
+                            _lightDrawer = tagOnBadDrawer.DrawerToLight;
+                            bDrawerToLight[tagOnBadDrawer.DrawerToLight] = false;
+                            bDrawerToRefreshLight[tagOnBadDrawer.DrawerToLight] = false;
+                            tagOnBadDrawer.TagId = null;
+                        }
+                    }
+                    else
+                    {
+                        if ((DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight)) 
+                        {
+                            wallStatus = "Light stones in drawer " + e.DrawerId;
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InLight;
+                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                            BrushDrawer[e.DrawerId] = _borderLight;
+                            bDrawerToLight[e.DrawerId] = true;
+                            _lightDrawer = e.DrawerId;
+                        }
+                        else
+                        {
+                            if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
+                                StopWallScan();
+                            wallStatus = "Drawer " + e.DrawerId + " opened";
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
+                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                            BrushDrawer[e.DrawerId] = _borderDrawerOpen;
+                        }
+
+                        if (IsAutoLightDrawerChecked)
+                        {
+                            if ((_lightDrawer == -1) && (_autoLightDrawer == -1))// No light in progress
+                            {
+                                _bStopWall = true;
+                                _autoLightDrawer = e.DrawerId; //give Number drawer to autolight
+                            }
+                        }
+                        else
+                            _autoLightDrawer = -1;
                     }
                 }
                 else
                 {
-                    if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight)
+                    if (_lastDrawerOpen != e.DrawerId)
                     {
-                        wallStatus = "Light stones in drawer " + e.DrawerId;
-                        DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InLight;
-                        DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                        BrushDrawer[e.DrawerId] = _borderLight;
-                        bDrawerToLight[e.DrawerId] = true;
-                        _lightDrawer = e.DrawerId;
-                    }
-                    else
-                    {
-                        if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
-                            StopWallScan();
-                        wallStatus = "Drawer " + e.DrawerId + " opened";
-                        DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
-                        DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                        BrushDrawer[e.DrawerId] = _borderDrawerOpen;
-                    }
-
-                    if (IsAutoLightDrawerChecked)
-                    {
-                        if ((_lightDrawer == -1) && (_autoLightDrawer == -1))// No light in progress
+                        DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
+                        if ((DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight))
                         {
-                            _bStopWall = true;
-                            _autoLightDrawer = e.DrawerId; //give Number drawer to autolight
+                            wallStatus = "Light stones in drawer " + e.DrawerId;
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InLight;
+                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                            BrushDrawer[e.DrawerId] = _borderLight;
+                            bDrawerToLight[e.DrawerId] = true;
+                            _lightDrawer = e.DrawerId;
                         }
+                        else if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.Ready)
+                        {
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
+                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                            BrushDrawer[e.DrawerId] = _borderDrawerOpen;
+                        }
+                        else
+                        {
+                            if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
+                                StopWallScan();
+                            wallStatus = "Drawer " + e.DrawerId + " opened";
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
+                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                            BrushDrawer[e.DrawerId] = _borderDrawerOpen;
+                        }
+
+                        
+                        mainview0.Dispatcher.BeginInvoke(new System.Action(async () =>
+                        {
+                            string info = string.Format("Drawer {0} already open - please Close drawer {1} to continue", _lastDrawerOpen, e.DrawerId);
+                            await mainview0.ShowMessageAsync("Wall Information", info);
+                        }));
                     }
-                    else
-                        _autoLightDrawer = -1;
                 }
 
             }
             catch (Exception error)
-            {
+            {            
                 mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOpened");
                     exp.ShowDialog();
                 }));
-            }
+            }          
+                
         }
         private void DeviceHandler_ScanStarted(object sender, DrawerEventArgs e)
         {
@@ -2797,6 +2921,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
+                OverallStatus = false;
                 wallStatus = "Drawer " + e.DrawerId + " failed scan started";
                 if (DevicesHandler.DrawerStatus[e.DrawerId] != DrawerStatusList.Open)
                 {
@@ -2827,7 +2952,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
                 Task.Run(() =>
                {
-                   InventoryHandler.HandleNewScanCompleted(e.DrawerId);
+                   InventoryHandler.HandleNewScanCompleted(e.DrawerId);                 
 
                });
                 DevicesHandler.IsDrawerWaitScan[e.DrawerId] = false;
@@ -2835,9 +2960,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                 BrushDrawer[e.DrawerId] = _borderReady;
                 CountTotalStones();
-                bNeedUpdateCriteriaAfterScan = true;         
+                bNeedUpdateCriteriaAfterScan = true;
 
-               
             }
             catch (Exception error)
             {

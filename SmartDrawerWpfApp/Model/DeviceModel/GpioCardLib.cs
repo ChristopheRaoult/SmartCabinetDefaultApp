@@ -16,7 +16,9 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         public delegate void NotifyGpioCardHandlerDelegate(string arg);
         public event NotifyGpioCardHandlerDelegate NotifyGpioEvent;
         public string SerialPortCom { get; private set; }
+        private int[] _PreviousInStatus = new int[9];
         private int[] _InStatus = new int[9];
+        public int[] PreviousInStatus { get { return _PreviousInStatus; } }
         public int[] InStatus { get { return _InStatus; } }
         private int[] _OutStatus = new int[17];
         public int[] OutStatus { get { return _OutStatus; } }
@@ -40,7 +42,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             for (int loop = 0; loop < 9; loop++)
             {
                 _InStatus[loop] = -1;
-
+                _PreviousInStatus[loop] = -1;
             }
             for (int loop = 0; loop < 17; loop++)
             {
@@ -145,7 +147,8 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         {
             try
             {
-                serialPort.Write(string.Format("{0}", message));
+                if (serialPort != null)
+                    serialPort.Write(string.Format("{0}", message));
             }
             catch
             {
@@ -187,12 +190,19 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
 
             }
         }
+        private string previousInput = string.Empty;
         private void processInValues(string input)
         {
             string bckInput = input;
             input = input.Substring(1); //remove command Letter
             if (IsNumeric(input))
             {
+
+                for (int loop = 1; loop < 9; loop++)
+                {
+                    if (InStatus[loop] != -1)
+                        _PreviousInStatus[loop] = _InStatus[loop];
+                }
                 _InStatus[1] = ((int.Parse(input) & 0x01) == 0x01) ? 1 : 0;
                 _InStatus[2] = ((int.Parse(input) & 0x02) == 0x02) ? 1 : 0;
                 _InStatus[3] = ((int.Parse(input) & 0x04) == 0x04) ? 1 : 0;
@@ -203,9 +213,13 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 _InStatus[8] = ((int.Parse(input) & 0x80) == 0x80) ? 1 : 0;
             }
 
-            if (NotifyGpioEvent != null)
+            if (previousInput != input)
             {
-                NotifyGpioEvent(bckInput);
+                previousInput = input;
+                if (NotifyGpioEvent != null)
+                {
+                    NotifyGpioEvent(bckInput);
+                }
             }
 
         }

@@ -32,5 +32,11 @@
     <Setting Name="WallName" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
     </Setting>
+    <Setting Name="NotificationIp" Type="System.String" Scope="User">
+      <Value Profile="(Default)">217.128.159.119</Value>
+    </Setting>
+    <Setting Name="NotificationPort" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">9004</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

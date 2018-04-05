@@ -67,8 +67,10 @@ namespace SmartDrawerWpfApp.StaticHelpers
         {
             lock (lockMethod)
             {
+                string filename = string.Format("smartDrawerLog_{0}.txt", DateTime.Now.ToString("yyMMdd"));
+
                 System.IO.StreamWriter sw = System.IO.File.AppendText(
-                GetTempPath() + "smartDrawerLog.txt");
+                GetTempPath() + filename);
                 try
                 {
                     string logLine = System.String.Format(

@@ -60,6 +60,10 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         private static int _LastDrawerOpened = 0;
         private static int _LastDrawerClosed = 0;
 
+        private static bool isWallLocked = true;
+        public static bool IsWallLocked { get { return isWallLocked; } }
+
+
         public static async Task<SmartDrawerDatabase.DAL.Device> GetDeviceEntityAsync()
         {
             if (_deviceEntity != null)
@@ -197,6 +201,9 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         /// drawer closed
         /// </summary>
         public static event DeviceEventHandler DrawerClosed;
+
+        public static event DeviceEventHandler WallLocked;
+        public static event DeviceEventHandler WallUnLocked;
 
         /// <summary>
         /// Fail start scan
@@ -389,32 +396,70 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
 
             if (GpioCardObject.IsConnected)
                 FireEvent(GpioConnected, "0", 0);
+
+            GpioCardObject.ClearOut(1);
+            GpioCardObject.ClearOut(2);
         }
         private static void GpioCardObject_NotifyGpioEvent(string arg)
         {
-            if (_LastDrawerOpened != 0)
+            /* if (_LastDrawerOpened != 0)
+             {
+                 if (GpioCardObject.InStatus[_LastDrawerOpened] == 0)
+                 {                   
+                     _LastDrawerClosed = _LastDrawerOpened;
+                     _LastDrawerOpened = 0;
+                     FireEvent(DrawerClosed, DeviceList.FirstOrDefault(x => x.Value == _LastDrawerClosed).Key, _LastDrawerClosed);
+                     return;
+                 }
+             }
+
+             for (int loop = 1; loop <= NbDrawer; loop++)
+             {
+                 if (GpioCardObject.InStatus[loop] == 1)
+                 {
+                     if (_LastDrawerOpened != loop)
+                     {
+                         _LastDrawerOpened = loop;
+                         _LastDrawerClosed = 0;
+                         FireEvent(DrawerOpened, DeviceList.FirstOrDefault(x => x.Value == _LastDrawerOpened).Key, _LastDrawerOpened);
+                     }
+                     break;
+                 }
+             }*/
+            
+            for (int loop = 1; loop <= NbDrawer; loop++)
             {
-                if (GpioCardObject.InStatus[_LastDrawerOpened] == 0)
-                {                   
-                    _LastDrawerClosed = _LastDrawerOpened;
-                    _LastDrawerOpened = 0;
-                    FireEvent(DrawerClosed, DeviceList.FirstOrDefault(x => x.Value == _LastDrawerClosed).Key, _LastDrawerClosed);
-                    return;
+                if (GpioCardObject.InStatus[loop] != GpioCardObject.PreviousInStatus[loop])
+                {                    
+                    if ((GpioCardObject.InStatus[loop] == 0) && (GpioCardObject.PreviousInStatus[loop] == 1))
+                        FireEvent(DrawerClosed, DeviceList.FirstOrDefault(x => x.Value == loop).Key, loop);
                 }
-            }
+            }           
 
             for (int loop = 1; loop <= NbDrawer; loop++)
             {
-                if (GpioCardObject.InStatus[loop] == 1)
-                {
-                    if (_LastDrawerOpened != loop)
-                    {
-                        _LastDrawerOpened = loop;
-                        _LastDrawerClosed = 0;
-                        FireEvent(DrawerOpened, DeviceList.FirstOrDefault(x => x.Value == _LastDrawerOpened).Key, _LastDrawerOpened);
-                    }
-                    break;
+                if ((GpioCardObject.InStatus[loop] == 1) && (GpioCardObject.PreviousInStatus[loop] == 0))
+                {                  
+                    FireEvent(DrawerOpened, DeviceList.FirstOrDefault(x => x.Value == loop).Key, loop);
+                   
                 }
+            }
+
+            if (GpioCardObject.PreviousInStatus[8] == -1)
+            {
+                if (GpioCardObject.InStatus[8] == 1) isWallLocked = true;
+                else isWallLocked = false;
+            }
+
+            if ((GpioCardObject.InStatus[8] == 1) && (GpioCardObject.PreviousInStatus[8] == 0))
+            {
+                isWallLocked = false;
+                FireEvent(WallUnLocked, "0", 0);
+            }
+            if ((GpioCardObject.InStatus[8] == 0) && (GpioCardObject.PreviousInStatus[8] == 1))
+            {
+                isWallLocked = true;
+                FireEvent(WallLocked, "0", 0);
             }
         }
         /*private static void ConnectAccessBadge(string portCom)

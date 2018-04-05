@@ -82,7 +82,7 @@ namespace SmartDrawerDatabase.DAL
                 context.UserRanks.Add(ur);
 
             //seed Admin User
-            GrantedUser adminUser = new GrantedUser() { GrantedUserId = 1, Login = "Admin", Password = PasswordHashing.Sha256Of("Rfid123456") , UserRankId = 1 , UpdateAt = DateTime.Now };
+            GrantedUser adminUser = new GrantedUser() { GrantedUserId = 1, ServerGrantedUserId = -1, Login = "Admin", Password = PasswordHashing.Sha256Of("Rfid123456") , UserRankId = 1 , UpdateAt = DateTime.Now };
             context.GrantedUsers.Add(adminUser);
 
             //seed device
