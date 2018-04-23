@@ -145,7 +145,7 @@ namespace SmartDrawerWpfApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("217.128.159.119")]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
         public string NotificationIp {
             get {
                 return ((string)(this["NotificationIp"]));

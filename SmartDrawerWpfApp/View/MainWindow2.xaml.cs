@@ -6,6 +6,7 @@ using SmartDrawerWpfApp.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -42,6 +43,10 @@ namespace SmartDrawerWpfApp.View
                 Properties.Settings.Default.Save();
                 Properties.Settings.Default.Upgrade();
             }
+
+            System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
+            FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
+            Title += " - " + fvi.FileVersion;
         }
 
         private string IncomeMessage = string.Empty;

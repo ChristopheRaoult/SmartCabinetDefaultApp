@@ -37,6 +37,14 @@ namespace SmartDrawerWpfApp.StaticHelpers
             treeViewItem.ExpandSubtree();
             buildTreeLayer(e, treeViewItem);
             treeView1.Items.Add(treeViewItem);
+
+            LogToFile.LogMessageToFile("------- Start Exception --------");
+            LogToFile.LogMessageToFile(e.InnerException.ToString());
+            LogToFile.LogMessageToFile(e.Message);
+            LogToFile.LogMessageToFile(e.Source);
+            LogToFile.LogMessageToFile(e.StackTrace);
+            LogToFile.LogMessageToFile(e.TargetSite.ToString());
+            LogToFile.LogMessageToFile("------- End Exception --------");
         }
 
         void buildTreeLayer(Exception e, TreeViewItem parent)

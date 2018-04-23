@@ -58,7 +58,11 @@ namespace SmartDrawerWpfApp.StaticHelpers
         public static string GetTempPath()
         {
             string path = System.Environment.GetEnvironmentVariable("TEMP");
-            if (!path.EndsWith("\\")) path += "\\";
+            if (!path.EndsWith("\\")) path += "\\SPACECODE\\";
+            else
+                path += "SPACECODE\\";
+            if(!System.IO.Directory.Exists(path))
+                System.IO.Directory.CreateDirectory(path);
             return path;
         }
 

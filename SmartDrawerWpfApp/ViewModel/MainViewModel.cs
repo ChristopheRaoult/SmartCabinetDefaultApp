@@ -1160,6 +1160,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 ctx.Database.Connection.Close();
                 ctx.Dispose();
 
+                DevicesHandler.ResetDEviceEntity();
+
             }
             catch (DbEntityValidationException ex)
             {
@@ -1549,8 +1551,11 @@ namespace SmartDrawerWpfApp.ViewModel
         public RelayCommand ResetDeviceCommand { get; set; }
         void Reset(bool renewFP = false)
         {
-
-            AutoConnectTimer.IsEnabled = false;
+            mainview0.Dispatcher.Invoke(new System.Action(() =>
+            {
+                if (AutoConnectTimer != null)
+                    AutoConnectTimer.IsEnabled = false;
+            }));
             WallStatusOperational = "INITIALISATION";
 
             try
@@ -1590,13 +1595,22 @@ namespace SmartDrawerWpfApp.ViewModel
 
                 }));
             }
-            catch
+            catch(Exception error)
             {
+                 mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                {
+                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Reset");
+                    exp.ShowDialog();
+                }));
             }
             finally
             {
-
-                AutoConnectTimer.IsEnabled = true;
+                mainview0.Dispatcher.Invoke(new System.Action(() =>
+                {
+                    if (AutoConnectTimer != null)
+                        AutoConnectTimer.IsEnabled = true;
+                }));
+                
             }
         }
 
@@ -2003,7 +2017,11 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 else
                 {
-                    if ((myDev.DeviceSerial != Properties.Settings.Default.WallSerial) || (myDev.DeviceName != Properties.Settings.Default.WallName) || (myDev.IpAddress != Properties.Settings.Default.NotificationIp))
+                    string tmpIp = Utils.GetLocalIp();
+                if (!string.IsNullOrEmpty(Properties.Settings.Default.NotificationIp))
+                    tmpIp = Properties.Settings.Default.NotificationIp;
+
+                if ((myDev.DeviceSerial != Properties.Settings.Default.WallSerial) || (myDev.DeviceName != Properties.Settings.Default.WallName) || (myDev.IpAddress != tmpIp))
                     {
                         bNeedQuit = true;
 
@@ -2148,6 +2166,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
+                ScanTimer.IsEnabled = false;
                 ScanTimer.Stop();
 
                 #region status
@@ -2408,6 +2427,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     await myConTroller.CloseAsync();
 
                 ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
+                ScanTimer.IsEnabled = true;
                 ScanTimer.Start();
             }
         }
@@ -2478,7 +2498,6 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             NetworkStatus = true;
         }
-
         private void Wns_MyHostEvent(object sender, MyHostEventArgs e)
         {
             try
@@ -2546,7 +2565,6 @@ namespace SmartDrawerWpfApp.ViewModel
                 File.AppendAllText(@"c:/temp/WallPanelLog/logService.txt", exp.Message + "\r\n");
             }
         }
-
         #endregion
         #region Device
         private void DevicesHandler_GpioConnected(object sender, DrawerEventArgs e)
@@ -2737,7 +2755,17 @@ namespace SmartDrawerWpfApp.ViewModel
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOClosed");
                     exp.ShowDialog();
                 }));
-            }            
+            }   
+            
+            finally
+            {
+                if (!ScanTimer.IsEnabled)
+                {
+                    ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
+                    ScanTimer.IsEnabled = true;
+                    ScanTimer.Start();
+                }
+            }
         }
         private void DevicesHandler_DrawerOpened(object sender, DrawerEventArgs e)
         {
@@ -2895,8 +2923,17 @@ namespace SmartDrawerWpfApp.ViewModel
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOpened");
                     exp.ShowDialog();
                 }));
-            }          
-                
+            }
+            finally
+            {
+                if (!ScanTimer.IsEnabled)
+                {
+                    ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
+                    ScanTimer.IsEnabled = true;
+                    ScanTimer.Start();
+                }
+            }
+
         }
         private void DeviceHandler_ScanStarted(object sender, DrawerEventArgs e)
         {
@@ -3190,9 +3227,7 @@ namespace SmartDrawerWpfApp.ViewModel
             DevicesHandler.DrawerClosed += DevicesHandler_DrawerClosed;
             DevicesHandler.GpioConnected += DevicesHandler_GpioConnected;
             DevicesHandler.FpAuthenticationReceive += DevicesHandler_FpAuthenticationReceive;
-            DevicesHandler.TryInitializeLocalDeviceAsync();
-
-            InitWcfService();
+         
 
             AutoConnectTimer = new DispatcherTimer();
             AutoConnectTimer.Tick += new EventHandler(AutoConnectTimer_Tick);
@@ -3203,6 +3238,9 @@ namespace SmartDrawerWpfApp.ViewModel
             AutoLockTimer.Tick += new EventHandler(AutoLockTimer_Tick);
             AutoLockTimer.Interval = new TimeSpan(0, 0, 1);
             AutoLockTimer.Start();
+
+            DevicesHandler.TryInitializeLocalDeviceAsync();
+            InitWcfService();
 
             ScanTimer = new DispatcherTimer();
             ScanTimer.Tick += new EventHandler(ScanTimer_Tick);
@@ -3222,6 +3260,9 @@ namespace SmartDrawerWpfApp.ViewModel
         /// </summary>
         public MainViewModel()
         {
+
+            //reset properties
+           // Properties.Settings.Default.Reset();
 
             // add custom accent and theme resource dictionaries to the ThemeManager
             // you should replace MahAppsMetroThemesSample with your application name

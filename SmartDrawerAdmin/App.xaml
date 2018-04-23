@@ -17,10 +17,10 @@
         <!-- theme resource -->
         <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Accents/BaseLight.xaml">
         </ResourceDictionary>
-        <ResourceDictionary Source="Stylesheet\Stylesheet.xaml">         
-        </ResourceDictionary>                
-        </ResourceDictionary.MergedDictionaries>
-        <vm:ViewModelLocator x:Key="Locator" d:IsDataSource="True" xmlns:vm="clr-namespace:SmartDrawerAdmin.ViewModel" />
+        <ResourceDictionary Source="Stylesheet\Stylesheet.xaml">
         </ResourceDictionary>
+      </ResourceDictionary.MergedDictionaries>
+      <vm:ViewModelLocator x:Key="Locator" d:IsDataSource="True" xmlns:vm="clr-namespace:SmartDrawerAdmin.ViewModel" />
+    </ResourceDictionary>
   </Application.Resources>
 </Application>

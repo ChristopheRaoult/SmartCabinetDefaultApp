@@ -64,6 +64,11 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         public static bool IsWallLocked { get { return isWallLocked; } }
 
 
+        public static void ResetDEviceEntity()
+        {
+            _deviceEntity = null;
+        }
+
         public static async Task<SmartDrawerDatabase.DAL.Device> GetDeviceEntityAsync()
         {
             if (_deviceEntity != null)

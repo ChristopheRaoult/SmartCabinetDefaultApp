@@ -620,7 +620,12 @@ namespace SmartDrawerWpfApp.WcfServer
                 request.AddParameter("serial_num", dev.DeviceSerial);
                 request.AddParameter("name", dev.DeviceName);
                 request.AddParameter("location", dev.DeviceLocation);
-                request.AddParameter("IP_addr", Properties.Settings.Default.NotificationIp);
+
+                // If default parameter is nul get found IP
+                if (string.IsNullOrEmpty(Properties.Settings.Default.NotificationIp))
+                    request.AddParameter("IP_addr", dev.IpAddress);
+                else
+                    request.AddParameter("IP_addr", Properties.Settings.Default.NotificationIp);
                 request.AddParameter("port", Properties.Settings.Default.NotificationPort);
 
                 var response = await client.ExecuteTaskAsync(request);
@@ -648,7 +653,11 @@ namespace SmartDrawerWpfApp.WcfServer
 
                 request.AddParameter("name", dev.DeviceName);
                 request.AddParameter("location", dev.DeviceLocation);
-                request.AddParameter("IP_addr", Properties.Settings.Default.NotificationIp);
+                // If default parameter is nul get found IP
+                if (string.IsNullOrEmpty(Properties.Settings.Default.NotificationIp))
+                    request.AddParameter("IP_addr", dev.IpAddress);
+                else
+                    request.AddParameter("IP_addr", Properties.Settings.Default.NotificationIp);
                 request.AddParameter("port", Properties.Settings.Default.NotificationPort);
 
                 var response = await client.ExecuteTaskAsync(request);
