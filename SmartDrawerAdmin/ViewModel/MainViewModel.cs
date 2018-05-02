@@ -510,7 +510,8 @@ namespace SmartDrawerAdmin.ViewModel
                 var secureString = pwd.ToSecureString();
                 Properties.Settings.Default.DbPassword = secureString.EncryptString();
                 Properties.Settings.Default.Save();
-                Properties.Settings.Default.Upgrade();
+                //Properties.Settings.Default.Upgrade();
+                Properties.Settings.Default.Reload();
             }
 
             btSaveDevice = new RelayCommand( ()=> SaveDevice());

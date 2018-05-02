@@ -38,5 +38,11 @@
     <Setting Name="NotificationPort" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">9004</Value>
     </Setting>
+    <Setting Name="bReadDft" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="UpgradeRequired" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

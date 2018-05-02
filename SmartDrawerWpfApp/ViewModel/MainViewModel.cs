@@ -100,8 +100,23 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Properties
 
-       
-
+        private bool _ReadDft = false;
+        public bool ReadDft
+        {
+            get
+            {
+                _ReadDft = Properties.Settings.Default.bReadDft;
+                return _ReadDft;
+            }
+            set
+            {
+                _ReadDft = value;
+                Properties.Settings.Default.bReadDft = _ReadDft;
+                Properties.Settings.Default.Save();
+                Properties.Settings.Default.Reload();
+                RaisePropertyChanged(() => ReadDft);
+            }
+        }
         private bool _validationSuccess = true;
         internal bool ValidationSuccess
         {
@@ -152,7 +167,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     _ServerIp = value;
                     Properties.Settings.Default.ServerIp = _ServerIp;
                     Properties.Settings.Default.Save();
-                    Properties.Settings.Default.Upgrade();
+                    Properties.Settings.Default.Reload();
                     RaisePropertyChanged(() => ServerIp);
                 }
             }
@@ -173,7 +188,8 @@ namespace SmartDrawerWpfApp.ViewModel
                     _ServerPort = value;
                     Properties.Settings.Default.ServerPort = _ServerPort;
                     Properties.Settings.Default.Save();
-                    Properties.Settings.Default.Upgrade();
+                    // Properties.Settings.Default.Upgrade();
+                    Properties.Settings.Default.Reload();
                     RaisePropertyChanged(() => ServerPort);
                 }
             }
@@ -194,7 +210,8 @@ namespace SmartDrawerWpfApp.ViewModel
                     _NotificationIp = value;
                     Properties.Settings.Default.NotificationIp = _NotificationIp;
                     Properties.Settings.Default.Save();
-                    Properties.Settings.Default.Upgrade();
+                    //Properties.Settings.Default.Upgrade();
+                    Properties.Settings.Default.Reload();
                     RaisePropertyChanged(() => NotificationIp);
                 }
             }
@@ -1136,8 +1153,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
         public RelayCommand btSaveDevice { get; set; }
         public async void ReloadDevice()
-        {
-            Properties.Settings.Default.Upgrade();
+        {          
 
             // Add device in local DB
             try
@@ -1986,7 +2002,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     Properties.Settings.Default.RfidSerial = DevicesHandler.Device.SerialNumber;
                     Properties.Settings.Default.Save();
-                    Properties.Settings.Default.Upgrade();
+                    // Properties.Settings.Default.Upgrade();
+                    Properties.Settings.Default.Reload();
                 }
                 DevicesHandler.Device.DisconnectReader();
             }
@@ -3262,7 +3279,14 @@ namespace SmartDrawerWpfApp.ViewModel
         {
 
             //reset properties
-           // Properties.Settings.Default.Reset();
+             //Properties.Settings.Default.Reset();
+
+            if (Properties.Settings.Default.UpgradeRequired)
+            {
+                Properties.Settings.Default.Upgrade();
+                Properties.Settings.Default.UpgradeRequired = false;
+                Properties.Settings.Default.Save();
+            }
 
             // add custom accent and theme resource dictionaries to the ThemeManager
             // you should replace MahAppsMetroThemesSample with your application name

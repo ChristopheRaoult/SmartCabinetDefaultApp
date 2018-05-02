@@ -524,6 +524,7 @@ namespace SmartDrawerWpfApp.WcfServer
         {
             try
             {
+                Properties.Settings.Default.Reload();
                 string serverIP = Properties.Settings.Default.ServerIp;
                 int serverPort = Properties.Settings.Default.ServerPort;
 

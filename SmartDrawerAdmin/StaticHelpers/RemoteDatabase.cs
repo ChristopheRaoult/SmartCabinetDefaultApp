@@ -51,7 +51,8 @@ namespace SmartDrawerAdmin.StaticHelpers
         public static void SaveSettings()
         {
             Properties.Settings.Default.Save();
-            Properties.Settings.Default.Upgrade();          
+            Properties.Settings.Default.Reload();
+            //Properties.Settings.Default.Upgrade();          
         }
 
         public static bool IsConfigured

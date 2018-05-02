@@ -41,7 +41,8 @@ namespace SmartDrawerWpfApp.View
                 var secureString = pwd.ToSecureString();
                 Properties.Settings.Default.DbPassword = secureString.EncryptString();
                 Properties.Settings.Default.Save();
-                Properties.Settings.Default.Upgrade();
+                // Properties.Settings.Default.Upgrade();
+                Properties.Settings.Default.Reload();
             }
 
             System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();

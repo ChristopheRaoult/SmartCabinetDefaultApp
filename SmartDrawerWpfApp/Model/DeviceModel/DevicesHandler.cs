@@ -782,16 +782,22 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                     break;
                 case rfidReaderArgs.ReaderNotify.RN_TagAdded:
 
-                    if (isValidUidFormat(args.Message))
+                    if (Properties.Settings.Default.bReadDft)
                     {
                         FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);
                     }
-                    else if (Device.ReaderData.strListTag.Contains(args.Message))
+                    else
                     {
-                        Device.ReaderData.strListTag.Remove(args.Message);
-                        Device.ReaderData.nbTagScan = Device.ReaderData.strListTag.Count;
+                        if (isValidUidFormat(args.Message))
+                        {
+                            FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);
+                        }
+                        else if (Device.ReaderData.strListTag.Contains(args.Message))
+                        {
+                            Device.ReaderData.strListTag.Remove(args.Message);
+                            Device.ReaderData.nbTagScan = Device.ReaderData.strListTag.Count;
+                        }
                     }
-
 
                     break;
                 case rfidReaderArgs.ReaderNotify.RN_ScanCompleted:
