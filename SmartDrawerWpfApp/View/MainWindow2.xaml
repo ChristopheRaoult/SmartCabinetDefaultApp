@@ -578,7 +578,7 @@
                 </Grid>
             </TabItem>
             <!-- Drawer Mode -->
-            <TabItem Header="Drawer Mode" Width="200" Height="44" Visibility="Visible" x:Name="tabListPerDrawer">
+            <TabItem Header="Drawer Mode" Width="200" Height="44" Visibility="Collapsed" x:Name="tabListPerDrawer">
                 <Grid Margin="20,20,20,20">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="100" />

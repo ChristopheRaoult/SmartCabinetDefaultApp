@@ -104,12 +104,7 @@ namespace SmartDrawerWpfApp
                     exception.StackTrace);
 
             File.AppendAllText(string.Format("{0}Exceptions.log", DirectoryName), contents);
-
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                ExceptionMessageBox exp = new ExceptionMessageBox(exception, s);
-                exp.ShowDialog();
-            });
+            
         }
         private void Application_Startup(object sender, StartupEventArgs e)
         {

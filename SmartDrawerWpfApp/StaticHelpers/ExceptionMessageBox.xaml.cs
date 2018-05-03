@@ -27,6 +27,8 @@ namespace SmartDrawerWpfApp.StaticHelpers
 
         public ExceptionMessageBox(Exception e, string userExceptionMessage)
         {
+            if (e == null) return;
+
             InitializeComponent();
 
             this.userExceptionMessage = userExceptionMessage;
@@ -39,10 +41,15 @@ namespace SmartDrawerWpfApp.StaticHelpers
             treeView1.Items.Add(treeViewItem);
 
             LogToFile.LogMessageToFile("------- Start Exception --------");
+            if (e.InnerException != null)
             LogToFile.LogMessageToFile(e.InnerException.ToString());
+            if (e.Message != null)
             LogToFile.LogMessageToFile(e.Message);
+            if (e.Source != null)
             LogToFile.LogMessageToFile(e.Source);
+            if (e.StackTrace != null)
             LogToFile.LogMessageToFile(e.StackTrace);
+            if (e.TargetSite != null)
             LogToFile.LogMessageToFile(e.TargetSite.ToString());
             LogToFile.LogMessageToFile("------- End Exception --------");
         }
