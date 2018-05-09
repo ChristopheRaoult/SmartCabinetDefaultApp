@@ -2220,6 +2220,8 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private async void ScanTimer_Tick(object sender, EventArgs e)
         {
+            int _bckrecheckLightDrawer = _recheckLightDrawer;
+            var myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Rechecking {0} tags in drawer {1}", SelectedCassette.TagToLight[_bckrecheckLightDrawer].Count, _bckrecheckLightDrawer));
             try
             {
                 ScanTimer.IsEnabled = false;
@@ -2260,12 +2262,10 @@ namespace SmartDrawerWpfApp.ViewModel
                 #endregion
                 #region Recheck light
                 else if (_recheckLightDrawer != -1)
-                {
-                    int _bckrecheckLightDrawer = _recheckLightDrawer;
-                   
-                        var myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Rechecking {0} tags in drawer {1}", SelectedCassette.TagToLight[_bckrecheckLightDrawer].Count, _bckrecheckLightDrawer));
-                        myConTroller.SetIndeterminate();
-               
+                {                
+
+                
+                    myConTroller.SetIndeterminate();               
                     List<string> TagToLight = new List<string>(SelectedCassette.TagToLight[_bckrecheckLightDrawer]);
 
                     await Task.Run(() =>
@@ -2294,7 +2294,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 {
                                     DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.InLight;
                                     DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
-                                    BrushDrawer[_bckrecheckLightDrawer] = _borderDrawerOpen;
+                                    BrushDrawer[_bckrecheckLightDrawer] = _borderReadyToPull;
                                 }
 
                                 DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
@@ -2394,8 +2394,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
                         else if (bDrawerToLight[bckDrawer] == true)
                         {
-                            bDrawerToLight[bckDrawer] = false;
-                            var myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Lighting {0} tags in drawer {1}", SelectedCassette.TagToLight[_lightDrawer].Count, _lightDrawer));
+                            bDrawerToLight[bckDrawer] = false;                           
                             myConTroller.SetIndeterminate();
 
                             await Task.Run(() =>
@@ -2490,7 +2489,12 @@ namespace SmartDrawerWpfApp.ViewModel
                 }));
             }
             finally
-            {               
+            {
+
+                if ((myConTroller != null) && (myConTroller.IsOpen))
+                {
+                    myConTroller.CloseAsync();
+                }
 
                 ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
                 ScanTimer.IsEnabled = true;
@@ -3280,7 +3284,7 @@ namespace SmartDrawerWpfApp.ViewModel
                         {
                             DevicesHandler.DrawerStatus[loop] = DrawerStatusList.InLight;
                             DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
-                            BrushDrawer[loop] = _borderDrawerOpen;
+                            BrushDrawer[loop] = _borderReadyToPull;
                             bDrawerToLight[loop] = true;
                             if (_lastDrawerOpen == loop) // drawer already open run lighting
                             {

@@ -48,6 +48,15 @@ namespace SmartDrawerWpfApp.View
             System.Reflection.Assembly assembly = System.Reflection.Assembly.GetExecutingAssembly();
             FileVersionInfo fvi = FileVersionInfo.GetVersionInfo(assembly.Location);
             Title += " - " + fvi.FileVersion;
+
+            if (string.IsNullOrEmpty(Properties.Settings.Default.WallSerial))
+            {
+                tb_WallSerial.IsReadOnly = false;
+            }
+            else
+            {
+                tb_WallSerial.Background = Brushes.LightGray;
+            }
         }
 
         private string IncomeMessage = string.Empty;

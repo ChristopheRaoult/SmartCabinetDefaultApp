@@ -409,7 +409,7 @@
                 </Grid>
             </TabItem>
             <!-- Inventory Mode -->
-            <TabItem Header="Inventory Mode" Width="200" Height="44">
+            <TabItem Header="Inventory Mode" Width="200" Height="44" Visibility="Collapsed">
                 <Grid Grid.Row="1" >
                     <Grid.RowDefinitions>
                         <RowDefinition Height="75"></RowDefinition>
@@ -649,7 +649,7 @@
                             <TextBlock Grid.Row="1" Grid.Column="0" Text="Server Port :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
                             <TextBox Grid.Row="1" Grid.Column="1"  Margin="10" Text="{Binding ServerPort , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Device Serial :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
-                            <TextBox Grid.Row="2" Grid.Column="1"  Margin="10" Text="{Binding WallSerial , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                            <TextBox x:Name="tb_WallSerial" Grid.Row="2" Grid.Column="1"  Margin="10" Text="{Binding WallSerial , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" IsReadOnly="True"/>
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Device Name :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
                             <TextBox Grid.Row="3" Grid.Column="1"  Margin="10" Text="{Binding WallName , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Device location :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
