@@ -414,6 +414,17 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
+        bool _RfidError;
+        public bool RfidError
+        {
+            get { return _RfidError; }
+            set
+            {
+                _RfidError = value;
+                RaisePropertyChanged("RfidError");
+            }
+        }
+
         bool _RfidStatus;
         public bool RfidStatus
         {
@@ -959,7 +970,7 @@ namespace SmartDrawerWpfApp.ViewModel
         private static Object thisLock = new Object();
         public async void getCriteria()
         {
-            var myConTroller = await mainview0.ShowProgressAsync("Please wait", "Retrieving information from Database");
+            var myConTroller = await mainview0.ShowProgressAsync("Please wait", "Retrieving information from Database",true);
             try
             {
                 myConTroller.SetIndeterminate();
@@ -1044,12 +1055,15 @@ namespace SmartDrawerWpfApp.ViewModel
             }
             finally
             {
-                if ((myConTroller != null) && (myConTroller.IsOpen))
+                try
                 {
-                    myConTroller.CloseAsync();
-                   
-
+                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                    {
+                        myConTroller.CloseAsync();
+                    }
                 }
+                catch
+                { }
             }
         }
         public DataTable PopulateDataGrid(ObservableCollection<BaseObject> giaData)
@@ -1280,86 +1294,152 @@ namespace SmartDrawerWpfApp.ViewModel
             BrushDrawer[7] = _borderReady;
 
 
-            var myConTroller = await mainview0.ShowProgressAsync("Please wait","Get Selection From server");
+            var myConTroller = await mainview0.ShowProgressAsync("Please wait","Get Selection From server",true);
             myConTroller.SetIndeterminate();
             try
             {
-                getCriteria();
 
+                Selection.Clear();
+                getCriteria();
                 /* Get Selection from API */
                 bool gotSel = await ProcessSelectionFromServer.GetAndStoreSelectionAsync();
 
                 if (gotSel)
                 {
-
-                    List<PullItem> lstToRemove = new List<PullItem>();
-                    var ctx = await RemoteDatabase.GetDbContextAsync();
-                    Selection.Clear();
-                    foreach (var sel in ctx.PullItems)
+                    if (ProcessSelectionFromServer.lastSelection != null)
                     {
-                        SelectionViewModel svm = new SelectionViewModel();
-                        svm.IsSelected = false;
-                        svm.PullItemId = sel.PullItemId;
-                        svm.ServerPullItemId = sel.ServerPullItemId;
-
-                        TimeSpan ts = DateTime.Now - sel.PullItemDate;
-                        if (ts.TotalDays < 1)
-                            svm.PullItemDate = sel.PullItemDate.ToString("hh:mm tt");
-                        else if (ts.TotalDays == 2)
-                            svm.PullItemDate = "Yesterday\r\n" + sel.PullItemDate.ToString("hh:mm tt");
-                        else
-                            svm.PullItemDate = sel.PullItemDate.ToString("MMM dd") + "\r\n" + sel.PullItemDate.ToString("hh:mm tt");
-
-                        svm.Description = sel.Description;
-                        if (sel.GrantedUser != null)
-                            svm.User = sel.GrantedUser.FirstName + " " + sel.GrantedUser.LastName;
-                        svm.TotalToPull = sel.TotalToPull;
-
-                        svm.lstTopull = new List<string>();
-                        int nbInDevice = 0;
-
-                        foreach (var pit in sel.PullItems)
+                        var ctx = await RemoteDatabase.GetDbContextAsync();
+                        foreach (JsonSelectionList jsl in ProcessSelectionFromServer.lastSelection)
                         {
-                            if (DevicesHandler.ListTagPerDrawer.ContainsKey(pit.RfidTag.TagUid))
+                            if (jsl.state == "closed") continue;
+                            if (jsl.listOfTagToPull == null) continue;
+                            GrantedUser user = null;
+                            if (jsl.user_id.HasValue)
                             {
-                                svm.lstTopull.Add(pit.RfidTag.TagUid);
-                                nbInDevice++;
+                                user = ctx.GrantedUsers.GetByServerId(jsl.user_id.Value);
+                            }
+
+                            SelectionViewModel svm = new SelectionViewModel();
+                            svm.IsSelected = false;
+                            svm.PullItemId = jsl.selection_id;
+                            svm.ServerPullItemId = jsl.selection_id;
+
+                            TimeSpan ts = DateTime.Now - jsl.created_at;
+                            if (ts.TotalDays < 1)
+                                svm.PullItemDate = jsl.created_at.ToString("hh:mm tt");
+                            else if (ts.TotalDays == 2)
+                                svm.PullItemDate = "Yesterday\r\n" + jsl.created_at.ToString("hh:mm tt");
+                            else
+                                svm.PullItemDate = jsl.created_at.ToString("MMM dd") + "\r\n" + jsl.created_at.ToString("hh:mm tt");
+
+                            svm.Description = string.IsNullOrEmpty(jsl.description) ? " " : jsl.description;
+
+                            if (user != null)
+                                svm.User = user.FirstName + " " + user.LastName;
+                            svm.TotalToPull = jsl.listOfTagToPull.Count;
+
+                            svm.lstTopull = new List<string>();
+                            int nbInDevice = 0;
+
+                            foreach (var uid in jsl.listOfTagToPull)
+                            {
+                                if (string.IsNullOrEmpty(uid)) continue;
+                                if (DevicesHandler.ListTagPerDrawer.ContainsKey(uid))
+                                {
+                                    svm.lstTopull.Add(uid);
+                                    nbInDevice++;
+                                }
+                            }
+
+                            if (nbInDevice > 0)
+                            {
+                                svm.TotalToPullInDevice = nbInDevice;
+                                Selection.Add(svm);
                             }
                         }
-                        // if (1 == 1)
-                        if (nbInDevice > 0)
-                        {
-                            svm.TotalToPullInDevice = nbInDevice;
-                            Selection.Add(svm);
-                        }
-                        else   //remove selection bigger thant 1 week having no selection
-                        {
-                            if (sel.PullItemDate.AddDays(7) < DateTime.Now)
-                                lstToRemove.Add(sel);
-                        }
-                    }
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
 
-                    if (lstToRemove.Count > 0)
-                    {
-                        foreach (var sel in lstToRemove)
-                            ctx.PullItems.Remove(sel);
-                        await ctx.SaveChangesAsync();
-                    }
-                    ctx.Database.Connection.Close();
-                    ctx.Dispose();
-
-                    mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                    try
-                    {
-                        if ((myConTroller != null) && (myConTroller.IsOpen))
+                        mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                        try
                         {
-                            myConTroller.CloseAsync();
-                           
-
+                            if ((myConTroller != null) && (myConTroller.IsOpen))
+                            {
+                                await myConTroller.CloseAsync();
+                            }
                         }
+                        catch
+                        { }
+
+                        /* List<PullItem> lstToRemove = new List<PullItem>();
+                         var ctx = await RemoteDatabase.GetDbContextAsync();
+                         Selection.Clear();
+                         foreach (var sel in ctx.PullItems)
+                         {
+                             SelectionViewModel svm = new SelectionViewModel();
+                             svm.IsSelected = false;
+                             svm.PullItemId = sel.PullItemId;
+                             svm.ServerPullItemId = sel.ServerPullItemId;
+
+                             TimeSpan ts = DateTime.Now - sel.PullItemDate;
+                             if (ts.TotalDays < 1)
+                                 svm.PullItemDate = sel.PullItemDate.ToString("hh:mm tt");
+                             else if (ts.TotalDays == 2)
+                                 svm.PullItemDate = "Yesterday\r\n" + sel.PullItemDate.ToString("hh:mm tt");
+                             else
+                                 svm.PullItemDate = sel.PullItemDate.ToString("MMM dd") + "\r\n" + sel.PullItemDate.ToString("hh:mm tt");
+
+                             svm.Description = sel.Description;
+                             if (sel.GrantedUser != null)
+                                 svm.User = sel.GrantedUser.FirstName + " " + sel.GrantedUser.LastName;
+                             svm.TotalToPull = sel.TotalToPull;
+
+                             svm.lstTopull = new List<string>();
+                             int nbInDevice = 0;
+
+                             foreach (var pit in sel.PullItems)
+                             {
+                                 if (DevicesHandler.ListTagPerDrawer.ContainsKey(pit.RfidTag.TagUid))
+                                 {
+                                     svm.lstTopull.Add(pit.RfidTag.TagUid);
+                                     nbInDevice++;
+                                 }
+                             }
+                             // if (1 == 1)
+                             if (nbInDevice > 0)
+                             {
+                                 svm.TotalToPullInDevice = nbInDevice;
+                                 Selection.Add(svm);
+                             }
+                             else   //remove selection bigger thant 1 week having no selection
+                             {
+                                 if (sel.PullItemDate.AddDays(7) < DateTime.Now)
+                                     lstToRemove.Add(sel);
+                             }
+                         }
+
+                         if (lstToRemove.Count > 0)
+                         {
+                             foreach (var sel in lstToRemove)
+                                 ctx.PullItems.Remove(sel);
+                             await ctx.SaveChangesAsync();
+                         }
+                         ctx.Database.Connection.Close();
+                         ctx.Dispose();
+
+                         mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                         try
+                         {
+                             if ((myConTroller != null) && (myConTroller.IsOpen))
+                             {
+                                 myConTroller.CloseAsync();
+
+
+                             }
+                         }
+                         catch
+                         { }*/
                     }
-                    catch
-                    { }
                 }
                 else
                 {
@@ -1368,7 +1448,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     {
                         if ((myConTroller != null) && (myConTroller.IsOpen))
                         {
-                            myConTroller.CloseAsync();                          
+                            await myConTroller.CloseAsync();
 
                         }
                     }
@@ -1387,7 +1467,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     if ((myConTroller != null) && (myConTroller.IsOpen))
                     {
-                        myConTroller.CloseAsync();     
+                        await myConTroller.CloseAsync();     
                     }
                 }
                 catch
@@ -2078,29 +2158,10 @@ namespace SmartDrawerWpfApp.ViewModel
                     tmpIp = Properties.Settings.Default.NotificationIp;
 
                 if ((myDev.DeviceSerial != Properties.Settings.Default.WallSerial) || (myDev.DeviceName != Properties.Settings.Default.WallName) || (myDev.IpAddress != tmpIp))
-                    {
-                        bNeedQuit = true;
-
-                        Device updDev = new Device()
-                        {
-                            DeviceSerial = Properties.Settings.Default.WallSerial,
-                            DeviceName = Properties.Settings.Default.WallName,
-                            DeviceLocation = Properties.Settings.Default.WallLocation,
-                            IpAddress = Utils.GetLocalIp(),
-
-                        };
-                        bool x = await ProcessSelectionFromServer.UpdateCabinet(updDev);
-
-                        if (!x)
-                        {
-                            await mainview0.ShowMessageAsync("Wall Information", "Unable to update wall device inforamtion - You have to go in admin mode to setup device");
-                            bNeedQuit = true;
-                        }
-                    }
-                    
-                }
-
-                if (bNeedQuit) return;
+                    {      
+                            ReloadDevice();                       
+                    }                    
+                }              
 
 
                  var ctx = await RemoteDatabase.GetDbContextAsync();
@@ -2220,8 +2281,10 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private async void ScanTimer_Tick(object sender, EventArgs e)
         {
-            int _bckrecheckLightDrawer = _recheckLightDrawer;
-            var myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Rechecking {0} tags in drawer {1}", SelectedCassette.TagToLight[_bckrecheckLightDrawer].Count, _bckrecheckLightDrawer));
+
+            ProgressDialogController myConTroller = null;
+
+
             try
             {
                 ScanTimer.IsEnabled = false;
@@ -2238,6 +2301,11 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     OverallStatus = false;
                     WallStatusOperational = "GPIO FAILURE";                  
+                }
+                else if (RfidError)
+                {
+                    OverallStatus = false;
+                    WallStatusOperational = "RFID SCAN ERROR";
                 }
                 else if (!NetworkStatus)
                 {
@@ -2262,10 +2330,12 @@ namespace SmartDrawerWpfApp.ViewModel
                 #endregion
                 #region Recheck light
                 else if (_recheckLightDrawer != -1)
-                {                
+                {
 
-                
-                    myConTroller.SetIndeterminate();               
+                    int _bckrecheckLightDrawer = _recheckLightDrawer;
+                    myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Rechecking {0} tags in drawer {1}", SelectedCassette.TagToLight[_bckrecheckLightDrawer].Count, _bckrecheckLightDrawer), true);                   
+
+                    myConTroller.SetIndeterminate();
                     List<string> TagToLight = new List<string>(SelectedCassette.TagToLight[_bckrecheckLightDrawer]);
 
                     await Task.Run(() =>
@@ -2371,7 +2441,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     {
                         if ((myConTroller != null) && (myConTroller.IsOpen))
                         {
-                            myConTroller.CloseAsync();     
+                           await  myConTroller.CloseAsync();     
                         }
                     }
                     catch
@@ -2393,8 +2463,9 @@ namespace SmartDrawerWpfApp.ViewModel
                         }
 
                         else if (bDrawerToLight[bckDrawer] == true)
-                        {
-                            bDrawerToLight[bckDrawer] = false;                           
+                        {                         
+                            bDrawerToLight[bckDrawer] = false;
+                            myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Lighting {0} tags in drawer {1}", SelectedCassette.TagToLight[_lightDrawer].Count, _lightDrawer), true);                           
                             myConTroller.SetIndeterminate();
 
                             await Task.Run(() =>
@@ -2414,7 +2485,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             {
                                 if ((myConTroller != null) && (myConTroller.IsOpen))
                                 {
-                                    myConTroller.CloseAsync();                                  
+                                    await myConTroller.CloseAsync();                                  
 
                                 }
                             }
@@ -2465,8 +2536,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 if (bNeedUpdateCriteriaAfterScan)
                 {
                     if (!IsWaitingForScan())
-                    {
-                        getCriteria();
+                    {                        
                         getSelection();
                         bNeedUpdateCriteriaAfterScan = false;   
                     }
@@ -2474,6 +2544,15 @@ namespace SmartDrawerWpfApp.ViewModel
             }
             catch (IndexOutOfRangeException err)
             {
+                try
+                {
+                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                    {
+                        await myConTroller.CloseAsync();
+                    }
+                }
+                catch
+                { }
                 await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
                     ExceptionMessageBox exp = new ExceptionMessageBox(err, "Out of range Exception - value = " + _autoLightDrawer);
@@ -2481,7 +2560,16 @@ namespace SmartDrawerWpfApp.ViewModel
                 }));
             }
             catch (Exception error)
-            {               
+            {
+                try
+                {
+                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                    {
+                       await  myConTroller.CloseAsync();
+                    }
+                }
+                catch
+                { }
                 await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Scan Timer");
@@ -2490,11 +2578,15 @@ namespace SmartDrawerWpfApp.ViewModel
             }
             finally
             {
-
-                if ((myConTroller != null) && (myConTroller.IsOpen))
+                try
                 {
-                    myConTroller.CloseAsync();
+                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                    {
+                        await myConTroller.CloseAsync();
+                    }
                 }
+                catch
+                { }
 
                 ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
                 ScanTimer.IsEnabled = true;
@@ -2648,6 +2740,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 wallStatus = "Rfid Connected";
                 WallService.myWall.DeviceSerial = e.Serial;
+                RfidError = false;
 
                 for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
                 {
@@ -3055,6 +3148,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
+                RfidError = false;
                 _autoLockCpt = 120;
                 wallStatus = "Drawer " + e.DrawerId + " scan started";
                 DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InScan;
@@ -3074,7 +3168,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
-                OverallStatus = false;
+                RfidError = true;
                 wallStatus = "Drawer " + e.DrawerId + " failed scan started";
                 if (DevicesHandler.DrawerStatus[e.DrawerId] != DrawerStatusList.Open)
                 {

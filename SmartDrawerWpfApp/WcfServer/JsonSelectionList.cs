@@ -7,7 +7,7 @@ using System.Web.Script.Serialization;
 
 namespace SmartDrawerWpfApp.WcfServer
 {
-    class JsonSelectionList
+    public class JsonSelectionList
     {
         public string state { get; set; }
         public List<string> tags { get; set; }

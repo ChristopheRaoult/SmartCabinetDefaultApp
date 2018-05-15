@@ -21,6 +21,9 @@ namespace SmartDrawerWpfApp.WcfServer
 
         private static string privateApiLogin = "userc";
         private static string privateApiMdp = "Spacecode4SmarrtDrawer";
+
+        public static JsonSelectionList[] lastSelection { get; private set; }
+
         #region Selection
         public static async Task<bool> GetAndStoreSelectionAsync()
         {
@@ -36,53 +39,61 @@ namespace SmartDrawerWpfApp.WcfServer
                 var response = await client.ExecuteTaskAsync(request);
 
                 if (response.IsSuccessful)
-                {
-                    var ctx = await RemoteDatabase.GetDbContextAsync();
-                    ctx.PullItems.Clear();
-                    await ctx.SaveChangesAsync();
+                {         
+                        
+                        var ctx = await RemoteDatabase.GetDbContextAsync();
+                        ctx.PullItems.Clear();
+                        await ctx.SaveChangesAsync();
 
-                    var lstSelection = JsonSelectionList.DeserializedJsonList(response.Content);
-                    if ((lstSelection != null) && (lstSelection.Length > 0))
-                    {
-                        foreach (JsonSelectionList jsl in lstSelection)
+                       var lstSelection = JsonSelectionList.DeserializedJsonList(response.Content);
+                        if ((lstSelection != null) && (lstSelection.Length > 0))
                         {
-                            if (jsl.state == "closed") continue;
-                            if (jsl.listOfTagToPull == null) continue;
+                            lastSelection = lstSelection;
+                            // not store pullitem detail for speed
+                            /*foreach (JsonSelectionList jsl in lstSelection)
+                            {
+                                if (jsl.state == "closed") continue;
+                                if (jsl.listOfTagToPull == null) continue;
 
-                            /********************/
-                            GrantedUser user = null;
-                            if (jsl.user_id.HasValue)
-                            {
-                                user = ctx.GrantedUsers.GetByServerId(jsl.user_id.Value);
-                            }
-                            var pullItemToAdd = new SmartDrawerDatabase.DAL.PullItem
-                            {
-                                ServerPullItemId = jsl.selection_id,
-                                PullItemDate = jsl.created_at,
-                                Description = string.IsNullOrEmpty(jsl.description) ? " " : jsl.description,
-                                GrantedUser = user,
-                                TotalToPull = jsl.listOfTagToPull.Count,
-
-                            };
-                            ctx.PullItems.Add(pullItemToAdd);
-                            foreach (string uid in jsl.listOfTagToPull)
-                            {
-                                if (string.IsNullOrEmpty(uid)) continue;
-                                RfidTag tag = ctx.RfidTags.AddIfNotExisting(uid);
-                                ctx.PullItemsDetails.Add(new PullItemDetail
+                                GrantedUser user = null;
+                                if (jsl.user_id.HasValue)
                                 {
-                                    PullItem = pullItemToAdd,
-                                    RfidTag = tag,
-                                });
-                            }
-                            await ctx.SaveChangesAsync();
-                        }
+                                    user = ctx.GrantedUsers.GetByServerId(jsl.user_id.Value);
+                                }
+                                var pullItemToAdd = new SmartDrawerDatabase.DAL.PullItem
+                                {
+                                    ServerPullItemId = jsl.selection_id,
+                                    PullItemDate = jsl.created_at,
+                                    Description = string.IsNullOrEmpty(jsl.description) ? " " : jsl.description,
+                                    GrantedUser = user,
+                                    TotalToPull = jsl.listOfTagToPull.Count,
 
-                        ctx.Database.Connection.Close();
-                        ctx.Dispose();
+                                };
+                                ctx.PullItems.Add(pullItemToAdd);
+                               
+                               /* foreach (string uid in jsl.listOfTagToPull)
+                                {
+                                    if (string.IsNullOrEmpty(uid)) continue;
+                                    RfidTag tag = ctx.RfidTags.AddIfNotExisting(uid);
+                                    ctx.PullItemsDetails.Add(new PullItemDetail
+                                    {
+                                        PullItem = pullItemToAdd,
+                                        RfidTag = tag,
+                                    });
+                                }
+                                await ctx.SaveChangesAsync();
+
+                            }      */                      
+                        }
+                        else
+                        {
+                            lastSelection = null;
+                           
+                        }
+                       // ctx.Database.Connection.Close();
+                       // ctx.Dispose();
                         return true;
-                    }
-                    return true;
+
                 }
                 return false;
             }
