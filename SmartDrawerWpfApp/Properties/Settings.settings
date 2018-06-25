@@ -18,7 +18,7 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ServerIp" Type="System.String" Scope="User">
-      <Value Profile="(Default)">45.114.157.223</Value>
+      <Value Profile="(Default)">192.168.1.17</Value>
     </Setting>
     <Setting Name="ServerPort" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">3000</Value>
@@ -42,6 +42,9 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="UpgradeRequired" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DoRecheck" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>

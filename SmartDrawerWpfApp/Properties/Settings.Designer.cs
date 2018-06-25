@@ -85,7 +85,7 @@ namespace SmartDrawerWpfApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("45.114.157.223")]
+        [global::System.Configuration.DefaultSettingValueAttribute("192.168.1.17")]
         public string ServerIp {
             get {
                 return ((string)(this["ServerIp"]));
@@ -188,6 +188,18 @@ namespace SmartDrawerWpfApp.Properties {
             }
             set {
                 this["UpgradeRequired"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool DoRecheck {
+            get {
+                return ((bool)(this["DoRecheck"]));
+            }
+            set {
+                this["DoRecheck"] = value;
             }
         }
     }

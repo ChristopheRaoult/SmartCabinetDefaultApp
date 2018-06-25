@@ -1,0 +1,20 @@
+﻿<Window x:Class="ClientRandomRequest.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ClientRandomRequest"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+        <Label Content="Serial:" HorizontalAlignment="Left" Height="27" Margin="158,8,0,0" VerticalAlignment="Top" Width="44" Foreground="Black" RenderTransformOrigin="6.282,-0.531"/>
+        <TextBox x:Name="txtIP" HorizontalAlignment="Left" Height="20" Margin="56,10,0,0" TextWrapping="Wrap" Text="192.168.1.17" VerticalAlignment="Top" Width="84" RenderTransformOrigin="0.516,-1.617"/>
+        <Button Content="Get Last Scan" HorizontalAlignment="Left" Height="38" Margin="71,48,0,0" VerticalAlignment="Top" Width="101" IsDefault="True" Click="Button_Click"/>
+        <TextBlock x:Name="txtScanInfo" HorizontalAlignment="Left" Height="218" Margin="10,91,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="218"/>
+        <Label Content="IP:" HorizontalAlignment="Left" Height="27" Margin="22,8,0,0" VerticalAlignment="Top" Width="26" Foreground="Black"/>
+        <TextBox x:Name="txtSerial" HorizontalAlignment="Left" Height="20" Margin="215,10,0,0" TextWrapping="Wrap" Text="S03202-1500-0028" VerticalAlignment="Top" Width="152"/>
+        <Button Content="Random Request" HorizontalAlignment="Left" Height="38" Margin="215,48,0,0" VerticalAlignment="Top" Width="114" Click="Button_Click_1"/>
+        <TextBox x:Name="txtNbTag" HorizontalAlignment="Left" Height="22" Margin="341,55,0,0" TextWrapping="Wrap" Text="20" VerticalAlignment="Top" Width="39" PreviewTextInput="txtNbTag_PreviewTextInput"/>
+
+    </Grid>
+</Window>

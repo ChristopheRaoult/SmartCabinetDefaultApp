@@ -47,7 +47,6 @@
                 <TextBlock Margin="0,23,0,0" Text="Device Serial:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
                 <TextBlock Margin="0,5,0,0" Text="{Binding  WallSerial}" Style="{StaticResource wallinfoTextBlock2}"/>
             </StackPanel>
-
             <StackPanel Orientation="Vertical"  Margin="20,0,20,0">
                 <TextBlock Margin="0,23,0,0" Text="Facility Name:"  Style="{StaticResource itemTextBlock1}"></TextBlock>
                 <TextBlock Margin="0,5,0,0" Text="{Binding  WallName}" Style="{StaticResource wallinfoTextBlock2}"/>
@@ -61,7 +60,9 @@
             <Separator Style="{StaticResource {x:Static ToolBar.SeparatorStyleKey}}" Margin="15"/>
             <Button   Margin="20,0,20,0" Width="165"  Height="44"  Visibility="{Binding btUserVisibility}" BorderThickness="1,1,1,1" BorderBrush="Gainsboro"  Command="{Binding LogoutCommand}" Content="Log out" Style="{StaticResource DefaultButton2}" />
             <TextBlock Margin="10,0,0,0" VerticalAlignment="Center" Text="{Binding AutoLockMsg}" Style="{StaticResource wallinfoTextBlock2}"/>
+            <TextBlock Margin="50,00,0,0" HorizontalAlignment="Center" Text="{Binding wallStatus}"  Style="{StaticResource itemTextBlock1}"></TextBlock>
         </StackPanel>
+        
         <StackPanel Orientation="Vertical" HorizontalAlignment="Right" Background="#F8F8F8">
             <TextBlock Margin="0,23,20,0" HorizontalAlignment="Center" Text="{Binding dayDate}"  Style="{StaticResource itemTextBlock1}"></TextBlock>
             <TextBlock Margin="0,5,20,0" HorizontalAlignment="Center" Text="{Binding  dayTime}" Style="{StaticResource wallinfoTextBlock2}"/>

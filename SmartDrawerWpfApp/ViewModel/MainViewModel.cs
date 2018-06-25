@@ -2279,268 +2279,300 @@ namespace SmartDrawerWpfApp.ViewModel
                 AutoLockMsg = "Log out in " + _autoLockCpt + "sec";
             }
         }
+        private volatile bool InLightOrRecheckprocess = false;
+
         private async void ScanTimer_Tick(object sender, EventArgs e)
         {
 
             ProgressDialogController myConTroller = null;
-
-
-            try
-            {
-                ScanTimer.IsEnabled = false;
-                ScanTimer.Stop();
-
-                #region status
-              
-                if (!RfidStatus)
-                {
-                    OverallStatus = false;
-                    WallStatusOperational = "RFID FAILURE";                   
-                }
-                else if (!GpioStatus)
-                {
-                    OverallStatus = false;
-                    WallStatusOperational = "GPIO FAILURE";                  
-                }
-                else if (RfidError)
-                {
-                    OverallStatus = false;
-                    WallStatusOperational = "RFID SCAN ERROR";
-                }
-                else if (!NetworkStatus)
-                {
-                    OverallStatus = false;
-                    WallStatusOperational = "SERVICE FAILURE";                
-                }
-                else
-                {
-                    OverallStatus = true;
-                    WallStatusOperational = "OPERATIONAL";
-                }                
-
-                #endregion
-
-                #region stop scan
-                if (_bStopWall)
-                {
-                    _bStopWall = false;
-                    if (IsWallInScan())
-                        StopWallScan();
-                }
-                #endregion
-                #region Recheck light
-                else if (_recheckLightDrawer != -1)
+              try
                 {
 
-                    int _bckrecheckLightDrawer = _recheckLightDrawer;
-                    myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Rechecking {0} tags in drawer {1}", SelectedCassette.TagToLight[_bckrecheckLightDrawer].Count, _bckrecheckLightDrawer), true);                   
+                    if (InLightOrRecheckprocess)
+                        return;
+                    ScanTimer.IsEnabled = false;
+                    ScanTimer.Stop();
 
-                    myConTroller.SetIndeterminate();
-                    List<string> TagToLight = new List<string>(SelectedCassette.TagToLight[_bckrecheckLightDrawer]);
+                    #region status
 
-                    await Task.Run(() =>
+                    if (!RfidStatus)
                     {
-                        DevicesHandler.SetDrawerActive(_bckrecheckLightDrawer);
-                        if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
+                        OverallStatus = false;
+                        WallStatusOperational = "RFID FAILURE";
+                    }
+                    else if (!GpioStatus)
+                    {
+                        OverallStatus = false;
+                        WallStatusOperational = "GPIO FAILURE";
+                    }
+                    else if (RfidError)
+                    {
+                        OverallStatus = false;
+                        WallStatusOperational = "RFID SCAN ERROR";
+                    }
+                    else if (!NetworkStatus)
+                    {
+                        OverallStatus = false;
+                        WallStatusOperational = "SERVICE FAILURE";
+                    }
+                    else
+                    {
+                        OverallStatus = true;
+                        WallStatusOperational = "OPERATIONAL";
+                    }
+
+                #endregion
+
+               
+
+
+                    #region stop scan
+                    if (_bStopWall)
+                    {
+                        _bStopWall = false;
+                        if (IsWallInScan())
+                            StopWallScan();
+                    }
+                    #endregion
+                    #region Recheck light
+                    else if ((_recheckLightDrawer != -1) && (_lightDrawer == -1))
+                    {
+                    int _bckrecheckLightDrawer = _recheckLightDrawer;
+                    if (!Properties.Settings.Default.DoRecheck)
+                    {
+                      
+                        DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.InLight;
+                        DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
+                        BrushDrawer[_bckrecheckLightDrawer] = _borderReadyToPull;
+                        _recheckLightDrawer = -1;
+
+                        DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
+                    }
+                    else
+                    {
+                      
+                       myConTroller = await mainview0.ShowProgressAsync("Please wait end of recheck before opening another drawer", string.Format("Rechecking {0} tags in drawer {1}", SelectedCassette.TagToLight[_bckrecheckLightDrawer].Count, _bckrecheckLightDrawer), true);
+                       myConTroller.SetIndeterminate();                       
+                       List<string> TagToLight = new List<string>(SelectedCassette.TagToLight[_bckrecheckLightDrawer]);
+
+                        await Task.Run(() =>
                         {
-                           
-                            if (TagToLight.Count > 0)
-                            {
-                                int nbToFind = TagToLight.Count;
-                                wallStatus = "Check " + nbToFind + " stones(s) in drawer " + _bckrecheckLightDrawer;
-                                DevicesHandler.StopLighting(_bckrecheckLightDrawer);
-                                DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.InLight;
-                                DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
-                                BrushDrawer[_bckrecheckLightDrawer] = _borderLight;
-                                LightSelectionDrawer(TagToLight, _bckrecheckLightDrawer);
-                                if (nbToFind == TagToLight.Count)
-                                {
-                                    DevicesHandler.StopLighting(_bckrecheckLightDrawer);
-                                    DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.Ready;
-                                    DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
-                                    BrushDrawer[_bckrecheckLightDrawer] = _borderReady;
-                                }
-                                else
-                                {
-                                    DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.InLight;
-                                    DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
-                                    BrushDrawer[_bckrecheckLightDrawer] = _borderReadyToPull;
-                                }
-
-                                DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
-                                int nbTag = TagToLight.Count;
-                                TotalCassettesPulled += nbTag;
-                                //update remain tag to light
-
-                                foreach (string uid in TagToLight) // tag to light should contain all removed tags
-                                {
-                                    if (SelectedCassette.TagToLight[_bckrecheckLightDrawer].Contains(uid))
-                                    {
-                                        SelectedCassette.TagToLight[_bckrecheckLightDrawer].Remove(uid);
-                                        SelectedCassette.ListControlNumber.Remove(uid);
-                                    }
-                                }
-
-                                //Store removed tag at recheck with user    
-                                ReaderData rd = DevicesHandler.DrawerInventoryData[_bckrecheckLightDrawer];
-                                for (int loop = 0; loop < TagToLight.Count; loop++) // tag to light should contain all removed tags
-                                {
-                                    string uid = TagToLight[loop];
-                                    if (rd.strListTag.Contains(uid))
-                                        rd.strListTag.Remove(uid);
-                                }
-                                DevicesHandler.DrawerInventoryData[_bckrecheckLightDrawer] = rd;
-                                DevicesHandler.DrawerTagQty[_bckrecheckLightDrawer] = rd.strListTag.Count;
-                                DevicesHandler.RemoveTagFromListForDrawer(_bckrecheckLightDrawer);
-
-                                DevicesHandler.AddTagListForDrawer(_bckrecheckLightDrawer, rd.strListTag);
-                                DevicesHandler.UpdateAddedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
-                                DevicesHandler.UpdateremovedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
-                                  Task.Run(() =>
+                           InLightOrRecheckprocess = true;
+                           DevicesHandler.SetDrawerActive(_bckrecheckLightDrawer);
+                           if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
+                           {
+                               if (TagToLight.Count > 0)
                                {
-                                   InventoryHandler.HandleNewScanCompleted(_bckrecheckLightDrawer);
-                               });
+                                   int nbToFind = TagToLight.Count;
+                                   wallStatus = "Check " + nbToFind + " stones(s) in drawer " + _bckrecheckLightDrawer;
+                                   DevicesHandler.StopLighting(_bckrecheckLightDrawer);
+                                   DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.InLight;
+                                   DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
+                                   BrushDrawer[_bckrecheckLightDrawer] = _borderLight;
+                                   LightSelectionDrawer(TagToLight, _bckrecheckLightDrawer);
+                                   if (nbToFind == TagToLight.Count)
+                                   {
+                                       DevicesHandler.StopLighting(_bckrecheckLightDrawer);
+                                       DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.Ready;
+                                       DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
+                                       BrushDrawer[_bckrecheckLightDrawer] = _borderReady;
+                                   }
+                                   else
+                                   {
+                                       DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.InLight;
+                                       DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
+                                       BrushDrawer[_bckrecheckLightDrawer] = _borderReadyToPull;
+                                   }
 
-                                //Update GUI INFO 
-                                SelectedCassette.CassetteDrawer1Number = SelectedCassette.TagToLight[1].Count.ToString(); ;
-                                SelectedCassette.CassetteDrawer2Number = SelectedCassette.TagToLight[2].Count.ToString(); ;
-                                SelectedCassette.CassetteDrawer3Number = SelectedCassette.TagToLight[3].Count.ToString(); ;
-                                SelectedCassette.CassetteDrawer4Number = SelectedCassette.TagToLight[4].Count.ToString(); ;
-                                SelectedCassette.CassetteDrawer5Number = SelectedCassette.TagToLight[5].Count.ToString(); ;
-                                SelectedCassette.CassetteDrawer6Number = SelectedCassette.TagToLight[6].Count.ToString(); ;
-                                SelectedCassette.CassetteDrawer7Number = SelectedCassette.TagToLight[7].Count.ToString(); ;
-                                SelectedCassette.CassetteSelectionTotalNumber = SelectedCassette.ListControlNumber.Count;
+                                   DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
+                                   int nbTag = TagToLight.Count;
+                                   TotalCassettesPulled += nbTag;
+                                       //update remain tag to light
 
-                                if (TotalCassettesPulled == TotalCassettesToPull)
-                                {
-                                    IsFlyoutCassetteInfoOpen = false;
-                                    IsFlyoutCassettePositionOpen = false;
-                                }
+                                       foreach (string uid in TagToLight) // tag to light should contain all removed tags
+                                       {
+                                           if (SelectedCassette.TagToLight[_bckrecheckLightDrawer].Contains(uid))
+                                           {
+                                               SelectedCassette.TagToLight[_bckrecheckLightDrawer].Remove(uid);
+                                               SelectedCassette.ListControlNumber.Remove(uid);
+                                           }
+                                       }
 
-                                _recheckLightDrawer = -1;
+                                       //Store removed tag at recheck with user    
+                                       ReaderData rd = DevicesHandler.DrawerInventoryData[_bckrecheckLightDrawer];
+                                   for (int loop = 0; loop < TagToLight.Count; loop++) // tag to light should contain all removed tags
+                                       {
+                                       string uid = TagToLight[loop];
+                                       if (rd.strListTag.Contains(uid))
+                                           rd.strListTag.Remove(uid);
+                                   }
+                                   DevicesHandler.DrawerInventoryData[_bckrecheckLightDrawer] = rd;
+                                   DevicesHandler.DrawerTagQty[_bckrecheckLightDrawer] = rd.strListTag.Count;
+                                   DevicesHandler.RemoveTagFromListForDrawer(_bckrecheckLightDrawer);
 
+                                   DevicesHandler.AddTagListForDrawer(_bckrecheckLightDrawer, rd.strListTag);
+                                   DevicesHandler.UpdateAddedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
+                                   DevicesHandler.UpdateremovedTagToDrawer(_bckrecheckLightDrawer, rd.strListTag);
+                                   Task.Run(() =>
+                                   {
+                                         InventoryHandler.HandleNewScanCompleted(_bckrecheckLightDrawer);
+                                   });
+
+                                   //Update GUI INFO 
+                                   SelectedCassette.CassetteDrawer1Number = SelectedCassette.TagToLight[1].Count.ToString(); ;
+                                   SelectedCassette.CassetteDrawer2Number = SelectedCassette.TagToLight[2].Count.ToString(); ;
+                                   SelectedCassette.CassetteDrawer3Number = SelectedCassette.TagToLight[3].Count.ToString(); ;
+                                   SelectedCassette.CassetteDrawer4Number = SelectedCassette.TagToLight[4].Count.ToString(); ;
+                                   SelectedCassette.CassetteDrawer5Number = SelectedCassette.TagToLight[5].Count.ToString(); ;
+                                   SelectedCassette.CassetteDrawer6Number = SelectedCassette.TagToLight[6].Count.ToString(); ;
+                                   SelectedCassette.CassetteDrawer7Number = SelectedCassette.TagToLight[7].Count.ToString(); ;
+                                   SelectedCassette.CassetteSelectionTotalNumber = SelectedCassette.ListControlNumber.Count;
+
+                                   if (TotalCassettesPulled == TotalCassettesToPull)
+                                   {
+                                       IsFlyoutCassetteInfoOpen = false;
+                                       IsFlyoutCassettePositionOpen = false;
+                                   }
+                                   DevicesHandler.StopLighting(_recheckLightDrawer);                                  
+                                    _recheckLightDrawer = -1;
+                               }
+                           }
+                           else
+                               wallStatus = "Wait user Action";
+                           _recheckLightDrawer = -1;
+                            InLightOrRecheckprocess = false;
+                      });
+
+                        /*****   Update API ****/
+                        await Task.Run(() =>
+                      {
+                          if (SelectionSelected != null)
+                          {
+                              ProcessSelectionFromServer.UpdateSelectionAsync(SelectionSelected.ServerPullItemId, TagToLight);
+                          }
+
+                      });
+
+                        mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                        try
+                        {
+                            if ((myConTroller != null) && (myConTroller.IsOpen))
+                            {
+                                await myConTroller.CloseAsync();
                             }
                         }
-                        else
-                            wallStatus = "Wait user Action";
-                        _recheckLightDrawer = -1;
-                    });
-
-                    /*****   Update API ****/
-                    await Task.Run(() =>
-                    {
-                        if (SelectionSelected != null)
-                        {
-                            ProcessSelectionFromServer.UpdateSelectionAsync(SelectionSelected.ServerPullItemId, TagToLight);
-                        }
-
-                    });
-
-                    mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                    try
-                    {
-                        if ((myConTroller != null) && (myConTroller.IsOpen))
-                        {
-                           await  myConTroller.CloseAsync();     
-                        }
+                        catch
+                        { }
                     }
-                    catch
-                    { }
-                }
-                #endregion
-                #region Light
-                else if (_lightDrawer != -1)
-                {
-                    int bckDrawer = _lightDrawer;
-                    DevicesHandler.SetDrawerActive(bckDrawer);
-                    if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
+                    }
+                    #endregion
+                    #region Light
+                    else if ((_lightDrawer != -1) && (_recheckLightDrawer == -1))
                     {
-                        if (bDrawerToRefreshLight[bckDrawer] == true)
-                        {
-                            DevicesHandler.StopLighting(bckDrawer);
-                            Thread.Sleep(500);
-                            DevicesHandler.Device.LEdOnAll(bckDrawer, 0, false);
-                        }
-
-                        else if (bDrawerToLight[bckDrawer] == true)
-                        {                         
-                            bDrawerToLight[bckDrawer] = false;
-                            myConTroller = await mainview0.ShowProgressAsync("Please wait", string.Format("Lighting {0} tags in drawer {1}", SelectedCassette.TagToLight[_lightDrawer].Count, _lightDrawer), true);                           
-                            myConTroller.SetIndeterminate();
-
-                            await Task.Run(() =>
+                        int bckDrawer = _lightDrawer;
+                        DevicesHandler.SetDrawerActive(bckDrawer);
+                        if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
+                        {                        
+                           
+                            if (bDrawerToLight[bckDrawer] == true)
                             {
+
+                                myConTroller = await mainview0.ShowProgressAsync("Please wait - Not closed drawer until light process finish", string.Format("Lighting {0} tags in drawer {1}", SelectedCassette.TagToLight[_lightDrawer].Count, _lightDrawer), true);
+                                myConTroller.SetIndeterminate();
+                               
+                            await  Task.Run(() =>
+                            {
+                                InLightOrRecheckprocess = true;
+                                //Refresh list to light
+                                LightSelectionFromList();
                                 DevicesHandler.StopLighting(bckDrawer);
                                 List<string> TagToLight = new List<string>(SelectedCassette.TagToLight[bckDrawer]);
+                                List<string> TagToLightSos = new List<string>(SelectedCassette.TagToLight[bckDrawer]);
                                 wallStatus = "Light " + TagToLight.Count + " stones(s) in drawer " + bckDrawer;
                                 LightSelectionDrawer(TagToLight, bckDrawer);
                                 if (TagToLight.Count > 0)
-                                    wallStatus = "Unable to light " + TagToLight.Count + " stones(s) in drawer " + bckDrawer;
-
-                                bDrawerToRefreshLight[bckDrawer] = true;
-                            });
-
-                            mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                            try
-                            {
-                                if ((myConTroller != null) && (myConTroller.IsOpen))
                                 {
-                                    await myConTroller.CloseAsync();                                  
+                                    Thread.Sleep(500);
+                                    
+                                    LightSelectionDrawer(TagToLightSos, bckDrawer);
+                                    if (TagToLightSos.Count > 0)
+                                        wallStatus = "Unable to light " + TagToLightSos.Count + " stones(s) in drawer " + bckDrawer;
+                                }                             
+                                   
+                                bDrawerToLight[bckDrawer] = false;
+                                bDrawerToRefreshLight[bckDrawer] = true;
+                                InLightOrRecheckprocess = false;
 
+
+                             });
+
+                                mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                                try
+                                {
+                                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                                    {
+                                        await myConTroller.CloseAsync();
+
+                                    }
                                 }
+                                catch
+                                { }
                             }
-                            catch
-                            { }
+                            else if (bDrawerToRefreshLight[bckDrawer] == true)
+                            {
+                                DevicesHandler.StopLighting(bckDrawer);
+                                Thread.Sleep(500);
+                                DevicesHandler.Device.LEdOnAll(bckDrawer, 0, false);
+                            }
+                            else
+                            {
+                                DevicesHandler.StopLighting(bckDrawer);
+                            }
                         }
-                        else
+                        else //pas de selection
                         {
-                            DevicesHandler.StopLighting(bckDrawer);
+                            DevicesHandler.Device.LEdOnAll(1, 0, false);
                         }
+
                     }
-                    else //pas de selection
+                    #endregion
+                    #region AutoLight Open drawer
+                    else if ((IsAutoLightDrawerChecked) && (_autoLightDrawer != -1))
                     {
+                        int bckDrawer = _autoLightDrawer;
+                        wallStatus = "Drawer " + bckDrawer + " in auto light";
+                        DevicesHandler.StopLighting(bckDrawer);
+                        DevicesHandler.LightAll(bckDrawer);
                         DevicesHandler.Device.LEdOnAll(1, 0, false);
                     }
-
-                }
-                #endregion
-                #region AutoLight Open drawer
-                else if ((IsAutoLightDrawerChecked) && (_autoLightDrawer != -1))
-                {
-                    int bckDrawer = _autoLightDrawer;
-                    wallStatus = "Drawer " + bckDrawer + " in auto light";
-                    DevicesHandler.StopLighting(bckDrawer);
-                    DevicesHandler.LightAll(bckDrawer);
-                    DevicesHandler.Device.LEdOnAll(1, 0, false);
-                }
-                #endregion
-                #region scan
-                else if (IsWallReady())
-                //else if ((!IsFlyoutCassettePositionOpen) && (IsWallReady()))
-                {
-                    for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
-                    {
-                        if (DevicesHandler.IsDrawerWaitScan[loop])
-                        {
-                            if ((DevicesHandler.Device != null) && (DevicesHandler.Device.IsConnected) && (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready))
-                            {
-                                DevicesHandler.StartManualScan(loop);
-
-                                break;
-                            }
-                        }
-                    }
-                }
-                #endregion
-
-                if (bNeedUpdateCriteriaAfterScan)
-                {
-                    if (!IsWaitingForScan())
+                    #endregion
+                    #region scan
+                    else if (IsWallReady())
+                    //else if ((!IsFlyoutCassettePositionOpen) && (IsWallReady()))
                     {                        
-                        getSelection();
-                        bNeedUpdateCriteriaAfterScan = false;   
+                            for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
+                            {
+                                if (DevicesHandler.IsDrawerWaitScan[loop])
+                                {
+                                    if ((DevicesHandler.Device != null) && (DevicesHandler.Device.IsConnected) && (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready))
+                                    {
+                                        DevicesHandler.StartManualScan(loop);
+
+                                        break;
+                                    }
+                                }
+                            }                       
                     }
-                }
+                    #endregion
+
+                    if (bNeedUpdateCriteriaAfterScan)
+                    {
+                        if (!IsWaitingForScan())
+                        {
+                            getSelection();
+                            bNeedUpdateCriteriaAfterScan = false;
+                        }
+                    }                
             }
             catch (IndexOutOfRangeException err)
             {
@@ -2565,16 +2597,16 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     if ((myConTroller != null) && (myConTroller.IsOpen))
                     {
-                       await  myConTroller.CloseAsync();
+                        await myConTroller.CloseAsync();
                     }
                 }
                 catch
                 { }
                 await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
-                {
-                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Scan Timer");
-                    exp.ShowDialog();
-                }));
+               {
+                   ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Scan Timer");
+                   exp.ShowDialog();
+               }));
             }
             finally
             {
@@ -2588,7 +2620,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 catch
                 { }
 
-                ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
+                ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
                 ScanTimer.IsEnabled = true;
                 ScanTimer.Start();
             }
@@ -2823,106 +2855,101 @@ namespace SmartDrawerWpfApp.ViewModel
                 }));
             }
         }
-        private async void DevicesHandler_DrawerClosed(object sender, DrawerEventArgs e)
+        private async   void DevicesHandler_DrawerClosed(object sender, DrawerEventArgs e)
         {
             try
             {
-
-                if (_recheckLightDrawer != -1)
-                {
-                    do
+                    //Wait end of light process or recheck
+                    if ((InLightOrRecheckprocess) || (_recheckLightDrawer != -1))
                     {
-                        Thread.Sleep(1000);
-
-                    }
-                    while (_recheckLightDrawer != -1);
-                    return;
-                }
-                   
+                        do
+                        {
+                            Thread.Sleep(1000);
+                        }
+                        while (InLightOrRecheckprocess);                  
+                    }  
 
                     List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
-                ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
-                ListCtrlPerDrawer = null;
-                DrawerSelected = "";
-                DrawerCtrlCount = "";
-              
+                    ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
+                    ListCtrlPerDrawer = null;
+                    DrawerSelected = "";
+                    DrawerCtrlCount = "";
 
 
-                if (string.IsNullOrEmpty(tagOnBadDrawer.TagId))
-                    IsFlyoutCassetteInfoOpen = false;
 
-                if (_lastDrawerOpen == e.DrawerId)
-                    _lastDrawerOpen = -1;
-                if (_currentDrawerInLight == e.DrawerId)
-                    _currentDrawerInLight = -1;
-                _tagToLightFromTextBox.Clear();
-                if (_recheckLightDrawer == e.DrawerId)
-                    _recheckLightDrawer = -1;
-                if (_lightDrawer == e.DrawerId)
-                    _lightDrawer = -1;
-                if (_autoLightDrawer == e.DrawerId)
-                    _autoLightDrawer = -1;
-                wallStatus = "Drawer " + e.DrawerId + " closed";
+                    if (string.IsNullOrEmpty(tagOnBadDrawer.TagId))
+                        IsFlyoutCassetteInfoOpen = false;
 
-                bool bWasStopHere = false;
+                    if (_lastDrawerOpen == e.DrawerId)
+                        _lastDrawerOpen = -1;
+                    if (_currentDrawerInLight == e.DrawerId)
+                        _currentDrawerInLight = -1;
+                    _tagToLightFromTextBox.Clear();
+                    if (_recheckLightDrawer == e.DrawerId)
+                        _recheckLightDrawer = -1;
+                    if (_lightDrawer == e.DrawerId)
+                        _lightDrawer = -1;
+                    if (_autoLightDrawer == e.DrawerId)
+                        _autoLightDrawer = -1;
+                    wallStatus = "Drawer " + e.DrawerId + " closed";
 
-                bDrawerToRefreshLight[e.DrawerId] = false;               
 
-                if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
-                {
-                    if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight)
+
+                    bDrawerToRefreshLight[e.DrawerId] = false;
+
+                    if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
                     {
-                        bDrawerToRefreshLight[e.DrawerId] = false;
-                        DevicesHandler.StopLighting(e.DrawerId);
-
-                        if (!bWasStopHere) //no recheck if drawer not  finish  led normally
+                        if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight)
+                        {
+                            bDrawerToRefreshLight[e.DrawerId] = false;
+                            DevicesHandler.StopLighting(e.DrawerId);
                             _recheckLightDrawer = e.DrawerId;
 
-
-                        wallStatus = "Recheck stones in drawer " + e.DrawerId;
-                        DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
-                        DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                        BrushDrawer[e.DrawerId] = _borderReady;
+                            wallStatus = "Recheck stones in drawer " + e.DrawerId;
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                            BrushDrawer[e.DrawerId] = _borderReady;
+                        }
+                        else
+                        {
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                            BrushDrawer[e.DrawerId] = _borderReady;
+                        }
                     }
                     else
                     {
+                        if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight)
+                            DevicesHandler.StopLighting(e.DrawerId);
                         DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
                         DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                         BrushDrawer[e.DrawerId] = _borderReady;
-                    }
-                }
-                else
-                {
-                    if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight)
-                        DevicesHandler.StopLighting(e.DrawerId);
-                    DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
-                    DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                    BrushDrawer[e.DrawerId] = _borderReady;
 
-                    if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
+                        if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
+                        {
+
+                            // Put drawer in light to avoid scan
+                            DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight] = DrawerStatusList.InLight;
+                            DrawerStatus[tagOnBadDrawer.DrawerToLight] = DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight];
+                            BrushDrawer[tagOnBadDrawer.DrawerToLight] = _borderLight;
+                        }
+                        else
+                        {
+                            IsFlyoutCassetteInfoOpen = false;
+                        }
+                    }
+
+                    if (_recheckLightDrawer == -1)
                     {
-
-                        // Put drawer in light to avoid scan
-                        DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight] = DrawerStatusList.InLight;
-                        DrawerStatus[tagOnBadDrawer.DrawerToLight] = DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight];
-                        BrushDrawer[tagOnBadDrawer.DrawerToLight] = _borderLight;
-                    }
-                    else
-                    {
-                        IsFlyoutCassetteInfoOpen = false;
+                        DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
                     }
                 }
-
-                if (_recheckLightDrawer == -1)
-                {
-                    DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
-                }
-            }
+           
             catch (Exception error)
             {               
                await  mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
-                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOClosed");
+                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Drawer Closed");
                     exp.ShowDialog();
                 }));
             }   
@@ -2931,203 +2958,175 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 if (!ScanTimer.IsEnabled)
                 {
-                    ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
+                    ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
                     ScanTimer.IsEnabled = true;
                     ScanTimer.Start();
                 }
             }
-        }
+        }    
         private async void DevicesHandler_DrawerOpened(object sender, DrawerEventArgs e)
         {
             try
             {
-
+               
                 // wait open drawer to let time automatic trimming (max field for comfirmation)
                 Thread.Sleep(1000);
-                if (_lastDrawerOpen == -1)
-                {
-
-                    if (_recheckLightDrawer != -1)
+                    if (_lastDrawerOpen == -1)
                     {
-                        // DevicesHandler.StopLighting(_recheckLightDrawer);
-                        // DevicesHandler.StopScan(_recheckLightDrawer);
-                        //_recheckLightDrawer = -1;
-                        /* if ((myConTroller != null) && (myConTroller.IsOpen))
-                             await myConTroller.CloseAsync();
-
-                         //DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
-                         await mainview0.Dispatcher.BeginInvoke(new System.Action( () =>
-                         {
-                             string info = string.Format("Device in recheck - please Close drawer {0} to continue", e.DrawerId);
-                             mainview0.ShowMessageAsync("Wall Information", info);
-
-                         }));*/
-                        // return;   
-                        
-                        do
+                        //Wait end of light process or recheck
+                        if ((InLightOrRecheckprocess) || (_recheckLightDrawer!= -1))
                         {
-                            Thread.Sleep(1000); 
+                            do
+                            {
+                                Thread.Sleep(1000);
+                            }
+                            while (InLightOrRecheckprocess);
                         }
-                        while (_recheckLightDrawer != -1);
-                    }                   
 
                     _lastDrawerOpen = e.DrawerId;
-                    wallStatus = "Drawer " + e.DrawerId + " opened";
-
-                    
-
-                    if (_autoLightDrawer != -1) //switch of drawer
-                    {
-                        if (DevicesHandler.DevicesConnected)
-                            DevicesHandler.StopLighting(_autoLightDrawer);
-                    }
-                    IsAutoLightDrawerChecked = false;
-
-                    List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
-                    ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
-                    ListCtrlPerDrawer = new ObservableCollection<string>(TmpListCtrlPerDrawer.OrderBy(i => i));
-                    DrawerSelected = "Drawer " + _lastDrawerOpen;
-                    DrawerCtrlCount = " (" + ListCtrlPerDrawer.Count + ")";
-                 
+                      wallStatus = "Drawer " + e.DrawerId + " opened";
 
 
-                    //Store event drawer 
-                   await  Task.Factory.StartNew(() =>
-                    {
-                        var ctx = RemoteDatabase.GetDbContext();
-                        if (GrantedUsersCache.LastAuthenticatedUser != null)
-                            ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId, InventoryId = null, EventDrawerDate = DateTime.Now });
-                        else
-                            ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null, EventDrawerDate = DateTime.Now });
 
-                        ctx.SaveChanges();
-                        ctx.Database.Connection.Close();
-                        ctx.Dispose();
-                    });
-
-                    //When a search find stone on other drawer than one currently open
-                    if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
-                    {
-                        if (tagOnBadDrawer.DrawerToLight == e.DrawerId)
+                        if (_autoLightDrawer != -1) //switch of drawer
                         {
-                            List<string> tags = new List<string>();
-                            tags.Add(tagOnBadDrawer.TagId);
+                            if (DevicesHandler.DevicesConnected)
+                                DevicesHandler.StopLighting(_autoLightDrawer);
+                        }
+                        IsAutoLightDrawerChecked = false;
 
-                            _lightDrawer = -1;
-                            DevicesHandler.StopLighting(tagOnBadDrawer.DrawerToLight);
-                            Thread.Sleep(50);
-                            DevicesHandler.LightTags(tagOnBadDrawer.DrawerToLight, tags, true);
-                            wallStatus = "Light in  wall (drawer " + tagOnBadDrawer.DrawerToLight + ")";
-                            DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight] = DrawerStatusList.InLight;
-                            DrawerStatus[tagOnBadDrawer.DrawerToLight] = DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight];
-                            BrushDrawer[tagOnBadDrawer.DrawerToLight] = _borderLight;
+                        List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
+                        ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
+                        ListCtrlPerDrawer = new ObservableCollection<string>(TmpListCtrlPerDrawer.OrderBy(i => i));
+                        DrawerSelected = "Drawer " + _lastDrawerOpen;
+                        DrawerCtrlCount = " (" + ListCtrlPerDrawer.Count + ")";
 
-                            _lightDrawer = tagOnBadDrawer.DrawerToLight;
-                            bDrawerToLight[tagOnBadDrawer.DrawerToLight] = false;
-                            bDrawerToRefreshLight[tagOnBadDrawer.DrawerToLight] = false;
-                            tagOnBadDrawer.TagId = null;
+
+
+                        //Store event drawer 
+                       await Task.Factory.StartNew(() =>
+                       {
+                           var ctx = RemoteDatabase.GetDbContext();
+                           if (GrantedUsersCache.LastAuthenticatedUser != null)
+                               ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId, InventoryId = null, EventDrawerDate = DateTime.Now });
+                           else
+                               ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null, EventDrawerDate = DateTime.Now });
+
+                           ctx.SaveChanges();
+                           ctx.Database.Connection.Close();
+                           ctx.Dispose();
+                       });
+
+                        //When a search find stone on other drawer than one currently open
+                        if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
+                        {
+                            if (tagOnBadDrawer.DrawerToLight == e.DrawerId)
+                            {
+                                List<string> tags = new List<string>();
+                                tags.Add(tagOnBadDrawer.TagId);
+
+                                _lightDrawer = -1;
+                                DevicesHandler.StopLighting(tagOnBadDrawer.DrawerToLight);
+                                Thread.Sleep(50);
+                                DevicesHandler.LightTags(tagOnBadDrawer.DrawerToLight, tags, true);
+                                wallStatus = "Light in  wall (drawer " + tagOnBadDrawer.DrawerToLight + ")";
+                                DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight] = DrawerStatusList.InLight;
+                                DrawerStatus[tagOnBadDrawer.DrawerToLight] = DevicesHandler.DrawerStatus[tagOnBadDrawer.DrawerToLight];
+                                BrushDrawer[tagOnBadDrawer.DrawerToLight] = _borderLight;
+
+                                _lightDrawer = tagOnBadDrawer.DrawerToLight;
+                                bDrawerToLight[tagOnBadDrawer.DrawerToLight] = false;
+                                bDrawerToRefreshLight[tagOnBadDrawer.DrawerToLight] = false;
+                                tagOnBadDrawer.TagId = null;
+                            }
+                        }
+                        else
+                        {
+                            if ((DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight))
+                            {
+                                wallStatus = "Light stones in drawer " + e.DrawerId;
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InLight;
+                                DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                                BrushDrawer[e.DrawerId] = _borderLight;
+                                bDrawerToLight[e.DrawerId] = true;
+                                _lightDrawer = e.DrawerId;                              
+                            }
+                            else
+                            {
+                                if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
+                                    StopWallScan();
+                                wallStatus = "Drawer " + e.DrawerId + " opened";
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
+                                DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                                BrushDrawer[e.DrawerId] = _borderDrawerOpen;
+                            }
+
+                            if (IsAutoLightDrawerChecked)
+                            {
+                                if ((_lightDrawer == -1) && (_autoLightDrawer == -1))// No light in progress
+                                {
+                                    _bStopWall = true;
+                                    _autoLightDrawer = e.DrawerId; //give Number drawer to autolight
+                                }
+                            }
+                            else
+                                _autoLightDrawer = -1;
                         }
                     }
                     else
                     {
-                        if ((DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight)) 
+                        //Wait end of light process or recheck
+                        if ((InLightOrRecheckprocess) || (_recheckLightDrawer != -1))
                         {
-                            wallStatus = "Light stones in drawer " + e.DrawerId;
-                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InLight;
-                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                            BrushDrawer[e.DrawerId] = _borderLight;
-                            bDrawerToLight[e.DrawerId] = true;
-                            _lightDrawer = e.DrawerId;
-                        }
-                        else
-                        {
-                            if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
-                                StopWallScan();
-                            wallStatus = "Drawer " + e.DrawerId + " opened";
-                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
-                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                            BrushDrawer[e.DrawerId] = _borderDrawerOpen;
-                        }
-
-                        if (IsAutoLightDrawerChecked)
-                        {
-                            if ((_lightDrawer == -1) && (_autoLightDrawer == -1))// No light in progress
+                            do
                             {
-                                _bStopWall = true;
-                                _autoLightDrawer = e.DrawerId; //give Number drawer to autolight
+                                Thread.Sleep(1000);
                             }
+                            while (InLightOrRecheckprocess);
                         }
-                        else
-                            _autoLightDrawer = -1;
-                    }
-                }
-                else
-                {
-
-                    if (_recheckLightDrawer != -1)
-                    {
-                        //DevicesHandler.StopLighting(_recheckLightDrawer);
-                        //DevicesHandler.StopScan(_recheckLightDrawer);                       
-                        //_recheckLightDrawer = -1;
-                        // if ((myConTroller != null) && (myConTroller.IsOpen))
-                        //     await myConTroller.CloseAsync();
-                        //DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
-                        /*await mainview0.Dispatcher.BeginInvoke(new System.Action( () =>
-                        {
-                            string info = string.Format("Device in recheck - please Close drawer {0} to continue", e.DrawerId);
-                            mainview0.ShowMessageAsync("Wall Information", info);
-                            return;
-                        }));*/
-                        //Wait end recheck                       
-                        do
-                        {
-                            Thread.Sleep(1000);
-                           
-                        }
-                        while (_recheckLightDrawer != -1);
-                    }
 
                     if (_lastDrawerOpen != e.DrawerId)
-                    {
-                        DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
-                        if ((DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight))
                         {
-                            wallStatus = "Light stones in drawer " + e.DrawerId;
-                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InLight;
-                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                            BrushDrawer[e.DrawerId] = _borderLight;
-                            bDrawerToLight[e.DrawerId] = true;
-                            _lightDrawer = e.DrawerId;
-                        }
-                        else if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.Ready)
-                        {
-                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
-                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                            BrushDrawer[e.DrawerId] = _borderDrawerOpen;
-                        }
-                        else
-                        {
-                            if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
-                                StopWallScan();
-                            wallStatus = "Drawer " + e.DrawerId + " opened";
-                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
-                            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                            BrushDrawer[e.DrawerId] = _borderDrawerOpen;
-                        }
+                            DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
+                            if ((DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight))
+                            {
+                                wallStatus = "Light stones in drawer " + e.DrawerId;
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InLight;
+                                DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                                BrushDrawer[e.DrawerId] = _borderLight;
+                                bDrawerToLight[e.DrawerId] = true;
+                                _lightDrawer = e.DrawerId;
+                            }
+                            else if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.Ready)
+                            {
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
+                                DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                                BrushDrawer[e.DrawerId] = _borderDrawerOpen;
+                            }
+                            else
+                            {
+                                if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
+                                    StopWallScan();
+                                wallStatus = "Drawer " + e.DrawerId + " opened";
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
+                                DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                                BrushDrawer[e.DrawerId] = _borderDrawerOpen;
+                            }
 
                         
-                        await mainview0.Dispatcher.BeginInvoke(new System.Action(async () =>
-                        {
-                            string info = string.Format("Drawer {0} already open - please Close drawer {1} to continue", _lastDrawerOpen, e.DrawerId);
-                            await mainview0.ShowMessageAsync("Wall Information", info);
-                        }));
+                            await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                            {
+                                string info = string.Format("Drawer {0} already open - please Close drawer {1} to continue", _lastDrawerOpen, e.DrawerId);
+                                mainview0.ShowMessageAsync("Wall Information", info);
+                            }));
+                        }
                     }
-                }
+                
 
             }
             catch (Exception error)
             {            
-                await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                 await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOpened");
                     exp.ShowDialog();
@@ -3137,7 +3136,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 if (!ScanTimer.IsEnabled)
                 {
-                    ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
+                    ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
                     ScanTimer.IsEnabled = true;
                     ScanTimer.Start();
                 }

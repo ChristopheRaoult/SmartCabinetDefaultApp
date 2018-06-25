@@ -402,8 +402,11 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             if (GpioCardObject.IsConnected)
                 FireEvent(GpioConnected, "0", 0);
 
-            GpioCardObject.ClearOut(1);
-            GpioCardObject.ClearOut(2);
+            if (GpioCardObject.IsConnected)
+            {
+                GpioCardObject.ClearOut(1);
+                GpioCardObject.ClearOut(2);
+            }
         }
         private static void GpioCardObject_NotifyGpioEvent(string arg)
         {
@@ -616,9 +619,9 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 StopScan(drawerId);
 
             SetDrawerActive(drawerId);
-            Device.ConfirmAndLightWithKD(1, tagList, bLight);
+           // Device.ConfirmAndLightWithKD(1, tagList, bLight);
 
-            /* Device.DeviceBoard.setBridgeState(false, 30 , 30);
+             Device.DeviceBoard.setBridgeState(false, 30 , 30);
              Device.StartLedOn(drawerId);
              Device.DeviceBoard.setBridgeState(false, 50, 50);
              Device.StartLedOn(drawerId);
@@ -643,7 +646,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                  Device.ConfirmAndLight(drawerId, tagList);
              }
              Device.DeviceBoard.setBridgeState(false, 167, 167);
-             */
+             
         }
         public static void StopLighting(int drawerId)
         {
@@ -660,9 +663,12 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             {
                 if (GpioCardObject != null)
                 {
-                    GpioCardObject.SetOut(1);
-                    Thread.Sleep(500);
-                    GpioCardObject.ClearOut(1);
+                    if (GpioCardObject.IsConnected)
+                    {
+                        GpioCardObject.SetOut(1);
+                        Thread.Sleep(500);
+                        GpioCardObject.ClearOut(1);
+                    }
                 }
             }
         }
@@ -676,9 +682,12 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             {
                 if (GpioCardObject != null)
                 {
-                    GpioCardObject.SetOut(2);
-                    Thread.Sleep(500);
-                    GpioCardObject.ClearOut(2);
+                    if (GpioCardObject.IsConnected)
+                    {
+                        GpioCardObject.SetOut(2);
+                        Thread.Sleep(500);
+                        GpioCardObject.ClearOut(2);
+                    }
                 }
             }
         }

@@ -184,7 +184,40 @@ namespace SmartDrawerWpfApp.WcfServer
                 return false;
             }
         }
+        public static async Task<bool> PostRequest (string user , string description , List<string> uids)
+        {
+            try
+            {
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
 
+                var request = new RestRequest("selections", Method.POST);
+                request.AddParameter("user_login", user);
+                request.AddParameter("description", description);
+
+                foreach (string uid in uids)
+                {
+                    request.AddParameter("listOfTagToPull", uid);
+                }
+                var response = await client.ExecuteTaskAsync(request);
+                LogToFile.LogMessageToFile(response.ResponseStatus.ToString());
+                LogToFile.LogMessageToFile(response.Content.ToString());
+
+                return response.IsSuccessful;
+
+            }
+            catch (Exception error)
+            {
+                LogToFile.LogMessageToFile(error.InnerException.ToString());
+                LogToFile.LogMessageToFile(error.Message);
+                LogToFile.LogMessageToFile(error.StackTrace);
+
+            }
+            return false;
+        }
         #endregion
         #region User
         public static async Task<bool> GetAndStoreUserAsync()
@@ -428,6 +461,37 @@ namespace SmartDrawerWpfApp.WcfServer
 
         #endregion
         #region Inventory
+        public static async Task<JsonInventory[]> GetLastScan (string serial)
+        {
+           
+                try
+                {
+                    string serverIP = Properties.Settings.Default.ServerIp;
+                    int serverPort = Properties.Settings.Default.ServerPort;
+
+                    string urlServer = "http://" + serverIP + ":" + serverPort;
+                    var client = new RestClient(urlServer);
+                    client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                    var request = new RestRequest("stockhistories/"+serial, Method.GET);
+                    var response = await client.ExecuteTaskAsync(request);
+
+                    if (response.IsSuccessful)
+                    {
+
+                        var lstInventories = JsonInventory.DeserializedJsonList(response.Content);
+                        return lstInventories;
+                    }
+                return null;
+                }
+               
+                catch (Exception error)
+                {
+                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error getting Inventory");
+                    exp.ShowDialog();
+                    return null;
+                }
+            
+        }
         public static async Task<bool> PostInventoryForDrawer(Device device, int drawerId, Inventory inventory)
         {
             try

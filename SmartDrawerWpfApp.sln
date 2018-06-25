@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDrawerAdmin", "SmartDr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AddHTTP", "AddHTTP\AddHTTP.csproj", "{12D66163-E115-46F4-B719-4AB4535E11F6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientRandomRequest", "ClientRandomRequest\ClientRandomRequest.csproj", "{9708775E-858D-4CE4-89B7-6F639B86CE76}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{12D66163-E115-46F4-B719-4AB4535E11F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{12D66163-E115-46F4-B719-4AB4535E11F6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{12D66163-E115-46F4-B719-4AB4535E11F6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9708775E-858D-4CE4-89B7-6F639B86CE76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9708775E-858D-4CE4-89B7-6F639B86CE76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9708775E-858D-4CE4-89B7-6F639B86CE76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9708775E-858D-4CE4-89B7-6F639B86CE76}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
