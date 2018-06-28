@@ -1311,6 +1311,7 @@ namespace SmartDrawerWpfApp.ViewModel
                         var ctx = await RemoteDatabase.GetDbContextAsync();
                         foreach (JsonSelectionList jsl in ProcessSelectionFromServer.lastSelection)
                         {
+                            if (jsl == null) continue;
                             if (jsl.state == "closed") continue;
                             if (jsl.listOfTagToPull == null) continue;
                             GrantedUser user = null;
@@ -2443,12 +2444,21 @@ namespace SmartDrawerWpfApp.ViewModel
                             InLightOrRecheckprocess = false;
                       });
 
+                        List<string> TagTolightBck = null;                        
+                        //Clone tag to light
+                        if ((TagToLight != null) && (TagToLight.Count > 0 ))
+                        {
+                            TagTolightBck = new List<string>();
+                            foreach (string uid in TagToLight)
+                                TagTolightBck.Add(uid);
+                        }
+
                         /*****   Update API ****/
                         await Task.Run(() =>
                       {
-                          if (SelectionSelected != null)
+                          if ((SelectionSelected != null) && (TagTolightBck != null) && (TagTolightBck.Count > 0))
                           {
-                              ProcessSelectionFromServer.UpdateSelectionAsync(SelectionSelected.ServerPullItemId, TagToLight);
+                              ProcessSelectionFromServer.UpdateSelectionAsync(SelectionSelected.ServerPullItemId, TagTolightBck);
                           }
 
                       });

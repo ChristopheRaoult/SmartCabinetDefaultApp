@@ -48,6 +48,18 @@ namespace SmartDrawerWpfApp.WcfServer
                        var lstSelection = JsonSelectionList.DeserializedJsonList(response.Content);
                         if ((lstSelection != null) && (lstSelection.Length > 0))
                         {
+
+                            foreach(var sel in lstSelection)
+                            {
+                                if (sel == null)
+                                {
+                                    LogToFile.LogMessageToFile("------- Start Error in selection --------");
+                                    LogToFile.LogMessageToFile(response.Content);
+                                    LogToFile.LogMessageToFile("------- End Error in selection --------");
+                                    break;
+                                }
+                            }
+
                             lastSelection = lstSelection;
                             // not store pullitem detail for speed
                             /*foreach (JsonSelectionList jsl in lstSelection)
