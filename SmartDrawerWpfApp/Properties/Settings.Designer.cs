@@ -85,7 +85,7 @@ namespace SmartDrawerWpfApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("192.168.1.17")]
+        [global::System.Configuration.DefaultSettingValueAttribute("202.71.27.218")]
         public string ServerIp {
             get {
                 return ((string)(this["ServerIp"]));
@@ -97,7 +97,7 @@ namespace SmartDrawerWpfApp.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("3000")]
+        [global::System.Configuration.DefaultSettingValueAttribute("4000")]
         public int ServerPort {
             get {
                 return ((int)(this["ServerPort"]));

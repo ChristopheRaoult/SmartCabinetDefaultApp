@@ -975,7 +975,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 myConTroller.SetIndeterminate();
                 await Task.Run(() =>
-               {
+               {                  
                    lock (thisLock)
                    {
                        Data.Clear();
@@ -1029,7 +1029,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     if ((myConTroller != null) && (myConTroller.IsOpen))
                     {
-                        myConTroller.CloseAsync(); 
+                        await myConTroller.CloseAsync(); 
                     }
                 }
                 catch
@@ -1041,7 +1041,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     if ((myConTroller != null) && (myConTroller.IsOpen))
                     {
-                        myConTroller.CloseAsync();                      
+                       await  myConTroller.CloseAsync();                      
 
                     }
                 }
@@ -1059,7 +1059,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     if ((myConTroller != null) && (myConTroller.IsOpen))
                     {
-                        myConTroller.CloseAsync();
+                        await myConTroller.CloseAsync();
                     }
                 }
                 catch
@@ -1297,7 +1297,7 @@ namespace SmartDrawerWpfApp.ViewModel
             var myConTroller = await mainview0.ShowProgressAsync("Please wait","Get Selection From server",true);
             myConTroller.SetIndeterminate();
             try
-            {
+            {               
 
                 Selection.Clear();
                 getCriteria();
@@ -1305,61 +1305,65 @@ namespace SmartDrawerWpfApp.ViewModel
                 bool gotSel = await ProcessSelectionFromServer.GetAndStoreSelectionAsync();
 
                 if (gotSel)
-                {
+                {                    
+
                     if (ProcessSelectionFromServer.lastSelection != null)
                     {
                         var ctx = await RemoteDatabase.GetDbContextAsync();
-                        foreach (JsonSelectionList jsl in ProcessSelectionFromServer.lastSelection)
+                        lock (ProcessSelectionFromServer.somePublicStaticObject)
                         {
-                            if (jsl == null) continue;
-                            if (jsl.state == "closed") continue;
-                            if (jsl.listOfTagToPull == null) continue;
-                            GrantedUser user = null;
-                            if (jsl.user_id.HasValue)
+                            foreach (JsonSelectionList jsl in ProcessSelectionFromServer.lastSelection)
                             {
-                                user = ctx.GrantedUsers.GetByServerId(jsl.user_id.Value);
-                            }
-
-                            SelectionViewModel svm = new SelectionViewModel();
-                            svm.IsSelected = false;
-                            svm.PullItemId = jsl.selection_id;
-                            svm.ServerPullItemId = jsl.selection_id;
-
-                            TimeSpan ts = DateTime.Now - jsl.created_at;
-                            if (ts.TotalDays < 1)
-                                svm.PullItemDate = jsl.created_at.ToString("hh:mm tt");
-                            else if (ts.TotalDays == 2)
-                                svm.PullItemDate = "Yesterday\r\n" + jsl.created_at.ToString("hh:mm tt");
-                            else
-                                svm.PullItemDate = jsl.created_at.ToString("MMM dd") + "\r\n" + jsl.created_at.ToString("hh:mm tt");
-
-                            svm.Description = string.IsNullOrEmpty(jsl.description) ? " " : jsl.description;
-
-                            if (user != null)
-                                svm.User = user.FirstName + " " + user.LastName;
-                            svm.TotalToPull = jsl.listOfTagToPull.Count;
-
-                            svm.lstTopull = new List<string>();
-                            int nbInDevice = 0;
-
-                            foreach (var uid in jsl.listOfTagToPull)
-                            {
-                                if (string.IsNullOrEmpty(uid)) continue;
-                                if (DevicesHandler.ListTagPerDrawer.ContainsKey(uid))
+                                if (jsl == null) continue;
+                                if (jsl.state == "closed") continue;
+                                if (jsl.listOfTagToPull == null) continue;
+                                GrantedUser user = null;
+                                if (jsl.user_id.HasValue)
                                 {
-                                    svm.lstTopull.Add(uid);
-                                    nbInDevice++;
+                                    user = ctx.GrantedUsers.GetByServerId(jsl.user_id.Value);
+                                }
+
+                                SelectionViewModel svm = new SelectionViewModel();
+                                svm.IsSelected = false;
+                                svm.PullItemId = jsl.selection_id;
+                                svm.ServerPullItemId = jsl.selection_id;
+
+                                TimeSpan ts = DateTime.Now - jsl.created_at;
+                                if (ts.TotalDays < 1)
+                                    svm.PullItemDate = jsl.created_at.ToString("hh:mm tt");
+                                else if (ts.TotalDays == 2)
+                                    svm.PullItemDate = "Yesterday\r\n" + jsl.created_at.ToString("hh:mm tt");
+                                else
+                                    svm.PullItemDate = jsl.created_at.ToString("MMM dd") + "\r\n" + jsl.created_at.ToString("hh:mm tt");
+
+                                svm.Description = string.IsNullOrEmpty(jsl.description) ? " " : jsl.description;
+
+                                if (user != null)
+                                    svm.User = user.FirstName + " " + user.LastName;
+                                svm.TotalToPull = jsl.listOfTagToPull.Count;
+
+                                svm.lstTopull = new List<string>();
+                                int nbInDevice = 0;
+
+                                foreach (var uid in jsl.listOfTagToPull)
+                                {
+                                    if (string.IsNullOrEmpty(uid)) continue;
+                                    if (DevicesHandler.ListTagPerDrawer.ContainsKey(uid))
+                                    {
+                                        svm.lstTopull.Add(uid);
+                                        nbInDevice++;
+                                    }
+                                }
+
+                                if (nbInDevice > 0)
+                                {
+                                    svm.TotalToPullInDevice = nbInDevice;
+                                    Selection.Add(svm);
                                 }
                             }
-
-                            if (nbInDevice > 0)
-                            {
-                                svm.TotalToPullInDevice = nbInDevice;
-                                Selection.Add(svm);
-                            }
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
                         }
-                        ctx.Database.Connection.Close();
-                        ctx.Dispose();
 
                         mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
                         try
@@ -1474,7 +1478,6 @@ namespace SmartDrawerWpfApp.ViewModel
                 catch
                 { }
             }
-
 
         }
 
@@ -2577,7 +2580,8 @@ namespace SmartDrawerWpfApp.ViewModel
 
                     if (bNeedUpdateCriteriaAfterScan)
                     {
-                        if (!IsWaitingForScan())
+                        //Wait end of light process or recheck                       
+                        if ((!IsWaitingForScan()) && (!InLightOrRecheckprocess) && (_recheckLightDrawer == -1) && (_lightDrawer == -1))
                         {
                             getSelection();
                             bNeedUpdateCriteriaAfterScan = false;
@@ -2718,7 +2722,8 @@ namespace SmartDrawerWpfApp.ViewModel
                     case "GetWallInfo":
                         break;
                     case "UpdateCriteriaNotification":
-                        getCriteria();
+                        bNeedUpdateCriteriaAfterScan = true;
+                        //getCriteria();
                         break;
                     case "UpdateUserInfoListNotification":
                         break;
@@ -2729,15 +2734,18 @@ namespace SmartDrawerWpfApp.ViewModel
                     case "UpdateCriteria":
                         if (e.Message != null)
                         {
-                            getCriteria();
+                            //getCriteria();
+                            bNeedUpdateCriteriaAfterScan = true;
                         }
                         break;
                     case "AddOrUpdateProduct":
-                        getCriteria();
-                        Thread.Sleep(500);
+                        //getCriteria();
+                        bNeedUpdateCriteriaAfterScan = true;
+                      
                         break;
                     case "StockOutProduct":
-                        getCriteria();
+                       // getCriteria();
+                        bNeedUpdateCriteriaAfterScan = true;
                         break;
 
                     case "SelectProduct":

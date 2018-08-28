@@ -16,6 +16,8 @@ namespace SmartDrawerWpfApp.WcfServer
     public static class ProcessSelectionFromServer
     {
 
+        public static object somePublicStaticObject = new Object();
+
         private static string publicApiLogin = "userp";
         private static string publicApiMdp = "F00lpro0f";
 
@@ -39,17 +41,16 @@ namespace SmartDrawerWpfApp.WcfServer
                 var response = await client.ExecuteTaskAsync(request);
 
                 if (response.IsSuccessful)
-                {         
-                        
-                        var ctx = await RemoteDatabase.GetDbContextAsync();
-                        ctx.PullItems.Clear();
-                        await ctx.SaveChangesAsync();
-
-                       var lstSelection = JsonSelectionList.DeserializedJsonList(response.Content);
+                {  
+                    var ctx = await RemoteDatabase.GetDbContextAsync();
+                    ctx.PullItems.Clear();
+                    await ctx.SaveChangesAsync();
+                    lock (somePublicStaticObject)
+                    {
+                        var lstSelection = JsonSelectionList.DeserializedJsonList(response.Content);
                         if ((lstSelection != null) && (lstSelection.Length > 0))
                         {
-
-                            foreach(var sel in lstSelection)
+                            foreach (var sel in lstSelection)
                             {
                                 if (sel == null)
                                 {
@@ -59,52 +60,17 @@ namespace SmartDrawerWpfApp.WcfServer
                                     break;
                                 }
                             }
-
-                            lastSelection = lstSelection;
-                            // not store pullitem detail for speed
-                            /*foreach (JsonSelectionList jsl in lstSelection)
-                            {
-                                if (jsl.state == "closed") continue;
-                                if (jsl.listOfTagToPull == null) continue;
-
-                                GrantedUser user = null;
-                                if (jsl.user_id.HasValue)
-                                {
-                                    user = ctx.GrantedUsers.GetByServerId(jsl.user_id.Value);
-                                }
-                                var pullItemToAdd = new SmartDrawerDatabase.DAL.PullItem
-                                {
-                                    ServerPullItemId = jsl.selection_id,
-                                    PullItemDate = jsl.created_at,
-                                    Description = string.IsNullOrEmpty(jsl.description) ? " " : jsl.description,
-                                    GrantedUser = user,
-                                    TotalToPull = jsl.listOfTagToPull.Count,
-
-                                };
-                                ctx.PullItems.Add(pullItemToAdd);
-                               
-                               /* foreach (string uid in jsl.listOfTagToPull)
-                                {
-                                    if (string.IsNullOrEmpty(uid)) continue;
-                                    RfidTag tag = ctx.RfidTags.AddIfNotExisting(uid);
-                                    ctx.PullItemsDetails.Add(new PullItemDetail
-                                    {
-                                        PullItem = pullItemToAdd,
-                                        RfidTag = tag,
-                                    });
-                                }
-                                await ctx.SaveChangesAsync();
-
-                            }      */                      
+                            lastSelection = lstSelection;                           
                         }
                         else
                         {
                             lastSelection = null;
-                           
+
                         }
-                       // ctx.Database.Connection.Close();
-                       // ctx.Dispose();
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
                         return true;
+                    }
 
                 }
                 return false;

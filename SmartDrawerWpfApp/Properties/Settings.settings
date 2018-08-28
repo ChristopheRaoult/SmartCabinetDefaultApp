@@ -18,10 +18,10 @@
       <Value Profile="(Default)" />
     </Setting>
     <Setting Name="ServerIp" Type="System.String" Scope="User">
-      <Value Profile="(Default)">192.168.1.17</Value>
+      <Value Profile="(Default)">202.71.27.218</Value>
     </Setting>
     <Setting Name="ServerPort" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">3000</Value>
+      <Value Profile="(Default)">4000</Value>
     </Setting>
     <Setting Name="WallSerial" Type="System.String" Scope="User">
       <Value Profile="(Default)" />
