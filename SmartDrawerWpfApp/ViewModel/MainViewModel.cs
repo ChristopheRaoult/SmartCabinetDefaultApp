@@ -1295,6 +1295,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
 
             var myConTroller = await mainview0.ShowProgressAsync("Please wait","Get Selection From server",true);
+          
             myConTroller.SetIndeterminate();
             try
             {               
@@ -1302,8 +1303,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 Selection.Clear();
                 getCriteria();
                 /* Get Selection from API */
+                LogToFile.LogMessageToFile("------- Start Getting Selection --------");
                 bool gotSel = await ProcessSelectionFromServer.GetAndStoreSelectionAsync();
-
+                LogToFile.LogMessageToFile("------- Selection Retrieve from server --------");
                 if (gotSel)
                 {                    
 
@@ -1375,75 +1377,7 @@ namespace SmartDrawerWpfApp.ViewModel
                         }
                         catch
                         { }
-
-                        /* List<PullItem> lstToRemove = new List<PullItem>();
-                         var ctx = await RemoteDatabase.GetDbContextAsync();
-                         Selection.Clear();
-                         foreach (var sel in ctx.PullItems)
-                         {
-                             SelectionViewModel svm = new SelectionViewModel();
-                             svm.IsSelected = false;
-                             svm.PullItemId = sel.PullItemId;
-                             svm.ServerPullItemId = sel.ServerPullItemId;
-
-                             TimeSpan ts = DateTime.Now - sel.PullItemDate;
-                             if (ts.TotalDays < 1)
-                                 svm.PullItemDate = sel.PullItemDate.ToString("hh:mm tt");
-                             else if (ts.TotalDays == 2)
-                                 svm.PullItemDate = "Yesterday\r\n" + sel.PullItemDate.ToString("hh:mm tt");
-                             else
-                                 svm.PullItemDate = sel.PullItemDate.ToString("MMM dd") + "\r\n" + sel.PullItemDate.ToString("hh:mm tt");
-
-                             svm.Description = sel.Description;
-                             if (sel.GrantedUser != null)
-                                 svm.User = sel.GrantedUser.FirstName + " " + sel.GrantedUser.LastName;
-                             svm.TotalToPull = sel.TotalToPull;
-
-                             svm.lstTopull = new List<string>();
-                             int nbInDevice = 0;
-
-                             foreach (var pit in sel.PullItems)
-                             {
-                                 if (DevicesHandler.ListTagPerDrawer.ContainsKey(pit.RfidTag.TagUid))
-                                 {
-                                     svm.lstTopull.Add(pit.RfidTag.TagUid);
-                                     nbInDevice++;
-                                 }
-                             }
-                             // if (1 == 1)
-                             if (nbInDevice > 0)
-                             {
-                                 svm.TotalToPullInDevice = nbInDevice;
-                                 Selection.Add(svm);
-                             }
-                             else   //remove selection bigger thant 1 week having no selection
-                             {
-                                 if (sel.PullItemDate.AddDays(7) < DateTime.Now)
-                                     lstToRemove.Add(sel);
-                             }
-                         }
-
-                         if (lstToRemove.Count > 0)
-                         {
-                             foreach (var sel in lstToRemove)
-                                 ctx.PullItems.Remove(sel);
-                             await ctx.SaveChangesAsync();
-                         }
-                         ctx.Database.Connection.Close();
-                         ctx.Dispose();
-
-                         mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                         try
-                         {
-                             if ((myConTroller != null) && (myConTroller.IsOpen))
-                             {
-                                 myConTroller.CloseAsync();
-
-
-                             }
-                         }
-                         catch
-                         { }*/
+                        LogToFile.LogMessageToFile("------- Stop Getting Selection --------");                       
                     }
                 }
                 else
@@ -2638,7 +2572,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 ScanTimer.IsEnabled = true;
                 ScanTimer.Start();
             }
-        }
+        } 
+
         #endregion
         #region Users
         private async  void  refreshUserFromServer()

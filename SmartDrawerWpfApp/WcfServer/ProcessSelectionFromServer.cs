@@ -32,13 +32,16 @@ namespace SmartDrawerWpfApp.WcfServer
             try
             {
                 string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.ServerPort;
+                int serverPort = Properties.Settings.Default.ServerPort;             
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
+                client.Timeout = 10000;
+                client.ReadWriteTimeout = 10000;
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
                 var request = new RestRequest("selections", Method.GET);
-                var response = await client.ExecuteTaskAsync(request);
+                var response = await client.ExecuteTaskAsync(request);    
+                
 
                 if (response.IsSuccessful)
                 {  

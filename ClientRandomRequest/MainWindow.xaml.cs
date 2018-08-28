@@ -63,7 +63,7 @@ namespace ClientRandomRequest
                 }
             }
 
-            string user = "CHRISTOPHE";
+            string user = "christophe";
             string description = "Random Selection at " + DateTime.Now.ToShortTimeString();
             bool x = await ProcessSelectionFromServer.PostRequest(user, description, ListTagToPull);
 
