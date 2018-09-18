@@ -212,12 +212,16 @@
     <Compile Include="StaticHelpers\TagFromTxtBox.cs" />
     <Compile Include="StaticHelpers\TouchKeyboardProvider.cs" />
     <Compile Include="StaticHelpers\Utils.cs" />
+    <Compile Include="StaticHelpers\WaitHandler.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\SelectionViewModel.cs" />
     <Compile Include="ViewModel\UsersViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Compile Include="View\MainWindow2.xaml.cs">
       <DependentUpon>MainWindow2.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="View\PleaseWaitWindow.xaml.cs">
+      <DependentUpon>PleaseWaitWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="View\UC\TextDefil.xaml.cs">
       <DependentUpon>TextDefil.xaml</DependentUpon>
@@ -278,6 +282,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Page Include="View\MainWindow2.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="View\PleaseWaitWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

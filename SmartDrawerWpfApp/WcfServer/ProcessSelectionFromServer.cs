@@ -40,6 +40,8 @@ namespace SmartDrawerWpfApp.WcfServer
                 client.ReadWriteTimeout = 10000;
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
                 var request = new RestRequest("selections", Method.GET);
+                request.Timeout = 10000;
+                request.ReadWriteTimeout = 10000;
                 var response = await client.ExecuteTaskAsync(request);    
                 
 
