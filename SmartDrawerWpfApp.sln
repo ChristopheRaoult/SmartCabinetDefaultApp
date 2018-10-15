@@ -4,6 +4,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 15.0.27004.2009
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDrawerWpfApp", "SmartDrawerWpfApp\SmartDrawerWpfApp.csproj", "{881BB30F-C534-4F30-A18F-361C1D7229B9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{143F8391-CD57-426C-8E65-B8BBF51CDE39} = {143F8391-CD57-426C-8E65-B8BBF51CDE39}
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDrawerDatabase", "SmartDrawerDatabase\SmartDrawerDatabase.csproj", "{A0C0BF39-CCAB-4698-9949-75A7B8C46618}"
 EndProject
@@ -14,6 +17,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AddHTTP", "AddHTTP\AddHTTP.csproj", "{12D66163-E115-46F4-B719-4AB4535E11F6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientRandomRequest", "ClientRandomRequest\ClientRandomRequest.csproj", "{9708775E-858D-4CE4-89B7-6F639B86CE76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDK_SC_RfidReader", "..\..\GIA Project\WallPanelWpfApp-GIATest\SDK_SC_RfidReader\SDK_SC_RfidReader.csproj", "{143F8391-CD57-426C-8E65-B8BBF51CDE39}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,6 +50,10 @@ Global
 		{9708775E-858D-4CE4-89B7-6F639B86CE76}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9708775E-858D-4CE4-89B7-6F639B86CE76}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9708775E-858D-4CE4-89B7-6F639B86CE76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{143F8391-CD57-426C-8E65-B8BBF51CDE39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{143F8391-CD57-426C-8E65-B8BBF51CDE39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{143F8391-CD57-426C-8E65-B8BBF51CDE39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{143F8391-CD57-426C-8E65-B8BBF51CDE39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

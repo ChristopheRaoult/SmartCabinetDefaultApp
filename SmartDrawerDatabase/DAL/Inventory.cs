@@ -13,7 +13,7 @@ namespace SmartDrawerDatabase.DAL
     {
         public Inventory()
         {
-            this.InventoryProducts = new HashSet<InventoryProduct>();
+            this.InventoryProducts = new HashSet<InventoryProduct>();            
         }
         [Key]
         public int InventoryId { get; set; }
@@ -31,7 +31,7 @@ namespace SmartDrawerDatabase.DAL
         [Required]
         public int TotalRemoved { get; set; }
         [Required]
-        public DateTime InventoryDate { get; set; }
+        public DateTime InventoryDate { get; set; }        
         [MaxLength]
         public string InventoryStream { get; set; }
 

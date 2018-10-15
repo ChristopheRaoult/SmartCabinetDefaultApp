@@ -282,7 +282,7 @@ namespace SmartDrawerWpfApp.WcfServer
                             }
                             else if (original2 != null)
                             {
-                                TimeSpan ts = jsl.updated_at - original.UpdateAt;
+                                TimeSpan ts = jsl.updated_at - original2.UpdateAt;
                                 if (Math.Abs(ts.TotalSeconds) > 1)  // Not the latest but avoid ms 
                                 {
                                     original2.ServerGrantedUserId = jsl.user_id;

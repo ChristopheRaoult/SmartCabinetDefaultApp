@@ -24,7 +24,6 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         private static SmartDrawerDatabase.DAL.Device _deviceEntity;
 
         static object lockMethodInventory = new object();
-
         public static void HandleNewScanCompleted(int drawerId)
         {
 
@@ -180,7 +179,6 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 }
             }
         }
-
         private static void AddMovementToInventory(SmartDrawerDatabaseContext ctx, Inventory newInventory, IEnumerable tags, MovementType movement , int drawerId)
         {
             /* foreach (string uid in tags)

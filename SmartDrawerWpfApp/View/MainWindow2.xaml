@@ -315,11 +315,29 @@
                         <Button  x:Name="btLightselection" Visibility="Hidden" Command="{Binding btLightFilteredTagSelection}"    Margin="10,5,5,5"  Content=" Light Selection " Style="{StaticResource DefaultButton}"  />
                         <Button  Command="{Binding btRemoveSelection}"  Visibility="Hidden"  Margin="50,5,5,5"   Content=" Remove Selection "   Style="{StaticResource DefaultButton}"  PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp"   />
                     </StackPanel>
-                    <StackPanel Orientation="Vertical" HorizontalAlignment="Right">
-                        <Controls:ToggleSwitch x:Name="ChkAutoLight"  Margin="0,10,0,5" IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" Foreground="{DynamicResource AccentColorBrush}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>
-                        <TextBlock Text="Lights" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Style="{StaticResource itemTextBlock}"/>
-                       
+                    <StackPanel  Orientation="Horizontal" HorizontalAlignment="Right">
+                        <!--StackPanel Orientation="Vertical" HorizontalAlignment="Right" Margin="0,0,50,0">
+                            <Controls:ToggleSwitch x:Name="ChkAccumulate"  Margin="0,10,0,5" IsChecked="{Binding IsInPutItemFastMode , Mode=TwoWay}" Foreground="{DynamicResource AccentColorBrush}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" ></Controls:ToggleSwitch>
+                            <TextBlock Text="Put Fast Mode" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Style="{StaticResource itemTextBlock}"/>
+                        </-->
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,50,0">
+                            <TextBlock Text="Put Fast Mode" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Style="{StaticResource itemTextBlock}"/>
+                            <ToggleButton Width="50" Height="50" Margin="10, 0, 0, 0"  IsChecked="{Binding IsInPutItemFastMode , Mode=TwoWay}"   Style="{DynamicResource MetroCircleToggleButtonStyle}">
+                                <Rectangle Width="30"  Height="30" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToggleButton}}}">
+                                    <Rectangle.OpacityMask>
+                                        <VisualBrush Stretch="Fill" Visual="{DynamicResource appbar_man_suitcase_run}"/>
+                                    </Rectangle.OpacityMask>
+                                </Rectangle>
+                            </ToggleButton>
+                            
+                        </StackPanel>
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Right">
+                            <Controls:ToggleSwitch x:Name="ChkAutoLight"  Margin="0,10,0,5" IsChecked="{Binding IsAutoLightDrawerChecked , Mode=TwoWay}" Foreground="{DynamicResource AccentColorBrush}" SwitchForeground="{DynamicResource AccentColorBrush}"   VerticalAlignment="Center" HorizontalAlignment="Right" />
+                            <TextBlock Text="Lights" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Style="{StaticResource itemTextBlock}"/>
+
+                        </StackPanel>
                     </StackPanel>
+                  
                     <syncfusion:SfDataGrid Name="myDatagridSelection" Grid.Row="1"
                                                HeaderRowHeight="80"
                                                RowHeight="60"
@@ -342,7 +360,7 @@
                                                RowSelectionBrush="#1A33BCBA"
                                                SelectionForegroundBrush="#000000"
                                                ItemsSource="{Binding Selection}" 
-                                               SelectedItem="{Binding SelectionSelected}"
+                                               SelectedItem="{Binding SelectionSelected , Mode=TwoWay}"
                                                AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
                                                AlternationCount="2"
                                                HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star"

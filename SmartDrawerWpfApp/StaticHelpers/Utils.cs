@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SDK_SC_RfidReader;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -6,6 +7,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web.Script.Serialization;
 
 namespace SmartDrawerWpfApp.StaticHelpers
 {
@@ -86,6 +88,15 @@ namespace SmartDrawerWpfApp.StaticHelpers
                     sw.Close();
                 }
             }
+        }
+    }
+    
+    public static class CloneReaderData
+    {
+        public static ReaderData CloneObject (ReaderData rd)
+        {
+                  var jss = new JavaScriptSerializer();
+            return jss.Deserialize<ReaderData>(jss.Serialize(rd));
         }
     }
 }

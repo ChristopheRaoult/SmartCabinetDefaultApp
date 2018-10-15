@@ -97,6 +97,8 @@ namespace SmartDrawerWpfApp.ViewModel
 
         private List<BaseObject> _SelectedBaseObjects;
 
+        private DateTime LastDeviceActionTime;
+
         #endregion
         #region Properties
 
@@ -553,9 +555,10 @@ namespace SmartDrawerWpfApp.ViewModel
                 _IsFlyoutCassettePositionOpen = value;
                 RaisePropertyChanged("IsFlyoutCassettePositionOpen");
                 if (_IsFlyoutCassettePositionOpen == false)
-                {
+                {                    
                     if (!IsFlyoutCassetteInfoOpen)
                         cancelLighting();
+                    SelectionSelected = null;
                     SelectedCassette = null;
                     if (bNeedUpdateCriteria)
                     {
@@ -688,6 +691,34 @@ namespace SmartDrawerWpfApp.ViewModel
                 RaisePropertyChanged(() => DrawerCtrlCount);
             }
         }
+
+        private bool _IsInPutItemFastMode = false;
+        public bool IsInPutItemFastMode
+        {
+            get {  return _IsInPutItemFastMode; }
+            set {
+                _IsInPutItemFastMode = value;
+                if (_IsInPutItemFastMode)
+                {
+                    if (IsWallInScan())                   
+                        StopWallScan();
+                    if (!IsWallReady())
+                        cancelLighting();
+                    DevicesHandler.IsInAccumulateMode = true;
+                }
+                else
+                {
+                    DevicesHandler.IsInAccumulateMode = false;
+                }
+
+                RaisePropertyChanged(() => IsInPutItemFastMode);
+               }
+        }
+
+        private bool PendingFastModeOperation = false;
+
+        private bool FastModeContinuousReading = false;
+
         #endregion
         #region admin
         public bool isAdmin = false;
@@ -1175,7 +1206,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 _SelectionSelected = value;
 
                 if (_selection != null)
-                {
+                {                 
                     foreach (var item in Selection)
                     {
                         if (item == _SelectionSelected)
@@ -1278,8 +1309,25 @@ namespace SmartDrawerWpfApp.ViewModel
         public void refreshSelection()
         {
             //Clear pull info
+          
+            SelectionSelected = null;
+            mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+            Thread.Sleep(100);
+
             if (IsFlyoutCassettePositionOpen) //Stop lighting if lighting ON
                 IsFlyoutCassettePositionOpen = false;
+
+            if (IsInPutItemFastMode)
+            {
+                for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
+                {
+
+                    DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
+                    DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
+                    BrushDrawer[loop] = _borderReady;
+                }
+            }
+            IsInPutItemFastMode = false;
             bNeedUpdateCriteriaAfterScan = true;
         }
         public async void getSelection()
@@ -1425,6 +1473,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
+                IsInPutItemFastMode = false;
                 if (SelectionSelected == null)
                     return;
 
@@ -1540,7 +1589,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     SelectedCassette = tmpCassette;
                     _previousSelectedCassettes = SelectedCassette;
                     TotalCassettesToPull = SelectedCassette.CassetteSelectionTotalNumber;
-                    TotalCassettesPulled = 0;
+                    TotalCassettesPulled = 0;                    
                     IsFlyoutCassettePositionOpen = true;
                 }
                 else
@@ -1705,6 +1754,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
+                IsInPutItemFastMode = false;
                 if (RfidStatus == false)
                 {
                     IsFlyoutCassettePositionOpen = false;
@@ -1796,81 +1846,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             }
                         }
                     }
-
-                }
-                else
-                {  // filtered records
-                   
-                    /*foreach (RecordEntry re in mainview0.myDatagrid.View.Records)
-                    {
-                        DataRowView drv = re.Data as DataRowView;
-                        string uid = drv.Row[0].ToString();
-                        BaseObject theBo = (from c in Data
-                                            where c.Productinfo.RfidTag.TagUid.Equals(uid)
-                                            select c).SingleOrDefault<BaseObject>();
-
-                        if (theBo != null)
-                        {
-                            _SelectedBaseObjects.Add(theBo);
-                            if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
-                            {
-                                switch (theBo.drawerId)
-                                {
-                                    case 1:
-                                        if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 2:
-                                        if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 3:
-                                        if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 4:
-                                        if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 5:
-                                        if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 6:
-                                        if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 7:
-                                        if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-
-                                }
-                            }
-                        }
-                    }*/
-                }
+                }                
                 tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count.ToString(); ;
                 tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count.ToString(); ;
                 tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count.ToString(); ;
@@ -1885,7 +1861,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     SelectedCassette = tmpCassette;
                     _previousSelectedCassettes = SelectedCassette;
                     TotalCassettesToPull = SelectedCassette.CassetteSelectionTotalNumber;
-                    TotalCassettesPulled = 0;
+                    TotalCassettesPulled = 0;                  
                     IsFlyoutCassettePositionOpen = true;
                 }
                 else
@@ -1961,7 +1937,8 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         public RelayCommand btClearSelection { get; set; }
         void ClearSelection()
-        {
+        {           
+            IsInPutItemFastMode = false;
 
             CassettesSelection tmpCassette = new CassettesSelection();
             tmpCassette.CassetteDrawer1Number = String.Empty;
@@ -1980,7 +1957,9 @@ namespace SmartDrawerWpfApp.ViewModel
             BrushDrawer[4] = _borderReady;
             BrushDrawer[5] = _borderReady;
             BrushDrawer[6] = _borderReady;
-            BrushDrawer[7] = _borderReady;
+            BrushDrawer[7] = _borderReady;  
+            
+        
 
             mainview0.myDatagrid.SelectedItems.Clear();
             mainview0.myDatagrid.SearchHelper.ClearSearch();
@@ -2226,7 +2205,6 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         private volatile bool InLightOrRecheckprocess = false;
-
         private async void ScanTimer_Tick(object sender, EventArgs e)
         {
             WaitHandler wh = null;
@@ -2424,6 +2402,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     #region Light
                     else if ((_lightDrawer != -1) && (_recheckLightDrawer == -1))
                     {
+                        IsInPutItemFastMode = false;
                         int bckDrawer = _lightDrawer;
                         DevicesHandler.SetDrawerActive(bckDrawer);
                         if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
@@ -2505,9 +2484,12 @@ namespace SmartDrawerWpfApp.ViewModel
                     }
                     #endregion
                     #region scan
-                    else if (IsWallReady())
+                    else if (!IsInPutItemFastMode  && IsWallReady())
                     //else if ((!IsFlyoutCassettePositionOpen) && (IsWallReady()))
-                    {                        
+                    {
+                        double elaspedTimeLastAction = (DateTime.Now - LastDeviceActionTime).TotalSeconds;
+                        if (elaspedTimeLastAction > 15.0)
+                        {
                             for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
                             {
                                 if (DevicesHandler.IsDrawerWaitScan[loop])
@@ -2519,7 +2501,8 @@ namespace SmartDrawerWpfApp.ViewModel
                                         break;
                                     }
                                 }
-                            }                       
+                            }
+                        }
                     }
                     #endregion
 
@@ -2527,6 +2510,11 @@ namespace SmartDrawerWpfApp.ViewModel
                     {
                         //Wait end of light process or recheck                       
                         if ((!IsWaitingForScan()) && (!InLightOrRecheckprocess) && (_recheckLightDrawer == -1) && (_lightDrawer == -1))
+                        {
+                            getSelection();
+                            bNeedUpdateCriteriaAfterScan = false;
+                        }
+                        else if (IsInPutItemFastMode)
                         {
                             getSelection();
                             bNeedUpdateCriteriaAfterScan = false;
@@ -2752,6 +2740,9 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         #endregion
         #region Device
+
+        int  CptErrorRfid = 0;
+
         private void DevicesHandler_GpioConnected(object sender, DrawerEventArgs e)
         {
             wallStatus = "Gpio connected";
@@ -2846,10 +2837,72 @@ namespace SmartDrawerWpfApp.ViewModel
                 }));
             }
         }
-        private async   void DevicesHandler_DrawerClosed(object sender, DrawerEventArgs e)
+        private async void DevicesHandler_DrawerClosed(object sender, DrawerEventArgs e)
         {
-            try
+            LastDeviceActionTime = DateTime.Now;
+            if (IsInPutItemFastMode)
             {
+                try
+                {
+                    FastModeContinuousReading = false;
+                    DevicesHandler.StopScan(e.DrawerId);
+                    Thread.Sleep(500);
+                    DevicesHandler.ProcessEndInventory();                                    
+                    InventoryHandler.HandleNewScanCompleted(e.DrawerId);                             
+                    PendingFastModeOperation = false;
+                    bNeedUpdateCriteriaAfterScan = true;
+                   
+                    
+
+
+                    if (string.IsNullOrEmpty(tagOnBadDrawer.TagId))
+                        IsFlyoutCassetteInfoOpen = false;
+
+                    if (_lastDrawerOpen == e.DrawerId)
+                        _lastDrawerOpen = -1;
+                    if (_currentDrawerInLight == e.DrawerId)
+                        _currentDrawerInLight = -1;
+                    _tagToLightFromTextBox.Clear();
+                    if (_recheckLightDrawer == e.DrawerId)
+                        _recheckLightDrawer = -1;
+                    if (_lightDrawer == e.DrawerId)
+                        _lightDrawer = -1;
+                    if (_autoLightDrawer == e.DrawerId)
+                        _autoLightDrawer = -1;
+                    wallStatus = "Drawer " + e.DrawerId + " closed";
+
+                    bDrawerToRefreshLight[e.DrawerId] = false;
+                    DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                    DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                    BrushDrawer[e.DrawerId] = _borderReady;
+                    CountTotalStones();
+
+
+                }
+
+                catch (Exception error)
+                {
+                    await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                    {
+                        ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Drawer Closed");
+                        exp.ShowDialog();
+                    }));
+                }
+
+                finally
+                {
+                    if (!ScanTimer.IsEnabled)
+                    {
+                        ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
+                        ScanTimer.IsEnabled = true;
+                        ScanTimer.Start();
+                    }
+                }
+            }
+            else
+            {
+                try
+                {
                     //Wait end of light process or recheck
                     if ((InLightOrRecheckprocess) || (_recheckLightDrawer != -1))
                     {
@@ -2857,8 +2910,8 @@ namespace SmartDrawerWpfApp.ViewModel
                         {
                             Thread.Sleep(1000);
                         }
-                        while (InLightOrRecheckprocess);                  
-                    }  
+                        while (InLightOrRecheckprocess);
+                    }
 
                     List<string> lstCno = DevicesHandler.GetTagFromDictionnary(_lastDrawerOpen, DevicesHandler.ListTagPerDrawer);
                     ObservableCollection<string> TmpListCtrlPerDrawer = new ObservableCollection<string>(lstCno);
@@ -2883,8 +2936,6 @@ namespace SmartDrawerWpfApp.ViewModel
                     if (_autoLightDrawer == e.DrawerId)
                         _autoLightDrawer = -1;
                     wallStatus = "Drawer " + e.DrawerId + " closed";
-
-
 
                     bDrawerToRefreshLight[e.DrawerId] = false;
 
@@ -2935,37 +2986,79 @@ namespace SmartDrawerWpfApp.ViewModel
                         DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
                     }
                 }
-           
-            catch (Exception error)
-            {               
-               await  mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+
+                catch (Exception error)
                 {
-                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Drawer Closed");
-                    exp.ShowDialog();
-                }));
-            }   
-            
-            finally
-            {
-                if (!ScanTimer.IsEnabled)
+                    await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                    {
+                        ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Drawer Closed");
+                        exp.ShowDialog();
+                    }));
+                }
+
+                finally
                 {
-                    ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
-                    ScanTimer.IsEnabled = true;
-                    ScanTimer.Start();
+                    if (!ScanTimer.IsEnabled)
+                    {
+                        ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
+                        ScanTimer.IsEnabled = true;
+                        ScanTimer.Start();
+                    }
                 }
             }
         }    
         private async void DevicesHandler_DrawerOpened(object sender, DrawerEventArgs e)
         {
-            try
-            {
-               
-                // wait open drawer to let time automatic trimming (max field for comfirmation)
+
+            while (PendingFastModeOperation == true)
                 Thread.Sleep(1000);
+
+            if (IsInPutItemFastMode)
+            {
+                PendingFastModeOperation = true;
+                IsAutoLightDrawerChecked = false;
+                DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
+                try
+                {
+                    _lastDrawerOpen = e.DrawerId;
+                    if (DevicesHandler.DevicesConnected)
+                        DevicesHandler.lockAllTags(e.DrawerId);
+                    Thread.Sleep(500);
+                    FastModeContinuousReading = true;
+                    DevicesHandler.lstAcumulate.Clear();
+                    DevicesHandler.bNeedUpdateAccumulationInventory = false;
+                    DevicesHandler.InitialDataForAccumulate[e.DrawerId] = CloneReaderData.CloneObject(DevicesHandler.DrawerInventoryData[e.DrawerId]);
+                    DevicesHandler.StartManualScan(e.DrawerId, false);
+                }
+                catch (Exception error)
+                {
+                    await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                    {
+                        ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOpened");
+                        exp.ShowDialog();
+                    }));
+                }
+                finally
+                {
+                    if (!ScanTimer.IsEnabled)
+                    {
+                        ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
+                        ScanTimer.IsEnabled = true;
+                        ScanTimer.Start();
+                    }
+                }
+            }
+            else
+            {
+                try
+                {
+
+                    // wait open drawer to let time automatic trimming (max field for comfirmation)
+                    Thread.Sleep(1000);
                     if (_lastDrawerOpen == -1)
                     {
                         //Wait end of light process or recheck
-                        if ((InLightOrRecheckprocess) || (_recheckLightDrawer!= -1))
+                        if ((InLightOrRecheckprocess) || (_recheckLightDrawer != -1))
                         {
                             do
                             {
@@ -2974,8 +3067,8 @@ namespace SmartDrawerWpfApp.ViewModel
                             while (InLightOrRecheckprocess);
                         }
 
-                    _lastDrawerOpen = e.DrawerId;
-                      wallStatus = "Drawer " + e.DrawerId + " opened";
+                        _lastDrawerOpen = e.DrawerId;
+                        wallStatus = "Drawer " + e.DrawerId + " opened";
 
 
 
@@ -2995,18 +3088,18 @@ namespace SmartDrawerWpfApp.ViewModel
 
 
                         //Store event drawer 
-                       await Task.Factory.StartNew(() =>
-                       {
-                           var ctx = RemoteDatabase.GetDbContext();
-                           if (GrantedUsersCache.LastAuthenticatedUser != null)
-                               ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId, InventoryId = null, EventDrawerDate = DateTime.Now });
-                           else
-                               ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null, EventDrawerDate = DateTime.Now });
+                        await Task.Factory.StartNew(() =>
+                        {
+                            var ctx = RemoteDatabase.GetDbContext();
+                            if (GrantedUsersCache.LastAuthenticatedUser != null)
+                                ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = GrantedUsersCache.LastAuthenticatedUser.GrantedUserId, InventoryId = null, EventDrawerDate = DateTime.Now });
+                            else
+                                ctx.EventDrawerDetails.Add(new EventDrawerDetail() { DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, DrawerNumber = e.DrawerId, GrantedUserId = null, InventoryId = null, EventDrawerDate = DateTime.Now });
 
-                           ctx.SaveChanges();
-                           ctx.Database.Connection.Close();
-                           ctx.Dispose();
-                       });
+                            ctx.SaveChanges();
+                            ctx.Database.Connection.Close();
+                            ctx.Dispose();
+                        });
 
                         //When a search find stone on other drawer than one currently open
                         if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
@@ -3040,7 +3133,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                                 BrushDrawer[e.DrawerId] = _borderLight;
                                 bDrawerToLight[e.DrawerId] = true;
-                                _lightDrawer = e.DrawerId;                              
+                                _lightDrawer = e.DrawerId;
                             }
                             else
                             {
@@ -3076,7 +3169,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             while (InLightOrRecheckprocess);
                         }
 
-                    if (_lastDrawerOpen != e.DrawerId)
+                        if (_lastDrawerOpen != e.DrawerId)
                         {
                             DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
                             if ((DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight))
@@ -3104,7 +3197,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 BrushDrawer[e.DrawerId] = _borderDrawerOpen;
                             }
 
-                        
+
                             await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                             {
                                 string info = string.Format("Drawer {0} already open - please Close drawer {1} to continue", _lastDrawerOpen, e.DrawerId);
@@ -3112,24 +3205,25 @@ namespace SmartDrawerWpfApp.ViewModel
                             }));
                         }
                     }
-                
 
-            }
-            catch (Exception error)
-            {            
-                 await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+
+                }
+                catch (Exception error)
                 {
-                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOpened");
-                    exp.ShowDialog();
-                }));
-            }
-            finally
-            {
-                if (!ScanTimer.IsEnabled)
+                    await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                   {
+                       ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in DrawerOpened");
+                       exp.ShowDialog();
+                   }));
+                }
+                finally
                 {
-                    ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
-                    ScanTimer.IsEnabled = true;
-                    ScanTimer.Start();
+                    if (!ScanTimer.IsEnabled)
+                    {
+                        ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
+                        ScanTimer.IsEnabled = true;
+                        ScanTimer.Start();
+                    }
                 }
             }
 
@@ -3139,6 +3233,7 @@ namespace SmartDrawerWpfApp.ViewModel
             try
             {
                 RfidError = false;
+                CptErrorRfid = 0;
                 _autoLockCpt = 120;
                 wallStatus = "Drawer " + e.DrawerId + " scan started";
                 DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InScan;
@@ -3156,16 +3251,29 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void DevicesHandler_FailStartSscan(object sender, DrawerEventArgs e)
         {
-            try
+            wallStatus = "Drawer " + e.DrawerId + " failed scan started";
+            /*try
             {
-                RfidError = true;
-                wallStatus = "Drawer " + e.DrawerId + " failed scan started";
-                if (DevicesHandler.DrawerStatus[e.DrawerId] != DrawerStatusList.Open)
+                if (CptErrorRfid == 0 ) //first error try to relaunch scan
                 {
-                    DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.NotReady;
-                    DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                    CptErrorRfid++;
+                    Thread.Sleep(500);
+                    wallStatus = "Drawer " + e.DrawerId + " failed scan started " + CptErrorRfid;
+                    if (DevicesHandler.Device.IsConnected)
+                         DevicesHandler.StartManualScan(e.DrawerId, !IsInPutItemFastMode);
                 }
-                BrushDrawer[e.DrawerId] = _borderDrawerOpen;
+                else
+                {
+                    RfidError = true;
+                    wallStatus = "Drawer " + e.DrawerId + " failed scan started";
+                    if (DevicesHandler.DrawerStatus[e.DrawerId] != DrawerStatusList.Open)
+                    {
+                        DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.NotReady;
+                        DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+                    }
+                    BrushDrawer[e.DrawerId] = _borderNotReady;
+                }
+               
             }
             catch (Exception error)
             {
@@ -3174,24 +3282,24 @@ namespace SmartDrawerWpfApp.ViewModel
                     ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in FailStartSscan");
                     exp.ShowDialog();
                 }));
-            }
+            }*/
         }
         private void DeviceHandler_ScanCompleted(object sender, DrawerEventArgs e)
-        {
-            wallStatus = "Drawer " + e.DrawerId + " scan completed";           
+        {  
+            wallStatus = "Drawer " + e.DrawerId + " scan completed";
             TimeSpan ts = DateTime.Now - DevicesHandler.LastScanTime;
             LastScanInfo = string.Format("Last scan : {0} min ago", (int)ts.TotalMinutes);
-          
+
             //Store Inventory
             // - Get Tag from Db to synchronize
             try
             {
 
                 Task.Run(() =>
-               {
-                   InventoryHandler.HandleNewScanCompleted(e.DrawerId);                 
+                {
+                    InventoryHandler.HandleNewScanCompleted(e.DrawerId);
 
-               });
+                });
                 DevicesHandler.IsDrawerWaitScan[e.DrawerId] = false;
                 DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
@@ -3208,11 +3316,14 @@ namespace SmartDrawerWpfApp.ViewModel
                     exp.ShowDialog();
                 }));
             }
+            
         }
         private void DeviceHandler_ScanCancelledByHost(object sender, DrawerEventArgs e)
         {
             try
             {
+                if (IsInPutItemFastMode) return;
+
                 wallStatus = "Drawer " + e.DrawerId + " scan cancelled";
                 DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
@@ -3229,25 +3340,51 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void DeviceHandler_TagRead(object sender, DrawerEventArgs e)
         {
-            try
-            {
-                if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
-                    DevicesHandler.DrawerTagQty[e.DrawerId] = DevicesHandler.Device.ReaderData.nbTagScan;
-                else
-                    DevicesHandler.DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerInventoryData[e.DrawerId].nbTagScan;
-
+            if (IsInPutItemFastMode)
+            {      
+                DevicesHandler.DrawerTagQty[e.DrawerId] = DevicesHandler.InitialDataForAccumulate[e.DrawerId].strListTag.Count;
                 DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerTagQty[e.DrawerId].ToString();
                 CountTotalStones();
             }
-            catch (Exception error)
+            else
             {
-                mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                try
                 {
-                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in TagRead");
-                    exp.ShowDialog();
-                }));
+                    if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InScan)
+                        DevicesHandler.DrawerTagQty[e.DrawerId] = DevicesHandler.Device.ReaderData.nbTagScan;
+                    else
+                        DevicesHandler.DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerInventoryData[e.DrawerId].nbTagScan;
+
+                    DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerTagQty[e.DrawerId].ToString();
+                    CountTotalStones();
+                }
+                catch (Exception error)
+                {
+                    mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                    {
+                        ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in TagRead");
+                        exp.ShowDialog();
+                    }));
+                }
             }
         }
+        private void DevicesHandler_ScanAccucompleted(object sender, DrawerEventArgs e)
+        {
+            Thread.Sleep(50);
+            if (FastModeContinuousReading)
+                DevicesHandler.StartManualScan(e.DrawerId, false);
+           
+        }
+        private void DevicesHandler_ScanAccuStarted(object sender, DrawerEventArgs e)
+        {
+            RfidError = false;
+            _autoLockCpt = 120;
+            wallStatus = "Drawer " + e.DrawerId + " scan started";
+            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.InScan;
+            DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
+            BrushDrawer[e.DrawerId] = _borderInScan;
+        }
+
         public async Task DoConnect()
         {
             await Task.Run(() => DevicesHandler.TryInitializeLocalDeviceAsync());
@@ -3419,8 +3556,10 @@ namespace SmartDrawerWpfApp.ViewModel
             DevicesHandler.DeviceConnected += DeviceHandler_DeviceConnected;
             DevicesHandler.DeviceDisconnected += DeviceHandlerOnDeviceDisconnected;
             DevicesHandler.TagRead += DeviceHandler_TagRead;
+            DevicesHandler.ScanAccuStarted += DevicesHandler_ScanAccuStarted;
             DevicesHandler.ScanStarted += DeviceHandler_ScanStarted;
             DevicesHandler.ScanCompleted += DeviceHandler_ScanCompleted;
+            DevicesHandler.ScanAccucompleted += DevicesHandler_ScanAccucompleted;
             DevicesHandler.ScanCancelledByHost += DeviceHandler_ScanCancelledByHost;
             DevicesHandler.FailStartSscan += DevicesHandler_FailStartSscan;
             DevicesHandler.DrawerOpened += DevicesHandler_DrawerOpened;
@@ -3446,7 +3585,12 @@ namespace SmartDrawerWpfApp.ViewModel
             ScanTimer.Tick += new EventHandler(ScanTimer_Tick);
             ScanTimer.Interval = new TimeSpan(0, 0, 5);
             ScanTimer.Start();
+
+            LastDeviceActionTime = DateTime.Now;
         }
+
+     
+
         private void CountTotalStones()
         {
             WallTotalStones = 0;

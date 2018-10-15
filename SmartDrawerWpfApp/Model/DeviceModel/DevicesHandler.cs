@@ -63,6 +63,24 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         private static bool isWallLocked = true;
         public static bool IsWallLocked { get { return isWallLocked; } }
 
+        public static List<string> lstAcumulate = new List<string>();
+        public static ReaderData[] InitialDataForAccumulate  = new ReaderData[NbDrawer + 1];
+        private static bool _IsInAccumulateMode = false;
+        public static bool IsInAccumulateMode
+        {
+            get { return _IsInAccumulateMode; }
+            set {
+                    _IsInAccumulateMode = value;
+                if (_IsInAccumulateMode)
+                    lstAcumulate.Clear();
+                }
+        }
+        private static bool _bNeedUpdateAccumulationInventory = false;
+        public static bool bNeedUpdateAccumulationInventory
+        {
+            get { return _bNeedUpdateAccumulationInventory; }
+            set { _bNeedUpdateAccumulationInventory = value; }
+        }
 
         public static void ResetDEviceEntity()
         {
@@ -182,6 +200,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         /// Local device started a scan
         /// </summary>
         public static event DeviceEventHandler ScanStarted;
+        public static event DeviceEventHandler ScanAccuStarted;
 
         /// <summary>
         /// Local device started a scanNEw Tags read</summary>
@@ -191,6 +210,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         /// Local device completed a scan
         /// </summary>
         public static event DeviceEventHandler ScanCompleted;
+        public static event DeviceEventHandler ScanAccucompleted;
 
         /// <summary>
         /// Current scan has been cancelled
@@ -575,15 +595,31 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             }
             return bInScan;
         }
-        public static void StartManualScan(int drawerId)
+        public static void StartManualScan(int drawerId, bool bUnlockTag = true)
         {
             if ((Device != null) && (Device.IsConnected))
             {
                 Device.StopField();
                 SetDrawerActive(drawerId);
-                Device.RequestScanSelectedAxis(true, true);
+                Device.RequestScanSelectedAxis(true, bUnlockTag);
             }
         }
+
+        public static void UnlockAllTags(int drawerId)
+        {
+            if ((Device != null) && (Device.IsConnected))
+            {
+                Device.UnlockAllTag(drawerId);
+            }
+        }
+        public static void lockAllTags(int drawerId)
+        {
+            if ((Device != null) && (Device.IsConnected))
+            {
+                Device.LockAllTag(drawerId);
+            }
+        }
+
         public static void StopScan(int drawerId)
         {
             if ((Device != null) && (Device.IsConnected))
@@ -782,8 +818,16 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
 
                     break;
                 case rfidReaderArgs.ReaderNotify.RN_ScanStarted:
-                    FireEvent(ScanStarted, args.SerialNumber, _CurrentActiveRfidDrawer);
-                    FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);
+                    if (IsInAccumulateMode)
+                    {
+                        FireEvent(ScanAccuStarted, args.SerialNumber, _CurrentActiveRfidDrawer);
+                       
+                    }
+                    else
+                    {
+                        FireEvent(ScanStarted, args.SerialNumber, _CurrentActiveRfidDrawer);
+                        FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);
+                    }
 
                     break;
                 case rfidReaderArgs.ReaderNotify.RN_ReaderFailToStartScan:
@@ -791,45 +835,77 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                     break;
                 case rfidReaderArgs.ReaderNotify.RN_TagAdded:
 
-                    if (Properties.Settings.Default.bReadDft)
+                    if (IsInAccumulateMode)
                     {
+                        if (!lstAcumulate.Contains(args.Message))                        
+                            lstAcumulate.Add(args.Message);
+
+                        var obj = (from t in Device.ReaderData.ListTagInfo
+                                   where (t.TagId_DEC == args.Message) || (t.TagId_R8_RO == args.Message) || (t.TagId_RW == args.Message)
+                                   select t).FirstOrDefault();
+                        if (obj != null)
+                            InitialDataForAccumulate[_CurrentActiveRfidDrawer].ListTagInfo.Add(obj);
+
+
+                        if (!InitialDataForAccumulate[_CurrentActiveRfidDrawer].strListTag.Contains(args.Message))
+                            InitialDataForAccumulate[_CurrentActiveRfidDrawer].strListTag.Add(args.Message);
                         FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);
                     }
                     else
                     {
-                        if (isValidUidFormat(args.Message))
+                        if (Properties.Settings.Default.bReadDft)
                         {
                             FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);
                         }
-                        else if (Device.ReaderData.strListTag.Contains(args.Message))
+                        else
                         {
-                            Device.ReaderData.strListTag.Remove(args.Message);
-                            Device.ReaderData.nbTagScan = Device.ReaderData.strListTag.Count;
+                            if (isValidUidFormat(args.Message))
+                            {
+                                FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);
+                            }
+                            else if (Device.ReaderData.strListTag.Contains(args.Message))
+                            {
+                                Device.ReaderData.strListTag.Remove(args.Message);
+                                Device.ReaderData.nbTagScan = Device.ReaderData.strListTag.Count;
+                            }
                         }
                     }
 
                     break;
                 case rfidReaderArgs.ReaderNotify.RN_ScanCompleted:
-                    MethodLock.EnterReadLock();
-                    try
-                    {
-                        DrawerInventoryData[_CurrentActiveRfidDrawer] = Device.ReaderData;
-                        DrawerTagQty[_CurrentActiveRfidDrawer] = Device.ReaderData.strListTag.Count;
-                        RemoveTagFromListForDrawer(_CurrentActiveRfidDrawer);
-                     
-                        AddTagListForDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);
-                        UpdateAddedTagToDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);                                          
-                        UpdateremovedTagToDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);
-                        LastScanTime = DateTime.Now;
 
-                        Thread.Sleep(10);
-                    }
-                    finally
+                    if (!IsInAccumulateMode)
                     {
-                        MethodLock.ExitReadLock();
+                        MethodLock.EnterReadLock();
+                        try
+                        {
+                            DrawerInventoryData[_CurrentActiveRfidDrawer] = Device.ReaderData;
+                            DrawerTagQty[_CurrentActiveRfidDrawer] = Device.ReaderData.strListTag.Count;
+                            RemoveTagFromListForDrawer(_CurrentActiveRfidDrawer);
+
+                            AddTagListForDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);
+                            UpdateAddedTagToDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);
+                            UpdateremovedTagToDrawer(_CurrentActiveRfidDrawer, Device.ReaderData.strListTag);
+                            LastScanTime = DateTime.Now;
+
+                            Thread.Sleep(10);
+                        }
+                        finally
+                        {
+                            MethodLock.ExitReadLock();
+                        }
+                        FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);  // Update drawer tag counter;
+                        FireEvent(ScanCompleted, args.SerialNumber, _CurrentActiveRfidDrawer);
+
                     }
-                    FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);  // Update drawer tag counter;
-                    FireEvent(ScanCompleted, args.SerialNumber, _CurrentActiveRfidDrawer);
+                    else
+                    {
+                        FireEvent(TagRead, args.SerialNumber, _CurrentActiveRfidDrawer);  // Update drawer tag counter;
+                        FireEvent(ScanAccucompleted, args.SerialNumber, _CurrentActiveRfidDrawer);
+                    }
+                    
+                    
+                    
                     break;
                 case rfidReaderArgs.ReaderNotify.RN_ScanCancelByHost:
                     FireEvent(ScanCancelledByHost, args.SerialNumber, _CurrentActiveRfidDrawer);
@@ -859,6 +935,32 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
                 return true;
             else
                 return false;
+        }
+
+        public static void ProcessEndInventory()
+        {
+            MethodLock.EnterReadLock();
+            foreach (string uid in lstAcumulate) //added
+            {
+                if (!InitialDataForAccumulate[_CurrentActiveRfidDrawer].strListTag.Contains(uid))
+                    InitialDataForAccumulate[_CurrentActiveRfidDrawer].strListTag.Add(uid);
+            }
+
+            DrawerInventoryData[_CurrentActiveRfidDrawer] = CloneReaderData.CloneObject(InitialDataForAccumulate[_CurrentActiveRfidDrawer]);
+            DrawerTagQty[_CurrentActiveRfidDrawer] = DrawerInventoryData[_CurrentActiveRfidDrawer].strListTag.Count;
+            RemoveTagFromListForDrawer(_CurrentActiveRfidDrawer);
+
+            AddTagListForDrawer(_CurrentActiveRfidDrawer, DrawerInventoryData[_CurrentActiveRfidDrawer].strListTag);
+            UpdateAddedTagToDrawer(_CurrentActiveRfidDrawer, DrawerInventoryData[_CurrentActiveRfidDrawer].strListTag);
+            UpdateremovedTagToDrawer(_CurrentActiveRfidDrawer, DrawerInventoryData[_CurrentActiveRfidDrawer].strListTag);
+            LastScanTime = DateTime.Now;
+
+            Device.ReaderData = DrawerInventoryData[_CurrentActiveRfidDrawer];
+
+            bNeedUpdateAccumulationInventory = false;
+            Thread.Sleep(10);
+            MethodLock.ExitReadLock();
+          
         }
 
     }
