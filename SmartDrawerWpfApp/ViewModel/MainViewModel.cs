@@ -67,6 +67,7 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Variables
         private MainWindow2 mainview0;
+        public PleaseWaitWindow cob = null;
 
         //private ProgressDialogController myConTroller = null;
         private readonly TouchKeyboardProvider _touchKeyboardProvider = new TouchKeyboardProvider();
@@ -559,11 +560,8 @@ namespace SmartDrawerWpfApp.ViewModel
                     if (!IsFlyoutCassetteInfoOpen)
                         cancelLighting();
                     SelectionSelected = null;
-                    SelectedCassette = null;
-                    if (bNeedUpdateCriteria)
-                    {
-                        bNeedUpdateCriteria = false;
-                    }
+                    SelectedCassette = null;                   
+                    bNeedUpdateCriteriaAfterScan = true;
                 }
                 else
                 {
@@ -698,8 +696,9 @@ namespace SmartDrawerWpfApp.ViewModel
             get {  return _IsInPutItemFastMode; }
             set {
                 _IsInPutItemFastMode = value;
+                LastDeviceActionTime = DateTime.Now;
                 if (_IsInPutItemFastMode)
-                {
+                {                  
                     if (IsWallInScan())                   
                         StopWallScan();
                     if (!IsWallReady())
@@ -949,6 +948,42 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
 
 
+        #region Info window
+        private void CreateProcessWindow()
+        {
+
+            if (cob != null)
+                cob.Close();
+            cob = new PleaseWaitWindow();   
+        }
+        private void ShowProcessWindow(string title)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (cob != null)
+                {
+                    cob.setText(title);
+                    if (!cob.IsVisible)
+                        cob.Show();
+                }
+
+                cob.Activate();
+                cob.Topmost = true;
+                cob.Topmost = false;
+                cob.Focus();
+            });
+        }
+        private void HideProcessWindow()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                if (cob != null)
+                    cob.Hide();
+            });
+        }
+        #endregion
+
+
         #region Datagrid
 
         private ObservableCollection<BaseObject> _data = new ObservableCollection<BaseObject>();
@@ -1002,13 +1037,14 @@ namespace SmartDrawerWpfApp.ViewModel
         public async void getCriteria()
         {
             //var myConTroller = await mainview0.ShowProgressAsync("Please wait", "Retrieving information from Database",true);
-            WaitHandler wh = null;
+           // WaitHandler wh = null;
             try
             {
 
-                wh = new WaitHandler();
+                /*wh = new WaitHandler();
                 wh.Msg = "Retrieving information from Database";
-                wh.Start();
+                wh.Start();*/
+                ShowProcessWindow("Retrieving information from Database");
 
                 //myConTroller.SetIndeterminate();
                 await Task.Run(() =>
@@ -1054,9 +1090,7 @@ namespace SmartDrawerWpfApp.ViewModel
                            SourceTable = PopulateDataGrid(Data);
                        else
                            SourceTable = null;
-
-                       if (_IsFlyoutCassettePositionOpen)
-                           bNeedUpdateCriteria = true;
+                     
                    }
 
                });
@@ -1071,17 +1105,19 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 catch
                 { }*/
-                wh.Stop();
+                // wh.Stop();
+                HideProcessWindow();
             }
             catch (Exception error)
             {
                 try
                 {
-                    if (wh != null)
-                    {
-                        wh.Stop();                    
+                    /* if (wh != null)
+                     {
+                         wh.Stop();                    
 
-                    }
+                     }*/
+                    HideProcessWindow();
                 }
                 catch
                 { }
@@ -1095,10 +1131,11 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 try
                 {
-                    if (wh != null)
-                    {
-                        wh.Stop();
-                    }
+                    /*  if (wh != null)
+                      {
+                          wh.Stop();
+                      }*/
+                    HideProcessWindow();
                 }
                 catch
                 { }
@@ -1309,7 +1346,8 @@ namespace SmartDrawerWpfApp.ViewModel
         public void refreshSelection()
         {
             //Clear pull info
-          
+            LastDeviceActionTime = DateTime.Now;
+
             SelectionSelected = null;
             mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
             Thread.Sleep(100);
@@ -1356,13 +1394,14 @@ namespace SmartDrawerWpfApp.ViewModel
 
             //var myConTroller = await mainview0.ShowProgressAsync("Please wait","Get Selection From server",true);          
             //myConTroller.SetIndeterminate();
-            WaitHandler wh = null;
+           // WaitHandler wh = null;
             try
             {
 
-                wh = new WaitHandler();
-                wh.Msg = "Get Selection From server";
-                wh.Start();
+                /* wh = new WaitHandler();
+                 wh.Msg = "Get Selection From server";
+                 wh.Start();*/
+                ShowProcessWindow("Get Selection From server");
 
                 Selection.Clear();
                 getCriteria();
@@ -1430,7 +1469,8 @@ namespace SmartDrawerWpfApp.ViewModel
                             ctx.Database.Connection.Close();
                             ctx.Dispose();
                         }
-                        wh.Stop();
+                        //wh.Stop();
+                        HideProcessWindow();
                         LogToFile.LogMessageToFile("------- Stop Getting Selection --------");                       
                     }
                 }
@@ -1439,10 +1479,11 @@ namespace SmartDrawerWpfApp.ViewModel
                     mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
                     try
                     {
-                        if (wh != null)
-                        {
-                            wh.Stop();
-                        }
+                        /*  if (wh != null)
+                          {
+                              wh.Stop();
+                          }*/
+                        HideProcessWindow();
                     }
                     catch
                     { }
@@ -1456,10 +1497,11 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 try
                 {
-                    if (wh != null)
-                    {
-                        wh.Stop();
-                    }
+                    /* if (wh != null)
+                     {
+                         wh.Stop();
+                     }*/
+                    HideProcessWindow();
                 }
                 catch
                 { }
@@ -1481,7 +1523,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     IsFlyoutCassettePositionOpen = false;
                     return;
-                }
+                }              
+
+
                 CassettesSelection tmpCassette = new CassettesSelection();
                 _SelectedBaseObjects = new List<BaseObject>();
                 tmpCassette.ListControlNumber = new List<string>();
@@ -1565,22 +1609,21 @@ namespace SmartDrawerWpfApp.ViewModel
                     }
                 }
 
-                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count == 0 ? "-" : tmpCassette.TagToLight[1].Count.ToString();
-                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count == 0 ? "-" : tmpCassette.TagToLight[2].Count.ToString(); 
-                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count == 0 ? "-" : tmpCassette.TagToLight[3].Count.ToString(); 
-                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count == 0 ? "-" : tmpCassette.TagToLight[4].Count.ToString(); 
-                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count == 0 ? "-" : tmpCassette.TagToLight[5].Count.ToString(); 
-                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count == 0 ? "-" : tmpCassette.TagToLight[6].Count.ToString(); 
-                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count == 0 ? "-" : tmpCassette.TagToLight[7].Count.ToString();
+                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count == 0 ? "0" : tmpCassette.TagToLight[1].Count.ToString();
+                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count == 0 ? "0" : tmpCassette.TagToLight[2].Count.ToString();
+                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count == 0 ? "0" : tmpCassette.TagToLight[3].Count.ToString();
+                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count == 0 ? "0" : tmpCassette.TagToLight[4].Count.ToString();
+                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count == 0 ? "0" : tmpCassette.TagToLight[5].Count.ToString();
+                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count == 0 ? "0" : tmpCassette.TagToLight[6].Count.ToString();
+                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count == 0 ? "0" : tmpCassette.TagToLight[7].Count.ToString();
 
-                BrushDrawer[1] = tmpCassette.TagToLight[1].Count == 0 ? BrushDrawer[1] : _borderReadyToPull;
-                BrushDrawer[2] = tmpCassette.TagToLight[2].Count == 0 ? BrushDrawer[2] : _borderReadyToPull;
-                BrushDrawer[3] = tmpCassette.TagToLight[3].Count == 0 ? BrushDrawer[3] : _borderReadyToPull;
-                BrushDrawer[4] = tmpCassette.TagToLight[4].Count == 0 ? BrushDrawer[4] : _borderReadyToPull;
-                BrushDrawer[5] = tmpCassette.TagToLight[5].Count == 0 ? BrushDrawer[5] : _borderReadyToPull;
-                BrushDrawer[6] = tmpCassette.TagToLight[6].Count == 0 ? BrushDrawer[6] : _borderReadyToPull;
-                BrushDrawer[7] = tmpCassette.TagToLight[7].Count == 0 ? BrushDrawer[7] : _borderReadyToPull;
-              
+                BrushDrawer[1] = tmpCassette.TagToLight[1].Count == 0 ? _borderReady : _borderReadyToPull;
+                BrushDrawer[2] = tmpCassette.TagToLight[2].Count == 0 ? _borderReady : _borderReadyToPull;
+                BrushDrawer[3] = tmpCassette.TagToLight[3].Count == 0 ? _borderReady : _borderReadyToPull;
+                BrushDrawer[4] = tmpCassette.TagToLight[4].Count == 0 ? _borderReady : _borderReadyToPull;
+                BrushDrawer[5] = tmpCassette.TagToLight[5].Count == 0 ? _borderReady : _borderReadyToPull;
+                BrushDrawer[6] = tmpCassette.TagToLight[6].Count == 0 ? _borderReady : _borderReadyToPull;
+                BrushDrawer[7] = tmpCassette.TagToLight[7].Count == 0 ? _borderReady : _borderReadyToPull;
 
                 tmpCassette.CassetteSelectionTotalNumber = tmpCassette.ListControlNumber.Count;
 
@@ -2123,7 +2166,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 WallSerial = Properties.Settings.Default.WallSerial;
                 WallName = Properties.Settings.Default.WallName;                    
                 InitValue();
-                 
+                CreateProcessWindow();
 
                  ctx.Database.Connection.Close();
                  ctx.Dispose();
@@ -2207,7 +2250,7 @@ namespace SmartDrawerWpfApp.ViewModel
         private volatile bool InLightOrRecheckprocess = false;
         private async void ScanTimer_Tick(object sender, EventArgs e)
         {
-            WaitHandler wh = null;
+           // WaitHandler wh = null;
             //ProgressDialogController myConTroller = null;
             try
                 {
@@ -2275,11 +2318,12 @@ namespace SmartDrawerWpfApp.ViewModel
                     else
                     {
 
-                        wh = new WaitHandler();
-                        wh.Msg = "Please wait end of recheck before opening another drawer";
-                        wh.Start();
+                        //wh = new WaitHandler();
+                        // wh.Msg = "Please wait end of recheck before opening another drawer";
+                        //wh.Start();
                         //myConTroller = await mainview0.ShowProgressAsync("Please wait end of recheck before opening another drawer", string.Format("Rechecking {0} tags in drawer {1}", SelectedCassette.TagToLight[_bckrecheckLightDrawer].Count, _bckrecheckLightDrawer), true);
-                       //myConTroller.SetIndeterminate();                       
+                        //myConTroller.SetIndeterminate();                       
+                        ShowProcessWindow("Please wait end of recheck before opening another drawer");
                        List<string> TagToLight = new List<string>(SelectedCassette.TagToLight[_bckrecheckLightDrawer]);
 
                         await Task.Run(() =>
@@ -2392,7 +2436,8 @@ namespace SmartDrawerWpfApp.ViewModel
                         mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
                         try
                         {
-                            wh.Stop();
+                            // wh.Stop();
+                            HideProcessWindow();
                         }
                         catch
                         { }
@@ -2413,9 +2458,10 @@ namespace SmartDrawerWpfApp.ViewModel
 
                             // myConTroller = await mainview0.ShowProgressAsync("Please wait - Not closed drawer until light process finish", string.Format("Lighting {0} tags in drawer {1}", SelectedCassette.TagToLight[_lightDrawer].Count, _lightDrawer), true);
                             //  myConTroller.SetIndeterminate();
-                            wh = new WaitHandler();
-                            wh.Msg = " Not closed drawer until light process finished";
-                            wh.Start();
+                            /* wh = new WaitHandler();
+                             wh.Msg = " Not closed drawer until light process finished";
+                             wh.Start();*/
+                            ShowProcessWindow("Not closed drawer until light process finished");
                             await  Task.Run(() =>
                             {
                                 InLightOrRecheckprocess = true;
@@ -2453,7 +2499,8 @@ namespace SmartDrawerWpfApp.ViewModel
                              }
                              catch
                              { }*/
-                            wh.Stop();
+                            //wh.Stop();
+                            HideProcessWindow();
                             }
                             else if (bDrawerToRefreshLight[bckDrawer] == true)
                             {
@@ -2482,34 +2529,12 @@ namespace SmartDrawerWpfApp.ViewModel
                         DevicesHandler.LightAll(bckDrawer);
                         DevicesHandler.Device.LEdOnAll(1, 0, false);
                     }
-                    #endregion
-                    #region scan
-                    else if (!IsInPutItemFastMode  && IsWallReady())
-                    //else if ((!IsFlyoutCassettePositionOpen) && (IsWallReady()))
+                #endregion
+                #region Update selection
+                else if (bNeedUpdateCriteriaAfterScan)
                     {
-                        double elaspedTimeLastAction = (DateTime.Now - LastDeviceActionTime).TotalSeconds;
-                        if (elaspedTimeLastAction > 15.0)
-                        {
-                            for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
-                            {
-                                if (DevicesHandler.IsDrawerWaitScan[loop])
-                                {
-                                    if ((DevicesHandler.Device != null) && (DevicesHandler.Device.IsConnected) && (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready))
-                                    {
-                                        DevicesHandler.StartManualScan(loop);
-
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    #endregion
-
-                    if (bNeedUpdateCriteriaAfterScan)
-                    {
-                        //Wait end of light process or recheck                       
-                        if ((!IsWaitingForScan()) && (!InLightOrRecheckprocess) && (_recheckLightDrawer == -1) && (_lightDrawer == -1))
+                        //Wait end of light process or recheck  
+                        if ((SelectionSelected == null) &&(!IsWallInScan()) && (!InLightOrRecheckprocess) && (_recheckLightDrawer == -1) && (_lightDrawer == -1))
                         {
                             getSelection();
                             bNeedUpdateCriteriaAfterScan = false;
@@ -2519,7 +2544,38 @@ namespace SmartDrawerWpfApp.ViewModel
                             getSelection();
                             bNeedUpdateCriteriaAfterScan = false;
                         }
-                    }                
+                    }
+                #endregion
+                #region scan
+                else if (!IsInPutItemFastMode  && IsWallReady())
+                //else if ((!IsFlyoutCassettePositionOpen) && (IsWallReady()))
+                {
+                    //double elaspedTimeLastAction = (DateTime.Now - LastDeviceActionTime).TotalSeconds;
+                    //if (elaspedTimeLastAction > 15.0)
+                    //{
+                        for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
+                        {
+                            if (DevicesHandler.IsDrawerWaitScan[loop])
+                            {
+                                if ((DevicesHandler.Device != null) && (DevicesHandler.Device.IsConnected) && (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready))
+                                {
+                                    DevicesHandler.StartManualScan(loop);
+                                    Thread.Sleep(500);                                   
+                                break;
+                                }
+                            }
+                        }
+                    //}
+                    if (bNeedUpdateCriteria)
+                    {
+                        if (!IsWaitingForScan())
+                        {
+                            bNeedUpdateCriteria = false;
+                            bNeedUpdateCriteriaAfterScan = true;
+                        }
+                    }
+                }
+                #endregion                                  
             }
             catch (IndexOutOfRangeException err)
             {
@@ -2534,10 +2590,11 @@ namespace SmartDrawerWpfApp.ViewModel
                  { }*/
                 try
                 {
-                    if (wh != null)
-                    {
-                        wh.Stop();
-                    }
+                    /* if (wh != null)
+                     {
+                         wh.Stop();
+                     }*/
+                    HideProcessWindow();
                 }
                 catch
                 { }
@@ -2560,10 +2617,11 @@ namespace SmartDrawerWpfApp.ViewModel
                 { }*/
                 try
                 {
-                    if (wh != null)
-                    {
-                        wh.Stop();
-                    }
+                    /* if (wh != null)
+                     {
+                         wh.Stop();
+                     }*/
+                    HideProcessWindow();
                 }
                 catch
                 { }
@@ -2586,10 +2644,11 @@ namespace SmartDrawerWpfApp.ViewModel
                 { }*/
                 try
                 {
-                    if (wh != null)
+                    /*if (wh != null)
                     {
                         wh.Stop();
-                    }
+                    }*/
+                    HideProcessWindow();
                 }
                 catch
                 { }
@@ -2850,10 +2909,6 @@ namespace SmartDrawerWpfApp.ViewModel
                     DevicesHandler.ProcessEndInventory();                                    
                     InventoryHandler.HandleNewScanCompleted(e.DrawerId);                             
                     PendingFastModeOperation = false;
-                    bNeedUpdateCriteriaAfterScan = true;
-                   
-                    
-
 
                     if (string.IsNullOrEmpty(tagOnBadDrawer.TagId))
                         IsFlyoutCassetteInfoOpen = false;
@@ -2876,6 +2931,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                     BrushDrawer[e.DrawerId] = _borderReady;
                     CountTotalStones();
+                    bNeedUpdateCriteria = true;
 
 
                 }
@@ -3009,7 +3065,7 @@ namespace SmartDrawerWpfApp.ViewModel
         }    
         private async void DevicesHandler_DrawerOpened(object sender, DrawerEventArgs e)
         {
-
+            LastDeviceActionTime = DateTime.Now;
             while (PendingFastModeOperation == true)
                 Thread.Sleep(1000);
 
@@ -3305,8 +3361,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                 BrushDrawer[e.DrawerId] = _borderReady;
                 CountTotalStones();
-                bNeedUpdateCriteriaAfterScan = true;
-
+                bNeedUpdateCriteria = true;
             }
             catch (Exception error)
             {
@@ -3587,9 +3642,7 @@ namespace SmartDrawerWpfApp.ViewModel
             ScanTimer.Start();
 
             LastDeviceActionTime = DateTime.Now;
-        }
-
-     
+        }  
 
         private void CountTotalStones()
         {

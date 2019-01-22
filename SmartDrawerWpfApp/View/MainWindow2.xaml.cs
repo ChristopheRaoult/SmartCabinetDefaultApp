@@ -189,5 +189,12 @@ namespace SmartDrawerWpfApp.View
         {
             GeneralTabControl.SelectedIndex = 0;
         }
+
+        private void MetroWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+
+            LogToFile.LogMessageToFile("------- Close Application  --------");
+            Application.Current.Shutdown();
+        }
     }
 }

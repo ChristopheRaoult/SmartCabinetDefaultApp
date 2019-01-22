@@ -13,7 +13,7 @@
         MinHeight="980" MinWidth="1600" 
         d:DesignWidth="1920" d:DesignHeight="1080"                      
         WindowStartupLocation="CenterScreen" WindowState="Maximized" IgnoreTaskbarOnMaximize="True" 
-        PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp">
+        PreviewKeyDown="MetroWindow_PreviewKeyDown" PreviewKeyUp="MetroWindow_PreviewKeyUp" Closing="MetroWindow_Closing">
     <Controls:MetroWindow.Resources>
         <Image x:Key="ButtonDelete" Source="/Resources/icon-delete.png" />
         <Image x:Key="ButtonLight" Source="/Resources/light_on.png" />
@@ -321,9 +321,9 @@
                             <TextBlock Text="Put Fast Mode" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Style="{StaticResource itemTextBlock}"/>
                         </-->
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,50,0">
-                            <TextBlock Text="Put Fast Mode" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Style="{StaticResource itemTextBlock}"/>
-                            <ToggleButton Width="50" Height="50" Margin="10, 0, 0, 0"  IsChecked="{Binding IsInPutItemFastMode , Mode=TwoWay}"   Style="{DynamicResource MetroCircleToggleButtonStyle}">
-                                <Rectangle Width="30"  Height="30" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToggleButton}}}">
+                            <TextBlock Text="Adding Item Fast Mode" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="15" Style="{StaticResource itemTextBlock}"/>
+                            <ToggleButton Width="70" Height="70" Margin="10, 0, 0, 0"  IsChecked="{Binding IsInPutItemFastMode , Mode=TwoWay}"   Style="{DynamicResource MetroCircleToggleButtonStyle}">
+                                <Rectangle Width="40"  Height="40" Fill="{Binding Path=Foreground, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ToggleButton}}}">
                                     <Rectangle.OpacityMask>
                                         <VisualBrush Stretch="Fill" Visual="{DynamicResource appbar_man_suitcase_run}"/>
                                     </Rectangle.OpacityMask>

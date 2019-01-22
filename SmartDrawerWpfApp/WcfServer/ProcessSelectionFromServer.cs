@@ -130,7 +130,10 @@ namespace SmartDrawerWpfApp.WcfServer
 
                         var client2 = new RestClient(urlServer);
                         client2.Authenticator = new HttpBasicAuthenticator(privateApiLogin, privateApiMdp);
+                        LogToFile.LogMessageToFile("------- Start Update selection --------");                       
                         var response2 = await client2.ExecuteTaskAsync(request2);
+                        LogToFile.LogMessageToFile(response2.Content);
+                        LogToFile.LogMessageToFile("------- End Updateselection --------");
                         return response2.IsSuccessful;
 
                     }
