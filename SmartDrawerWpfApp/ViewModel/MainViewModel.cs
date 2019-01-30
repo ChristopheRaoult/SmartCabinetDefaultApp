@@ -3383,6 +3383,11 @@ namespace SmartDrawerWpfApp.ViewModel
                 DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                 BrushDrawer[e.DrawerId] = _borderReady;
+
+                DevicesHandler.DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerInventoryData[e.DrawerId].strListTag.Count;
+                DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerTagQty[e.DrawerId].ToString("000");
+                CountTotalStones();
+
             }
             catch (Exception error)
             {
@@ -3496,9 +3501,13 @@ namespace SmartDrawerWpfApp.ViewModel
                     DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
                     DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
                     BrushDrawer[loop] = _borderReady;
-                    DrawerTagQty[loop] = DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerPreviousDrawer).Count.ToString();
+                    //DrawerTagQty[loop] = DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerPreviousDrawer).Count.ToString();
+                    DevicesHandler.DrawerTagQty[loop] = DevicesHandler.DrawerInventoryData[loop].strListTag.Count;
+                    DrawerTagQty[loop] = DevicesHandler.DrawerTagQty[loop].ToString("000");
+
                 }
             }
+            CountTotalStones();
         }
         private void cancelLighting(bool bUpdateTreeview = true)
         {
