@@ -1361,7 +1361,6 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
                 {
-
                     if (DevicesHandler.IsDrawerWaitScan[loop])
                     {
                         DevicesHandler.DrawerStatus[loop] = DrawerStatusList.ScanPending;
@@ -2355,8 +2354,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                     DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
                                     if (nbToFind == TagToLight.Count)
                                    {
-                                       DevicesHandler.StopLighting(_bckrecheckLightDrawer);
-
+                                        DevicesHandler.StopLighting(_bckrecheckLightDrawer);
                                         if (DevicesHandler.IsDrawerWaitScan[_recheckLightDrawer])
                                         {
                                             DevicesHandler.DrawerStatus[_recheckLightDrawer] = DrawerStatusList.ScanPending;
