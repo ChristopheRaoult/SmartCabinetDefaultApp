@@ -122,7 +122,7 @@
                     </Style.Triggers>
                 </Style>
             </StackPanel.Style>
-            <Button Width="150"  Height="44" Margin="0,25,0,0" VerticalAlignment="Center" Command="{Binding ResetDeviceCommand}" Content="Reset System" Style="{StaticResource DefaultButton3}"  />
+            <Button Width="150"  Height="44" Margin="0,25,0,0" VerticalAlignment="Center" Command="{Binding ResetDeviceCommand}" Content="Reset System" Style="{StaticResource DefaultButton3}"   />
         </StackPanel>
         <!-- RIGHT PANEL DRAWER-->
         <Grid Grid.Row="2" Grid.Column="2" Background="#F8F8F8" >

@@ -16,5 +16,6 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         public static string InLight { get { return "Lighting"; } }
         public static string InConnection { get { return "In Connection"; } }
         public static string Unknown { get { return "Unknown"; } }
+        public static string ScanPending { get { return "Scan Pending"; } }
     }
 }

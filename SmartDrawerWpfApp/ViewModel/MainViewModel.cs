@@ -64,6 +64,8 @@ namespace SmartDrawerWpfApp.ViewModel
         Brush _borderReadyToPull = new SolidColorBrush(Color.FromRgb(0x33, 0xBC, 0xBA));
         Brush _borderWhite = Brushes.WhiteSmoke;
         Brush _borderLight = Brushes.Brown;
+        Brush _borderScanPending = Brushes.Cyan;
+
         #endregion
         #region Variables
         private MainWindow2 mainview0;
@@ -1360,9 +1362,17 @@ namespace SmartDrawerWpfApp.ViewModel
                 for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
                 {
 
-                    DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
+                    if (DevicesHandler.IsDrawerWaitScan[loop])
+                    {
+                        DevicesHandler.DrawerStatus[loop] = DrawerStatusList.ScanPending;
+                        BrushDrawer[loop] = _borderScanPending;
+                    }
+                    else
+                    {
+                        DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
+                        BrushDrawer[loop] = _borderReady;
+                    }
                     DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
-                    BrushDrawer[loop] = _borderReady;
                 }
             }
             IsInPutItemFastMode = false;
@@ -2341,13 +2351,24 @@ namespace SmartDrawerWpfApp.ViewModel
                                    DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
                                    BrushDrawer[_bckrecheckLightDrawer] = _borderLight;
                                    LightSelectionDrawer(TagToLight, _bckrecheckLightDrawer);
-                                   if (nbToFind == TagToLight.Count)
+
+                                    DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
+                                    if (nbToFind == TagToLight.Count)
                                    {
                                        DevicesHandler.StopLighting(_bckrecheckLightDrawer);
-                                       DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.Ready;
-                                       DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
-                                       BrushDrawer[_bckrecheckLightDrawer] = _borderReady;
-                                   }
+
+                                        if (DevicesHandler.IsDrawerWaitScan[_recheckLightDrawer])
+                                        {
+                                            DevicesHandler.DrawerStatus[_recheckLightDrawer] = DrawerStatusList.ScanPending;
+                                            BrushDrawer[_recheckLightDrawer] = _borderScanPending;
+                                        }
+                                        else
+                                        {
+                                            DevicesHandler.DrawerStatus[_recheckLightDrawer] = DrawerStatusList.Ready;
+                                            BrushDrawer[_recheckLightDrawer] = _borderReady;
+                                        }
+                                        DrawerStatus[_recheckLightDrawer] = DevicesHandler.DrawerStatus[_recheckLightDrawer];
+                                    }
                                    else
                                    {
                                        DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.InLight;
@@ -2355,7 +2376,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                        BrushDrawer[_bckrecheckLightDrawer] = _borderReadyToPull;
                                    }
 
-                                   DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
+                                  
                                    int nbTag = TagToLight.Count;
                                    TotalCassettesPulled += nbTag;
                                        //update remain tag to light
@@ -2557,7 +2578,7 @@ namespace SmartDrawerWpfApp.ViewModel
                         {
                             if (DevicesHandler.IsDrawerWaitScan[loop])
                             {
-                                if ((DevicesHandler.Device != null) && (DevicesHandler.Device.IsConnected) && (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready))
+                                if ((DevicesHandler.Device != null) && (DevicesHandler.Device.IsConnected) && ((DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready) || (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.ScanPending)))
                                 {
                                     DevicesHandler.StartManualScan(loop);
                                     Thread.Sleep(500);                                   
@@ -2817,9 +2838,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
                 for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
                 {
-                    DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
-                    DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
-                    BrushDrawer[loop] = _borderReady;
+                   
                     string serialDrawer = e.Serial + "_" + loop;
 
                     SmartDrawerDatabase.DAL.Device _deviceEntity = null;
@@ -2856,6 +2875,9 @@ namespace SmartDrawerWpfApp.ViewModel
                                 DeviceHandler_TagRead(this, newArg);
                                 // DeviceHandler_ScanCompleted(this, newArg);
                                 DevicesHandler.IsDrawerWaitScan[loop] = true;
+                                DevicesHandler.DrawerStatus[loop] = DrawerStatusList.ScanPending;
+                                DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
+                                BrushDrawer[loop] = _borderScanPending;
                             }
                         }
                     }
@@ -2927,9 +2949,17 @@ namespace SmartDrawerWpfApp.ViewModel
                     wallStatus = "Drawer " + e.DrawerId + " closed";
 
                     bDrawerToRefreshLight[e.DrawerId] = false;
-                    DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                    if (DevicesHandler.IsDrawerWaitScan[e.DrawerId])
+                    {
+                        DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.ScanPending;
+                        BrushDrawer[e.DrawerId] = _borderScanPending;
+                    }
+                    else
+                    {
+                        DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                        BrushDrawer[e.DrawerId] = _borderReady;
+                    }
                     DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                    BrushDrawer[e.DrawerId] = _borderReady;
                     CountTotalStones();
                     bNeedUpdateCriteria = true;
 
@@ -3004,24 +3034,48 @@ namespace SmartDrawerWpfApp.ViewModel
                             _recheckLightDrawer = e.DrawerId;
 
                             wallStatus = "Recheck stones in drawer " + e.DrawerId;
-                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                            if (DevicesHandler.IsDrawerWaitScan[e.DrawerId])
+                            {
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.ScanPending;
+                                BrushDrawer[e.DrawerId] = _borderScanPending;
+                            }
+                            else
+                            {
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                                BrushDrawer[e.DrawerId] = _borderReady;
+                            }
                             DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                            BrushDrawer[e.DrawerId] = _borderReady;
                         }
                         else
                         {
-                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                            if (DevicesHandler.IsDrawerWaitScan[e.DrawerId])
+                            {
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.ScanPending;
+                                BrushDrawer[e.DrawerId] = _borderScanPending;
+                            }
+                            else
+                            {
+                                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                                BrushDrawer[e.DrawerId] = _borderReady;
+                            }
                             DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                            BrushDrawer[e.DrawerId] = _borderReady;
                         }
                     }
                     else
                     {
                         if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.InLight)
                             DevicesHandler.StopLighting(e.DrawerId);
-                        DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                        if (DevicesHandler.IsDrawerWaitScan[e.DrawerId])
+                        {
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.ScanPending;
+                            BrushDrawer[e.DrawerId] = _borderScanPending;
+                        }
+                        else
+                        {
+                            DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                            BrushDrawer[e.DrawerId] = _borderReady;
+                        }
                         DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                        BrushDrawer[e.DrawerId] = _borderReady;
 
                         if (!string.IsNullOrEmpty(tagOnBadDrawer.TagId))
                         {
@@ -3040,6 +3094,9 @@ namespace SmartDrawerWpfApp.ViewModel
                     if (_recheckLightDrawer == -1)
                     {
                         DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
+                        DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.ScanPending;
+                        BrushDrawer[e.DrawerId] = _borderScanPending;                      
+                        DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                     }
                 }
 
@@ -3237,7 +3294,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 bDrawerToLight[e.DrawerId] = true;
                                 _lightDrawer = e.DrawerId;
                             }
-                            else if (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.Ready)
+                            else if ((DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.Ready) || (DevicesHandler.DrawerStatus[e.DrawerId] == DrawerStatusList.ScanPending))
                             {
                                 DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Open;
                                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
@@ -3380,9 +3437,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 if (IsInPutItemFastMode) return;
 
                 wallStatus = "Drawer " + e.DrawerId + " scan cancelled";
-                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.Ready;
+                DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.ScanPending;
                 DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
-                BrushDrawer[e.DrawerId] = _borderReady;
+                BrushDrawer[e.DrawerId] = _borderScanPending;
 
                 DevicesHandler.DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerInventoryData[e.DrawerId].strListTag.Count;
                 DrawerTagQty[e.DrawerId] = DevicesHandler.DrawerTagQty[e.DrawerId].ToString("000");
@@ -3462,13 +3519,14 @@ namespace SmartDrawerWpfApp.ViewModel
         private bool IsWallReady()
         {
             if (_InLightProcess) return false;
-            bool bRet = true;
+            int cptDrawerReady = 0;
+
             for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
             {
-                if (DevicesHandler.DrawerStatus[loop] != DrawerStatusList.Ready)
-                    bRet = false;
+                if ((DevicesHandler.DrawerStatus[loop] == DrawerStatusList.Ready) || (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.ScanPending))
+                    cptDrawerReady++;
             }
-            return bRet;
+            return cptDrawerReady == DevicesHandler.NbDrawer ? true : false;
         }
         private bool IsWaitingForScan()
         {
@@ -3498,9 +3556,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     DevicesHandler.StopScan(loop);
                     DevicesHandler.IsDrawerWaitScan[loop] = true;
-                    DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
+                    DevicesHandler.DrawerStatus[loop] = DrawerStatusList.ScanPending;
                     DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
-                    BrushDrawer[loop] = _borderReady;
+                    BrushDrawer[loop] = _borderScanPending;
                     //DrawerTagQty[loop] = DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerPreviousDrawer).Count.ToString();
                     DevicesHandler.DrawerTagQty[loop] = DevicesHandler.DrawerInventoryData[loop].strListTag.Count;
                     DrawerTagQty[loop] = DevicesHandler.DrawerTagQty[loop].ToString("000");
@@ -3537,9 +3595,17 @@ namespace SmartDrawerWpfApp.ViewModel
                 if (DevicesHandler.DrawerStatus[loop] == DrawerStatusList.InLight)
                 {
                     DevicesHandler.StopLighting(loop);
-                    DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
+                    if (DevicesHandler.IsDrawerWaitScan[loop])
+                    {
+                        DevicesHandler.DrawerStatus[loop] = DrawerStatusList.ScanPending;
+                        BrushDrawer[loop] = _borderScanPending;
+                    }
+                    else
+                    {
+                        DevicesHandler.DrawerStatus[loop] = DrawerStatusList.Ready;
+                        BrushDrawer[loop] = _borderReady;
+                    }
                     DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
-                    BrushDrawer[loop] = _borderReady;
                 }
                 if (_lastDrawerOpen == loop)
                 {
