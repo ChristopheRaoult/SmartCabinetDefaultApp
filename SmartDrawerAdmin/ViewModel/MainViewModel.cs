@@ -383,7 +383,7 @@ namespace SmartDrawerAdmin.ViewModel
                     {
                         if (!string.IsNullOrWhiteSpace(EditedUser.Password))
                         {
-                            ctx.GrantedUsers.Add(new GrantedUser()
+                            var original = ctx.GrantedUsers.Add(new GrantedUser()
                             {
                                 Login = EditedUser.Login,
                                 Password = PasswordHashing.Sha256Of(EditedUser.Password),
@@ -392,19 +392,21 @@ namespace SmartDrawerAdmin.ViewModel
                                 BadgeNumber = EditedUser.BadgeId,
                                 UserRankId = 3,
                             });
+
+
                         }
                         else
                         {
-                            ctx.GrantedUsers.Add(new GrantedUser()
+                            var original = ctx.GrantedUsers.Add(new GrantedUser()
                             {
-                                Login = EditedUser.Login,                               
+                                Login = EditedUser.Login,
                                 FirstName = EditedUser.FirstName,
                                 LastName = EditedUser.LastName,
                                 BadgeNumber = EditedUser.BadgeId,
                                 UserRankId = 3,
                             });
+
                         }
-                        ctx.SaveChanges();
                     }
                 }
                 ctx.Database.Connection.Close();

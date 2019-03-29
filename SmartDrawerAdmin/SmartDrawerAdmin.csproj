@@ -58,10 +58,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestCertificateThumbprint>52E8A0C4C7F12A01441575F83C7E11F9A6E5324E</ManifestCertificateThumbprint>
+    <ManifestCertificateThumbprint>5D42B794EE7447959973C198C70486CD4FF4B299</ManifestCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup>
-    <ManifestKeyFile>SmartDrawerAdmin_TemporaryKey.pfx</ManifestKeyFile>
+    <ManifestKeyFile>SmartDrawerAdmin_1_TemporaryKey.pfx</ManifestKeyFile>
   </PropertyGroup>
   <PropertyGroup>
     <GenerateManifests>true</GenerateManifests>
@@ -218,6 +218,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <None Include="SmartDrawerAdmin_1_TemporaryKey.pfx" />
     <None Include="SmartDrawerAdmin_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>

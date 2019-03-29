@@ -213,6 +213,10 @@ namespace SmartDrawerWpfApp.WcfServer
 
                 string serverIP = Properties.Settings.Default.ServerIp;
                 int serverPort = Properties.Settings.Default.ServerPort;
+
+                //serverIP = "157.230.97.196";
+                //serverPort = 3000;
+
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
@@ -249,7 +253,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     original.Password = jsl.password;
                                     original.FirstName = jsl.fname;
                                     original.LastName = jsl.lname;
-                                    original.BadgeNumber = jsl.badge_num;
+                                    original.BadgeNumber = string.IsNullOrEmpty(jsl.badge_num) ? "000000" : jsl.badge_num;
                                     original.UserRankId = 3;
                                     original.UpdateAt = jsl.updated_at;
                                     ctx.Entry(original).State = EntityState.Modified;
@@ -258,7 +262,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     //deletefingerprint for this user if exists
 
                                     var fpUser = ctx.Fingerprints.Where(gu => gu.GrantedUserId == original.GrantedUserId).ToList();
-                                    if (fpUser != null)
+                                    if ((fpUser != null) && (fpUser.Count > 0))
                                     {
                                         foreach (SmartDrawerDatabase.DAL.Fingerprint fp in fpUser)
                                             ctx.Fingerprints.Remove(fp);
@@ -278,10 +282,9 @@ namespace SmartDrawerWpfApp.WcfServer
                                         }
                                         await ctx.SaveChangesAsync();
                                     }
-                                }
-                                ctx.GrantedAccesses.AddOrUpdateAccess(original, mydev, ctx.GrantTypes.All());
-                                await ctx.SaveChangesAsync();
-
+                                    ctx.GrantedAccesses.AddOrUpdateAccess(original, mydev, ctx.GrantTypes.All());
+                                    await ctx.SaveChangesAsync();
+                                }   
                             }
                             else if (original2 != null)
                             {
@@ -293,7 +296,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     original2.Password = jsl.password;
                                     original2.FirstName = jsl.fname;
                                     original2.LastName = jsl.lname;
-                                    original2.BadgeNumber = jsl.badge_num;
+                                    original2.BadgeNumber = string.IsNullOrEmpty(jsl.badge_num) ? "000000" : jsl.badge_num;
                                     original2.UserRankId = 3;
                                     original2.UpdateAt = jsl.updated_at;
                                     ctx.Entry(original2).State = EntityState.Modified;
@@ -302,7 +305,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     //deletefingerprint for this user if exists
 
                                     var fpUser = ctx.Fingerprints.Where(gu => gu.GrantedUserId == original.GrantedUserId).ToList();
-                                    if (fpUser != null)
+                                    if ((fpUser != null) && (fpUser.Count > 0))
                                     {
                                         foreach (SmartDrawerDatabase.DAL.Fingerprint fp in fpUser)
                                             ctx.Fingerprints.Remove(fp);
@@ -322,9 +325,10 @@ namespace SmartDrawerWpfApp.WcfServer
                                         }
                                         await ctx.SaveChangesAsync();
                                     }
+                                    ctx.GrantedAccesses.AddOrUpdateAccess(original2, mydev, ctx.GrantTypes.All());
+                                    await ctx.SaveChangesAsync();
                                 }
-                                ctx.GrantedAccesses.AddOrUpdateAccess(original2, mydev, ctx.GrantTypes.All());
-                                await ctx.SaveChangesAsync();
+                              
                             }
                             else if ((original == null) && (original2 == null))
                             {
@@ -335,7 +339,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     Password = jsl.password,
                                     FirstName = jsl.fname,
                                     LastName = jsl.lname,
-                                    BadgeNumber = jsl.badge_num,
+                                    BadgeNumber = string.IsNullOrEmpty(jsl.badge_num) ? "000000" : jsl.badge_num,
                                     UpdateAt = jsl.updated_at,
                                     UserRankId = 3,
                                 };

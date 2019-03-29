@@ -865,7 +865,8 @@ namespace SmartDrawerWpfApp.ViewModel
                         original.BadgeNumber = SelectedUser.BadgeId;
                         ctx.Entry(original).State = EntityState.Modified;
                         ctx.SaveChanges();
-
+                        ctx.GrantedAccesses.AddOrUpdateAccess(original, DevicesHandler.GetDeviceEntity(), ctx.GrantTypes.All());
+                        ctx.SaveChanges();
                         // Update server
                         await ProcessSelectionFromServer.UpdateUserAsync(original.Login);
                     }
@@ -892,7 +893,10 @@ namespace SmartDrawerWpfApp.ViewModel
                                 UserRankId = 3,
                             };
 
-                            ctx.GrantedUsers.Add(newUser);
+                            var original = ctx.GrantedUsers.Add(newUser);
+                            ctx.SaveChanges();
+                            ctx.GrantedAccesses.AddOrUpdateAccess(original, DevicesHandler.GetDeviceEntity(), ctx.GrantTypes.All());
+                            ctx.SaveChanges();
                         }
                         else
                         {
@@ -906,11 +910,16 @@ namespace SmartDrawerWpfApp.ViewModel
                             };
 
                             ctx.GrantedUsers.Add(newUser);
+                            var original = ctx.GrantedUsers.Add(newUser);
+                            ctx.SaveChanges();
+                            ctx.GrantedAccesses.AddOrUpdateAccess(original, DevicesHandler.GetDeviceEntity(), ctx.GrantTypes.All());
+                            ctx.SaveChanges();
                         }
-                        ctx.SaveChanges();
+                        
 
                         // Update server
                         await ProcessSelectionFromServer.UpdateUserAsync(newUser.Login);
+                        
 
                     }
                 }
@@ -920,7 +929,9 @@ namespace SmartDrawerWpfApp.ViewModel
                     PopulateUser(null);
                 else
                     PopulateUser(SelectedUser.ServerId);
+                
             }
+            GrantedUsersCache.Reload();
         }
         public RelayCommand btDeleteUser { get; set; }
         private async void DeleteUser()
@@ -2085,6 +2096,10 @@ namespace SmartDrawerWpfApp.ViewModel
         #region timer
         private async void StartTimer_Tick(object sender, EventArgs e)
         {
+
+            //debug user
+            refreshUserFromServer();
+
             startTimer.Stop();
             startTimer.IsEnabled = false;
 
