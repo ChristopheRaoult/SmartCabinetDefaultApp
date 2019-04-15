@@ -23,5 +23,6 @@ namespace SmartDrawerWpfApp.ViewModel
         public int TotalToPull { get; set; }
         public int TotalToPullInDevice { get; set; }
         public List<string> lstTopull { get; set; }
+        public List<string> lstTagpulled { get; set; }
     }
 }

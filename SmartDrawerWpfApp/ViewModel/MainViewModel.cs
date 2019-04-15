@@ -1350,9 +1350,12 @@ namespace SmartDrawerWpfApp.ViewModel
 
         }
         public RelayCommand BtRemoveCardSelection { get; set; }
-        public async void DeleteCard()
+        public void DeleteCard()
         {
             removeSelection();
+            Thread.Sleep(1000);
+            getSelection();
+            bNeedUpdateCriteriaAfterScan = false;
         }
 
         public RelayCommand BtRefreshSelection { get; set; }
@@ -1389,8 +1392,7 @@ namespace SmartDrawerWpfApp.ViewModel
             bNeedUpdateCriteriaAfterScan = true;
         }
         public async void getSelection()
-        {
-          
+        {         
 
             CassettesSelection tmpCassette = new CassettesSelection();
             tmpCassette.CassetteDrawer1Number = String.Empty;
@@ -1468,6 +1470,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 svm.TotalToPull = jsl.listOfTagToPull.Count;
 
                                 svm.lstTopull = new List<string>();
+                                svm.lstTagpulled = new List<string>();
                                 int nbInDevice = 0;
 
                                 foreach (var uid in jsl.listOfTagToPull)
@@ -2454,7 +2457,11 @@ namespace SmartDrawerWpfApp.ViewModel
                         {
                             TagTolightBck = new List<string>();
                             foreach (string uid in TagToLight)
+                            {
                                 TagTolightBck.Add(uid);
+                                if (SelectionSelected != null)
+                                    SelectionSelected.lstTagpulled.Add(uid); 
+                            }
                         }
 
                         /*****   Update API ****/
@@ -2463,8 +2470,12 @@ namespace SmartDrawerWpfApp.ViewModel
                           if ((SelectionSelected != null) && (TagTolightBck != null) && (TagTolightBck.Count > 0))
                           {
                               ProcessSelectionFromServer.UpdateSelectionAsync(SelectionSelected.ServerPullItemId, TagTolightBck);
-                          }
 
+                              int nbtagPulled = TagTolightBck.Count + SelectionSelected.lstTagpulled.Count;
+                              if ((SelectionSelected.TotalToPull == TagTolightBck.Count) && (SelectionSelected.TotalToPullInDevice == nbtagPulled))
+                                  ProcessSelectionFromServer.DeleteSelectionAsync(SelectionSelected.ServerPullItemId);
+
+                          }                          
                       });
 
                         mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
