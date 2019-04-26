@@ -36,9 +36,10 @@ namespace SmartDrawerWpfApp.StaticHelpers.Security
 
             try
             {
-                var ctx = await RemoteDatabase.GetDbContextAsync();  
+                var ctx = await RemoteDatabase.GetDbContextAsync();
                 // Get all users who have accesses on this device, and Administrators. Include Fingerprints to the request, as they're needed by FPReaderHandle.
-                Cache = ctx.GrantedUsers.Where(gu => gu.GrantedAccesses.Any(ga => ga.DeviceId == _deviceEntity.DeviceId) || gu.UserRank.Rank == UserRank.Administrator).Include(gu => gu.Fingerprints).ToList();
+                //Cache = ctx.GrantedUsers.Where(gu => gu.GrantedAccesses.Any(ga => ga.DeviceId == _deviceEntity.DeviceId) || gu.UserRank.Rank == UserRank.Administrator).Include(gu => gu.Fingerprints).ToList();
+                Cache = ctx.GrantedUsers.Include(gu => gu.Fingerprints).ToList();
                 ctx.Database.Connection.Close();
                 ctx.Dispose();
 
