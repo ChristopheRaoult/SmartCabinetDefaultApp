@@ -227,8 +227,8 @@ namespace SmartDrawerWpfApp.WcfServer
 
                     // remove  granted standard users
                     var ctx = await RemoteDatabase.GetDbContextAsync();
-                    ctx.GrantedAccesses.Clear();
-                    await ctx.SaveChangesAsync();
+                   /* ctx.GrantedAccesses.Clear();
+                    await ctx.SaveChangesAsync();*/
 
                     //get device
                     Device mydev = ctx.Devices.GetBySerialNumber(Properties.Settings.Default.WallSerial);
@@ -273,6 +273,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     {
                                         for (int loop = 0; loop < jsl.ftemplate.Count; loop++)
                                         {
+                                            if (!string.IsNullOrEmpty(jsl.ftemplate[loop]) && !string.IsNullOrEmpty(jsl.finger_index[loop]))
                                             ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
                                             {
                                                 GrantedUserId = original.GrantedUserId,
@@ -284,7 +285,8 @@ namespace SmartDrawerWpfApp.WcfServer
                                     }
                                     ctx.GrantedAccesses.AddOrUpdateAccess(original, mydev, ctx.GrantTypes.All());
                                     await ctx.SaveChangesAsync();
-                                }   
+                                }
+                               
                             }
                             else if (original2 != null)
                             {
@@ -304,7 +306,7 @@ namespace SmartDrawerWpfApp.WcfServer
 
                                     //deletefingerprint for this user if exists
 
-                                    var fpUser = ctx.Fingerprints.Where(gu => gu.GrantedUserId == original.GrantedUserId).ToList();
+                                    var fpUser = ctx.Fingerprints.Where(gu => gu.GrantedUserId == original2.GrantedUserId).ToList();
                                     if ((fpUser != null) && (fpUser.Count > 0))
                                     {
                                         foreach (SmartDrawerDatabase.DAL.Fingerprint fp in fpUser)
@@ -316,6 +318,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     {
                                         for (int loop = 0; loop < jsl.ftemplate.Count; loop++)
                                         {
+                                            if (!string.IsNullOrEmpty(jsl.ftemplate[loop]) && !string.IsNullOrEmpty(jsl.finger_index[loop]))
                                             ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
                                             {
                                                 GrantedUserId = original2.GrantedUserId,
@@ -348,8 +351,10 @@ namespace SmartDrawerWpfApp.WcfServer
 
                                 if ((jsl.ftemplate != null) & (jsl.ftemplate.Count > 0))
                                 {
+
                                     for (int loop = 0; loop < jsl.ftemplate.Count; loop++)
                                     {
+                                        if (!string.IsNullOrEmpty(jsl.ftemplate[loop]) && !string.IsNullOrEmpty(jsl.finger_index[loop]))
                                         ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
                                         {
                                             GrantedUserId = newUser.GrantedUserId,
@@ -580,7 +585,7 @@ namespace SmartDrawerWpfApp.WcfServer
             }
             catch (Exception error)
             {
-                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Get Cabinet ");
                 exp.ShowDialog();
                 return null;
             }
@@ -622,7 +627,7 @@ namespace SmartDrawerWpfApp.WcfServer
             }
             catch (Exception error)
             {
-                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Get Cabinet");
                 exp.ShowDialog();
                 return null;
             }

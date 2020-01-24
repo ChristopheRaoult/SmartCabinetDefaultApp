@@ -1280,6 +1280,17 @@ namespace SmartDrawerWpfApp.ViewModel
             // Add device in local DB
             try
             {
+
+                if (String.IsNullOrEmpty(ServerIp))
+                {
+                    return;
+                }
+
+                if ((string.IsNullOrEmpty(Properties.Settings.Default.WallSerial)) || (string.IsNullOrEmpty(Properties.Settings.Default.WallName)))
+                {
+                    return;
+                }
+
                 var ctx = await RemoteDatabase.GetDbContextAsync();
                 ctx.Devices.Clear();
                 Device newDev = new Device()
@@ -2101,9 +2112,9 @@ namespace SmartDrawerWpfApp.ViewModel
         {
 
             //debug user
-            refreshUserFromServer();
+            //refreshUserFromServer();
 
-            startTimer.Stop();
+           startTimer.Stop();
             startTimer.IsEnabled = false;
 
             // No serial in Configuration - Connect to get rfid serial           
@@ -2130,14 +2141,22 @@ namespace SmartDrawerWpfApp.ViewModel
             // Test If serial exist in app
             bool bNeedQuit = false;
 
-                if ((string.IsNullOrEmpty (Properties.Settings.Default.WallSerial)) || (string.IsNullOrEmpty(Properties.Settings.Default.WallName)))
-                {
-                    bNeedQuit = true;
-                    await mainview0.ShowMessageAsync("Wall Information", "Wall Not define in app! \r\n Please Add device ");
-                    SelectedTabIndex = 3;           
-                }
+            ServerIp  = Properties.Settings.Default.ServerIp;
+            if(String.IsNullOrEmpty(ServerIp))
+            {
+                bNeedQuit = true;
+                await mainview0.ShowMessageAsync("Device Information", "No Server IP define! \r\n Please Configure Server!");
+                SelectedTabIndex = 3;
+            }
 
-                if (bNeedQuit) return;
+            if ((string.IsNullOrEmpty (Properties.Settings.Default.WallSerial)) || (string.IsNullOrEmpty(Properties.Settings.Default.WallName)))
+            {
+                bNeedQuit = true;
+                await mainview0.ShowMessageAsync("Wall Information", "Wall Not define in app! \r\n Please Add device ");
+                SelectedTabIndex = 3;           
+            }
+
+            if (bNeedQuit) return;
 
                 Device myDev = await ProcessSelectionFromServer.GetCabinet(Properties.Settings.Default.WallSerial);
                 if ( (myDev == null) || (myDev.DeviceSerial != Properties.Settings.Default.WallSerial))

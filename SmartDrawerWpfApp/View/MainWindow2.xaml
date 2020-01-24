@@ -428,7 +428,7 @@
                 </Grid>
             </TabItem>
             <!-- Inventory Mode -->
-            <TabItem Header="Inventory Mode" Width="200" Height="44" Visibility="Collapsed">
+            <TabItem Header="Inventory Mode" Width="200" Height="44" Visibility="Visible">
                 <Grid Grid.Row="1" >
                     <Grid.RowDefinitions>
                         <RowDefinition Height="75"></RowDefinition>
