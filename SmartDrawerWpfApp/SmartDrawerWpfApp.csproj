@@ -238,6 +238,7 @@
     <Compile Include="WcfServer\JsonDevice.cs" />
     <Compile Include="WcfServer\JsonInventory.cs" />
     <Compile Include="WcfServer\JsonSelectionList.cs" />
+    <Compile Include="WcfServer\JsonSku.cs" />
     <Compile Include="WcfServer\JsonUserLst.cs" />
     <Compile Include="WcfServer\ProcessSelectionFromServer.cs" />
     <Compile Include="Wcf\JsonDrawerInventory.cs" />

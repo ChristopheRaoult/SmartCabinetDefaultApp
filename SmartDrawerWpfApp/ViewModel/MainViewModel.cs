@@ -66,6 +66,7 @@ namespace SmartDrawerWpfApp.ViewModel
         Brush _borderLight = Brushes.Brown;
         Brush _borderScanPending = Brushes.Cyan;
 
+        Brush _selectionBrush = new SolidColorBrush(Color.FromRgb(0x33, 0xBC, 0xBA));
         #endregion
         #region Variables
         private MainWindow2 mainview0;
@@ -408,6 +409,21 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
+        bool _ConfFailure = false;
+        public bool ConfFailure
+        {
+            get { return _ConfFailure; }
+            set
+            {
+                if (_ConfFailure != value)
+                {
+                    _ConfFailure = value;
+                    RaisePropertyChanged("ConfFailure");
+                }
+            }
+        }
+       
+
         bool _NetworkStatus;
         public bool NetworkStatus
         {
@@ -474,6 +490,170 @@ namespace SmartDrawerWpfApp.ViewModel
                 RaisePropertyChanged("AutoLockMsg");
             }
         }
+
+        string _txtBarcode;
+        public string txtBarcode
+        {
+            get { return _txtBarcode; }
+            set
+            {
+                _txtBarcode = value;
+                if (_txtBarcode.Length == 0)
+                {
+                    cancelLighting();
+                    SelectionSelected = null;
+                    SelectedCassette = null;
+
+                    txtStatus = string.Empty;
+                    txtRefNumber = string.Empty;
+                    txtTagId = string.Empty;
+                    txtDrawer = string.Empty;
+                    txtDevice = string.Empty;
+                    txtLastDate = string.Empty;
+                }
+
+                RaisePropertyChanged("txtBarcode");
+            }
+        }
+
+        string _txtStatus;
+        public string txtStatus
+        {
+            get { return _txtStatus; }
+            set
+            {
+                _txtStatus = value; 
+                RaisePropertyChanged("txtStatus");
+            }
+        }
+
+        string _txtRefNumber;
+        public string txtRefNumber
+        {
+            get { return _txtRefNumber; }
+            set
+            {
+                _txtRefNumber = value;
+                RaisePropertyChanged("txtRefNumber");
+            }
+        }   
+
+        string _txtTagId;
+        public string txtTagId
+        {
+            get { return _txtTagId; }
+            set
+            {
+                _txtTagId = value;
+                RaisePropertyChanged("txtTagId");
+            }
+        }
+
+        string _txtDevice;
+        public string txtDevice
+        {
+            get { return _txtDevice; }
+            set
+            {
+                _txtDevice = value;
+                RaisePropertyChanged("txtDevice");
+            }
+        }
+
+        string _txtDrawer;
+        public string txtDrawer
+        {
+            get { return _txtDrawer; }
+            set
+            {
+                _txtDrawer = value;
+                RaisePropertyChanged("txtDrawer");
+            }
+        }
+
+        string _txtLastDate;
+        public string txtLastDate
+        {
+            get { return _txtLastDate; }
+            set
+            {
+                _txtLastDate = value;
+                RaisePropertyChanged("txtLastDate");
+            }
+        }
+
+        
+        string _descDrawer1;
+        public string descDrawer1
+        {
+            get { return _descDrawer1; }
+            set
+            {
+                _descDrawer1 = value;
+                RaisePropertyChanged("descDrawer1");
+            }
+        }
+        string _descDrawer2;
+        public string descDrawer2
+        {
+            get { return _descDrawer2; }
+            set
+            {
+                _descDrawer2 = value;
+                RaisePropertyChanged("descDrawer2");
+            }
+        }
+        string _descDrawer3;
+        public string descDrawer3
+        {
+            get { return _descDrawer3; }
+            set
+            {
+                _descDrawer3 = value;
+                RaisePropertyChanged("descDrawer3");
+            }
+        }
+        string _descDrawer4;
+        public string descDrawer4
+        {
+            get { return _descDrawer4; }
+            set
+            {
+                _descDrawer4 = value;
+                RaisePropertyChanged("descDrawer4");
+            }
+        }
+        string _descDrawer5;
+        public string descDrawer5
+        {
+            get { return _descDrawer5; }
+            set
+            {
+                _descDrawer5 = value;
+                RaisePropertyChanged("descDrawer5");
+            }
+        }
+        string _descDrawer6;
+        public string descDrawer6
+        {
+            get { return _descDrawer6; }
+            set
+            {
+                _descDrawer6 = value;
+                RaisePropertyChanged("descDrawer6");
+            }
+        }
+        string _descDrawer7;
+        public string descDrawer7
+        {
+            get { return _descDrawer7; }
+            set
+            {
+                _descDrawer7 = value;
+                RaisePropertyChanged("descDrawer7");
+            }
+        }
+
 
         private bool _IsAutoLightDrawerChecked;
         public bool IsAutoLightDrawerChecked
@@ -651,13 +831,24 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 _txtSearchCtrl = value;
                 RaisePropertyChanged(() => txtSearchCtrl);
-               
-                mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
-                mainview0.myDatagrid.SearchHelper.ClearSearch();
-                mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
-                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
+
+                try
+                {
+                    mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
+                    mainview0.myDatagrid.SearchHelper.ClearSearch();             
+                    mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
+                    mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
+                    mainview0.myDatagrid.SearchHelper.SearchHighlightBrush = _selectionBrush;
+                    mainview0.myDatagrid.SearchHelper.SearchBrush = _selectionBrush;
+                }
+                catch 
+               {
+
+                }
             }
         }
+      
+
 
         private ObservableCollection<string> _ListCtrlPerDrawer;
         public ObservableCollection<string> ListCtrlPerDrawer
@@ -1274,21 +1465,21 @@ namespace SmartDrawerWpfApp.ViewModel
         #region Command
 
         public RelayCommand btSaveDevice { get; set; }
-        public async void ReloadDevice()
-        {          
-
+        public async Task<bool> ReloadDevice()
+        {
+            bool ret = false;
             // Add device in local DB
             try
             {
-
+               
                 if (String.IsNullOrEmpty(ServerIp))
                 {
-                    return;
+                    return false;
                 }
 
                 if ((string.IsNullOrEmpty(Properties.Settings.Default.WallSerial)) || (string.IsNullOrEmpty(Properties.Settings.Default.WallName)))
                 {
-                    return;
+                    return false;
                 }
 
                 var ctx = await RemoteDatabase.GetDbContextAsync();
@@ -1343,7 +1534,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     DeviceLocation = Properties.Settings.Default.WallLocation,
                     IpAddress = Utils.GetLocalIp(),
                 };
-                await ProcessSelectionFromServer.CreateCabinet(CreatedDev);
+                ret = await ProcessSelectionFromServer.CreateCabinet(CreatedDev);
             }
             else
             {
@@ -1351,13 +1542,14 @@ namespace SmartDrawerWpfApp.ViewModel
                 myDev.DeviceName = Properties.Settings.Default.WallName;
                 myDev.DeviceLocation = Properties.Settings.Default.WallLocation;
                 myDev.IpAddress = Utils.GetLocalIp();
-                await ProcessSelectionFromServer.UpdateCabinet(myDev);
+                ret = await ProcessSelectionFromServer.UpdateCabinet(myDev);
 
             }
 
 
             startTimer.Start();
             startTimer.IsEnabled = true;
+            return ret;
 
         }
         public RelayCommand BtRemoveCardSelection { get; set; }
@@ -1986,25 +2178,49 @@ namespace SmartDrawerWpfApp.ViewModel
              mainview0.TxtCtrlNumber.Focus();
         }
         public RelayCommand searchTxtGotCR { get; set; }
-        void searchTxtGotCRfn()
+        async  void searchTxtGotCRfn()
         {
             try
             {
-                if ((Data == null) || (Data.Count == 0)) return;               
+                if ((Data == null) || (Data.Count == 0)) return;
+
+                bool bfind = false;
 
                 mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
                 mainview0.myDatagrid.SearchHelper.ClearSearch();
-                mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
-                mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
+                mainview0.myDatagrid.SearchHelper = new SearchHelperExt(this.mainview0.myDatagrid, "Column1");
+                mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);   
+               
+                mainview0.myDatagrid.SearchHelper.SearchHighlightBrush = _selectionBrush;
+                mainview0.myDatagrid.SearchHelper.SearchBrush = _selectionBrush;
+                Thread.Sleep(50);
+                bool bOut = mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
                 do
                 {
                     var rowIndex = mainview0.myDatagrid.SearchHelper.CurrentRowColumnIndex.RowIndex;
-                    var record = mainview0.myDatagrid.View.Records[rowIndex - 1];
-                    DataRowView drv = record.Data as DataRowView;
-                    mainview0.myDatagrid.SelectedItems.Add(drv);
+                    var colIndex = mainview0.myDatagrid.SearchHelper.CurrentRowColumnIndex.ColumnIndex;
+                    if (rowIndex >= 0 && colIndex != 0)  //find
+                    {
+                        bfind = true;
+                        var record = mainview0.myDatagrid.View.Records[rowIndex - 1];
+                        DataRowView drv = record.Data as DataRowView;
+                        if (!mainview0.myDatagrid.SelectedItems.Contains(drv))
+                            mainview0.myDatagrid.SelectedItems.Add(drv);
+                    }
+                    bOut = mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
+                    if (mainview0.myDatagrid.SearchHelper.CurrentRowColumnIndex.RowIndex != rowIndex) bOut = true;
+                } while (bOut);
+
+                if (!bfind)
+                {
+                    string info = string.Format("Working Order : {0}\r\nTag ID : {1}\r\nLast Device : {2}\r\nDrawer : {3}", _txtSearchCtrl, "xxxxxxxxxx", "yyyyyyyyyy", "?");
+                    await mainview0.ShowMessageAsync("Information", info);
                 }
-                while (mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl));
                 
+
+                mainview0.TxtCtrlNumber.SelectAll();
+
+
             }
             catch (Exception error)
             {
@@ -2012,6 +2228,196 @@ namespace SmartDrawerWpfApp.ViewModel
                 exp.ShowDialog();
             }
         }
+
+        public RelayCommand searchTxtBarcodeCR { get; set; }
+        async void searchTxtBarcodeCRfn()
+        {            
+           
+            if (!string.IsNullOrEmpty(txtBarcode))
+            {               
+                JsonSku mySku = await ProcessSelectionFromServer.GetSkuInfo(txtBarcode);
+                if (mySku != null)
+                {
+                    if (!mySku.status) // error
+                    {
+                        txtStatus = string.Format("Error : Code {0} - {1}", mySku.errors.code, mySku.errors.msg);
+                        txtRefNumber = string.Empty;
+                        txtTagId = string.Empty;
+                        txtDrawer = string.Empty;
+                        txtDevice = string.Empty;
+                        txtLastDate = string.Empty;
+                    }
+                    else
+                    {
+                        txtStatus = mySku.data.status;
+                        txtRefNumber = mySku.data.refNumber;
+                        txtTagId = mySku.data.rfidNumber;
+                        if (txtStatus == "Present")
+                        {
+                            txtDevice = WallName;
+                            txtDrawer = mySku.data.drawer;
+                            txtLastDate = mySku.data.updatedAt.ToShortDateString() + " " + mySku.data.updatedAt.ToLongTimeString();
+                        }
+                        else
+                        {
+                            txtDrawer = string.Empty;
+                            txtDevice = string.Empty;
+                            txtLastDate = string.Empty;
+                        }
+                    }
+                    LightBarcodeTag(txtTagId);
+                }
+            } 
+            mainview0.TxtBarcodeCtrl.SelectAll();
+        }
+
+        void LightBarcodeTag(string tagId)
+        {
+            try
+            {
+                IsInPutItemFastMode = false;
+                if (RfidStatus == false)
+                {
+                    IsFlyoutCassettePositionOpen = false;
+                    return;
+                }
+                CassettesSelection tmpCassette = new CassettesSelection();
+                _SelectedBaseObjects = new List<BaseObject>();
+                tmpCassette.ListControlNumber = new List<string>();
+
+                for (int loop = 0; loop < 8; loop++)
+                    tmpCassette.TagToLight[loop] = new List<string>();
+
+
+                List<string> TmpListCtrlPerDrawer1 = new List<string>(DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer2 = new List<string>(DevicesHandler.GetTagFromDictionnary(2, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer3 = new List<string>(DevicesHandler.GetTagFromDictionnary(3, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer4 = new List<string>(DevicesHandler.GetTagFromDictionnary(4, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer5 = new List<string>(DevicesHandler.GetTagFromDictionnary(5, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer6 = new List<string>(DevicesHandler.GetTagFromDictionnary(6, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer7 = new List<string>(DevicesHandler.GetTagFromDictionnary(7, DevicesHandler.ListTagPerDrawer));
+
+
+                if (!string.IsNullOrEmpty(tagId))
+                {
+                    string uid = tagId;
+                    BaseObject theBo = (from c in Data
+                                        where c.Productinfo.RfidTag.TagUid.Equals(uid)
+                                        select c).SingleOrDefault<BaseObject>();
+
+                    if (theBo != null)
+                    {
+                        _SelectedBaseObjects.Add(theBo);
+                        if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
+                        {
+                            switch (theBo.drawerId)
+                            {
+                                case 1:
+                                    if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 2:
+                                    if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 3:
+                                    if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 4:
+                                    if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 5:
+                                    if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 6:
+                                    if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 7:
+                                    if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+
+                            }
+                        }
+                    }
+                }
+
+
+                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count.ToString(); ;
+                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count.ToString(); ;
+                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count.ToString(); ;
+                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count.ToString(); ;
+                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count.ToString(); ;
+                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count.ToString(); ;
+                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count.ToString(); ;
+                tmpCassette.CassetteSelectionTotalNumber = tmpCassette.ListControlNumber.Count;
+
+                if (_SelectedBaseObjects.Count > 0)
+                {
+                    SelectedCassette = tmpCassette;
+                    _previousSelectedCassettes = SelectedCassette;
+                    TotalCassettesToPull = SelectedCassette.CassetteSelectionTotalNumber;
+                    TotalCassettesPulled = 0;
+                    IsFlyoutCassettePositionOpen = true;
+                }
+                else
+                {
+                    IsFlyoutCassettePositionOpen = false;
+                    _InLightProcess = false;
+                }
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error selection");
+                exp.ShowDialog();
+            }
+        }
+
+
+        public class SearchHelperExt:SearchHelper
+        {
+            string ColumnToSearch;
+            public SearchHelperExt(SfDataGrid datagrid , string ColumnToSearch)
+            : base(datagrid)
+            {
+                this.ColumnToSearch = ColumnToSearch;
+            }
+
+            protected override bool SearchCell(DataColumnBase column, object record, bool ApplySearchHighlightBrush)
+            {
+
+                if (column.GridColumn.MappingName == ColumnToSearch)
+                    return base.SearchCell(column, record, ApplySearchHighlightBrush);
+                return false;
+            }
+        }
+
+
         public RelayCommand btClearSelection { get; set; }
         void ClearSelection()
         {           
@@ -2159,23 +2565,35 @@ namespace SmartDrawerWpfApp.ViewModel
             if (bNeedQuit) return;
 
                 Device myDev = await ProcessSelectionFromServer.GetCabinet(Properties.Settings.Default.WallSerial);
-                if ( (myDev == null) || (myDev.DeviceSerial != Properties.Settings.Default.WallSerial))
-                {
-                    bNeedQuit = true;
-                    await mainview0.ShowMessageAsync("Wall Information", "Wall not found in server or server not found - You have to go in admin mode to setup device");
-                    SelectedTabIndex = 3;
-                }
-                else
-                {
-                    string tmpIp = Utils.GetLocalIp();
+            if ((myDev == null) || (myDev.DeviceSerial != Properties.Settings.Default.WallSerial))
+            {
+                bNeedQuit = true;
+                await mainview0.ShowMessageAsync("Wall Information", "Wall not found in server or server not found - You have to go in admin mode to setup device");
+                SelectedTabIndex = 4;
+            }
+            else
+            {
+                string tmpIp = Utils.GetLocalIp();
                 if (!string.IsNullOrEmpty(Properties.Settings.Default.NotificationIp))
                     tmpIp = Properties.Settings.Default.NotificationIp;
 
                 if ((myDev.DeviceSerial != Properties.Settings.Default.WallSerial) || (myDev.DeviceName != Properties.Settings.Default.WallName) || (myDev.IpAddress != tmpIp))
-                    {      
-                            ReloadDevice();                       
-                    }                    
-                }              
+                {
+                    ConfFailure = false;
+                    bool x  = await ReloadDevice();
+                    if (!x)
+                    {
+                        ConfFailure = true;
+                        startTimer.Stop();
+                        startTimer.IsEnabled = false;
+                        await mainview0.ShowMessageAsync("Device error", "Device configuration error - Contact Spacecode Support ");
+                        startTimer.IsEnabled = true;
+                        startTimer.Interval = new TimeSpan(0, 1, 0);
+                        startTimer.Start();
+                    }               
+                }
+                startTimer.Interval = new TimeSpan(0, 0, 5);
+            }
 
 
                  var ctx = await RemoteDatabase.GetDbContextAsync();
@@ -2327,6 +2745,11 @@ namespace SmartDrawerWpfApp.ViewModel
                     {
                         OverallStatus = false;
                         WallStatusOperational = "SERVICE FAILURE";
+                    }
+                    else if (ConfFailure)
+                    {
+                        OverallStatus = false;
+                        WallStatusOperational = "SETTING ERROR";
                     }
                     else
                     {
@@ -3723,8 +4146,48 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         #endregion
         #region Function
+
+        private void ReadDrawerDescription()
+        {
+            const string DirectoryName = @"C:\Temp\SmartDrawerLog\";
+            string FileName = "DescDrawer.json";
+            string PathFile = (string.Format("{0}{1}", DirectoryName, FileName));
+            if (File.Exists(PathFile))
+            {
+                try
+                {
+                    Dictionary<string, string> Dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(PathFile));
+
+                    if (Dictionary != null)
+                    {
+                        if (Dictionary.ContainsKey("1"))
+                            descDrawer1 = Dictionary["1"];
+                        if (Dictionary.ContainsKey("2"))
+                            descDrawer2 = Dictionary["2"];
+                        if (Dictionary.ContainsKey("3"))
+                            descDrawer3 = Dictionary["3"];
+                        if (Dictionary.ContainsKey("4"))
+                            descDrawer4 = Dictionary["4"];
+                        if (Dictionary.ContainsKey("5"))
+                            descDrawer5 = Dictionary["5"];
+                        if (Dictionary.ContainsKey("6"))
+                            descDrawer6 = Dictionary["6"];
+                        if (Dictionary.ContainsKey("7"))
+                            descDrawer7 = Dictionary["7"];
+                    }
+
+                }
+                catch
+                {
+
+                }
+            }
+        }
+
         private void InitValue()
-        {          
+        {
+
+            ReadDrawerDescription();
 
             DevicesHandler.DeviceConnected += DeviceHandler_DeviceConnected;
             DevicesHandler.DeviceDisconnected += DeviceHandlerOnDeviceDisconnected;
@@ -3761,7 +4224,6 @@ namespace SmartDrawerWpfApp.ViewModel
 
             LastDeviceActionTime = DateTime.Now;
         }  
-
         private void CountTotalStones()
         {
             WallTotalStones = 0;
@@ -3813,7 +4275,8 @@ namespace SmartDrawerWpfApp.ViewModel
             LightAllCommand = new RelayCommand(() => LightAll());
             openKeyboard = new RelayCommand(() => openKeyboardFn());
             searchTxtGotCR = new RelayCommand(() => searchTxtGotCRfn());
-            btClearSelection = new RelayCommand(() => ClearSelection());
+            searchTxtBarcodeCR = new RelayCommand(() => searchTxtBarcodeCRfn());
+           btClearSelection = new RelayCommand(() => ClearSelection());
             LogoutCommand = new RelayCommand(() => logout());
             btLightFilteredTagSelection = new RelayCommand(() => LightSelectionFromList());
             btRemoveSelection = new RelayCommand(() => removeSelection());

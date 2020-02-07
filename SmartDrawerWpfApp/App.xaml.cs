@@ -1,4 +1,5 @@
 ﻿using MahApps.Metro;
+using Newtonsoft.Json;
 using SmartDrawerWpfApp.StaticHelpers;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,8 @@ namespace SmartDrawerWpfApp
                     System.Threading.Thread.Sleep(1000);
                     ProcessKiller(); // Kill the current process
                 }
+
+                CreateDrawerDescFile();
 
             }
             catch (Exception ex)
@@ -82,6 +85,32 @@ namespace SmartDrawerWpfApp
         }
 
     }
+    private static void CreateDrawerDescFile()
+    {
+        const string DirectoryName = @"C:\Temp\SmartDrawerLog\";
+        string FileName = "DescDrawer.json";
+       string PathFile = (string.Format("{0}{1}", DirectoryName, FileName));
+        if (!File.Exists(PathFile))
+        {
+            if (!Directory.Exists(DirectoryName))
+            {
+                Directory.CreateDirectory(DirectoryName);
+            }
+
+            Dictionary<string, string> dictionary = new Dictionary<string, string>();
+            dictionary.Add("1", " ");
+            dictionary.Add("2", " ");
+            dictionary.Add("3", " ");
+            dictionary.Add("4", " ");
+            dictionary.Add("5", " ");
+            dictionary.Add("6", " ");
+            dictionary.Add("7", " ");
+
+            string json = JsonConvert.SerializeObject(dictionary);
+            File.WriteAllText(PathFile, json);
+            }
+    }
+
 
     private static void LogUnhandledException(Exception exception, string s)
         {

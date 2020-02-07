@@ -26,27 +26,27 @@ namespace SmartDrawerWpfApp.WcfServer
 
         public static JsonSelectionList[] lastSelection { get; private set; }
 
+        private const int timeout = 30000;
+
         #region Selection
         public static async Task<bool> GetAndStoreSelectionAsync()
         {
             try
             {
                 string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.ServerPort;             
+                int serverPort = Properties.Settings.Default.ServerPort;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
-                var client = new RestClient(urlServer);
-                client.Timeout = 10000;
-                client.ReadWriteTimeout = 10000;
+                var client = new RestClient(urlServer);             
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
                 var request = new RestRequest("selections", Method.GET);
-                request.Timeout = 10000;
-                request.ReadWriteTimeout = 10000;
-                var response = await client.ExecuteTaskAsync(request);    
-                
-
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
+                var response = await client.ExecuteTaskAsync(request);
                 if (response.IsSuccessful)
-                {  
+                {
                     var ctx = await RemoteDatabase.GetDbContextAsync();
                     ctx.PullItems.Clear();
                     await ctx.SaveChangesAsync();
@@ -65,7 +65,7 @@ namespace SmartDrawerWpfApp.WcfServer
                                     break;
                                 }
                             }
-                            lastSelection = lstSelection;                           
+                            lastSelection = lstSelection;
                         }
                         else
                         {
@@ -93,7 +93,7 @@ namespace SmartDrawerWpfApp.WcfServer
                     }
                 }
                 return false;
-                
+
             }
             catch (Exception error)
             {
@@ -110,11 +110,14 @@ namespace SmartDrawerWpfApp.WcfServer
                 int serverPort = Properties.Settings.Default.ServerPort;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
-                var client = new RestClient(urlServer);
+                var client = new RestClient(urlServer);               
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
                 var request = new RestRequest("selections/" + IdSel, Method.GET);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
                 var response = await client.ExecuteTaskAsync(request);
-
                 if (response.IsSuccessful)
                 {
                     var Selection = JsonSelectionList.DeserializedJsonAlone(response.Content);
@@ -130,7 +133,7 @@ namespace SmartDrawerWpfApp.WcfServer
 
                         var client2 = new RestClient(urlServer);
                         client2.Authenticator = new HttpBasicAuthenticator(privateApiLogin, privateApiMdp);
-                        LogToFile.LogMessageToFile("------- Start Update selection --------");                       
+                        LogToFile.LogMessageToFile("------- Start Update selection --------");
                         var response2 = await client2.ExecuteTaskAsync(request2);
                         LogToFile.LogMessageToFile(response2.Content);
                         LogToFile.LogMessageToFile("------- End Updateselection --------");
@@ -156,9 +159,14 @@ namespace SmartDrawerWpfApp.WcfServer
                 int serverPort = Properties.Settings.Default.ServerPort;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
-                var client = new RestClient(urlServer);
+                var client = new RestClient(urlServer);               
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
                 var request = new RestRequest("selections/" + IdSel, Method.DELETE);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
+
                 var response = await client.ExecuteTaskAsync(request);
                 return response.IsSuccessful;
 
@@ -170,7 +178,7 @@ namespace SmartDrawerWpfApp.WcfServer
                 return false;
             }
         }
-        public static async Task<bool> PostRequest (string user , string description , List<string> uids)
+        public static async Task<bool> PostRequest(string user, string description, List<string> uids)
         {
             try
             {
@@ -178,9 +186,13 @@ namespace SmartDrawerWpfApp.WcfServer
                 int serverPort = Properties.Settings.Default.ServerPort;
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
-                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
-
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);              
                 var request = new RestRequest("selections", Method.POST);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
+
                 request.AddParameter("user_login", user);
                 request.AddParameter("description", description);
 
@@ -218,17 +230,21 @@ namespace SmartDrawerWpfApp.WcfServer
                 //serverPort = 3000;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
-                var client = new RestClient(urlServer);
+                var client = new RestClient(urlServer);               
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
                 var request = new RestRequest("/users", Method.GET);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
+
                 var response = await client.ExecuteTaskAsync(request);
                 if (response.IsSuccessful)
                 {
-
                     // remove  granted standard users
                     var ctx = await RemoteDatabase.GetDbContextAsync();
-                   /* ctx.GrantedAccesses.Clear();
-                    await ctx.SaveChangesAsync();*/
+                    /* ctx.GrantedAccesses.Clear();
+                     await ctx.SaveChangesAsync();*/
 
                     //get device
                     Device mydev = ctx.Devices.GetBySerialNumber(Properties.Settings.Default.WallSerial);
@@ -240,7 +256,6 @@ namespace SmartDrawerWpfApp.WcfServer
                     {
                         foreach (JsonUserList jsl in lstUser)
                         {
-
                             var original = ctx.GrantedUsers.GetByServerId(jsl.user_id);
                             var original2 = ctx.GrantedUsers.GetByLogin(jsl.login);
                             if ((original != null) && (original.Login != "Admin"))
@@ -274,19 +289,18 @@ namespace SmartDrawerWpfApp.WcfServer
                                         for (int loop = 0; loop < jsl.ftemplate.Count; loop++)
                                         {
                                             if (!string.IsNullOrEmpty(jsl.ftemplate[loop]) && !string.IsNullOrEmpty(jsl.finger_index[loop]))
-                                            ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
-                                            {
-                                                GrantedUserId = original.GrantedUserId,
-                                                Index = Convert.ToInt32(jsl.finger_index[loop]),
-                                                Template = jsl.ftemplate[loop],
-                                            });
+                                                ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                                                {
+                                                    GrantedUserId = original.GrantedUserId,
+                                                    Index = Convert.ToInt32(jsl.finger_index[loop]),
+                                                    Template = jsl.ftemplate[loop],
+                                                });
                                         }
                                         await ctx.SaveChangesAsync();
                                     }
                                     ctx.GrantedAccesses.AddOrUpdateAccess(original, mydev, ctx.GrantTypes.All());
                                     await ctx.SaveChangesAsync();
                                 }
-                               
                             }
                             else if (original2 != null)
                             {
@@ -319,19 +333,18 @@ namespace SmartDrawerWpfApp.WcfServer
                                         for (int loop = 0; loop < jsl.ftemplate.Count; loop++)
                                         {
                                             if (!string.IsNullOrEmpty(jsl.ftemplate[loop]) && !string.IsNullOrEmpty(jsl.finger_index[loop]))
-                                            ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
-                                            {
-                                                GrantedUserId = original2.GrantedUserId,
-                                                Index = Convert.ToInt32(jsl.finger_index[loop]),
-                                                Template = jsl.ftemplate[loop],
-                                            });
+                                                ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                                                {
+                                                    GrantedUserId = original2.GrantedUserId,
+                                                    Index = Convert.ToInt32(jsl.finger_index[loop]),
+                                                    Template = jsl.ftemplate[loop],
+                                                });
                                         }
                                         await ctx.SaveChangesAsync();
                                     }
                                     ctx.GrantedAccesses.AddOrUpdateAccess(original2, mydev, ctx.GrantTypes.All());
                                     await ctx.SaveChangesAsync();
                                 }
-                              
                             }
                             else if ((original == null) && (original2 == null))
                             {
@@ -355,27 +368,23 @@ namespace SmartDrawerWpfApp.WcfServer
                                     for (int loop = 0; loop < jsl.ftemplate.Count; loop++)
                                     {
                                         if (!string.IsNullOrEmpty(jsl.ftemplate[loop]) && !string.IsNullOrEmpty(jsl.finger_index[loop]))
-                                        ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
-                                        {
-                                            GrantedUserId = newUser.GrantedUserId,
-                                            Index = Convert.ToInt32(jsl.finger_index[loop]),
-                                            Template = jsl.ftemplate[loop],
-                                        });
+                                            ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                                            {
+                                                GrantedUserId = newUser.GrantedUserId,
+                                                Index = Convert.ToInt32(jsl.finger_index[loop]),
+                                                Template = jsl.ftemplate[loop],
+                                            });
                                     }
                                     await ctx.SaveChangesAsync();
                                 }
                                 ctx.GrantedAccesses.AddOrUpdateAccess(newUser, mydev, ctx.GrantTypes.All());
                                 await ctx.SaveChangesAsync();
                             }
-
                         }
-
                         ctx.Database.Connection.Close();
                         ctx.Dispose();
-
                         return true;
                     }
-
                     return true;
                 }
                 return false;
@@ -456,36 +465,37 @@ namespace SmartDrawerWpfApp.WcfServer
 
         #endregion
         #region Inventory
-        public static async Task<JsonInventory[]> GetLastScan (string serial)
+        public static async Task<JsonInventory[]> GetLastScan(string serial)
         {
-           
-                try
+
+            try
+            {
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);              
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                var request = new RestRequest("stockhistories/" + serial, Method.GET);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
+                var response = await client.ExecuteTaskAsync(request);
+                if (response.IsSuccessful)
                 {
-                    string serverIP = Properties.Settings.Default.ServerIp;
-                    int serverPort = Properties.Settings.Default.ServerPort;
-
-                    string urlServer = "http://" + serverIP + ":" + serverPort;
-                    var client = new RestClient(urlServer);
-                    client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
-                    var request = new RestRequest("stockhistories/"+serial, Method.GET);
-                    var response = await client.ExecuteTaskAsync(request);
-
-                    if (response.IsSuccessful)
-                    {
-
-                        var lstInventories = JsonInventory.DeserializedJsonList(response.Content);
-                        return lstInventories;
-                    }
+                    var lstInventories = JsonInventory.DeserializedJsonList(response.Content);
+                    return lstInventories;
+                }
                 return null;
-                }
-               
-                catch (Exception error)
-                {
-                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error getting Inventory");
-                    exp.ShowDialog();
-                    return null;
-                }
-            
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error getting Inventory");
+                exp.ShowDialog();
+                return null;
+            }
+
         }
         public static async Task<bool> PostInventoryForDrawer(Device device, int drawerId, Inventory inventory)
         {
@@ -494,10 +504,13 @@ namespace SmartDrawerWpfApp.WcfServer
                 string serverIP = Properties.Settings.Default.ServerIp;
                 int serverPort = Properties.Settings.Default.ServerPort;
                 string urlServer = "http://" + serverIP + ":" + serverPort;
-                var client = new RestClient(urlServer);
-                client.Authenticator = new HttpBasicAuthenticator(privateApiLogin, privateApiMdp);
-
+                var client = new RestClient(urlServer);              
+                client.Authenticator = new HttpBasicAuthenticator(privateApiLogin, privateApiMdp);               
                 var request = new RestRequest("stockhistories", Method.POST);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
 
                 request.AddParameter("serial_num", device.DeviceSerial);
                 request.AddParameter("drawer", drawerId.ToString());
@@ -524,12 +537,12 @@ namespace SmartDrawerWpfApp.WcfServer
                 if (invUser != null)
                     foreach (EventDrawerDetail edd in invUser)
                     {
-                        if ((edd.GrantedUser !=  null) && (!string.IsNullOrEmpty(edd.GrantedUser.Login)))
-                        request.AddParameter("user_login", edd.GrantedUser.Login);
+                        if ((edd.GrantedUser != null) && (!string.IsNullOrEmpty(edd.GrantedUser.Login)))
+                            request.AddParameter("user_login", edd.GrantedUser.Login);
                     }
                 var response = await client.ExecuteTaskAsync(request);
                 LogToFile.LogMessageToFile(response.ResponseStatus.ToString());
-                LogToFile.LogMessageToFile(response.Content.ToString());              
+                LogToFile.LogMessageToFile(response.Content.ToString());
 
                 return response.IsSuccessful;
 
@@ -554,9 +567,13 @@ namespace SmartDrawerWpfApp.WcfServer
                 int serverPort = Properties.Settings.Default.ServerPort;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
-                var client = new RestClient(urlServer);
-                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                var client = new RestClient(urlServer);               
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);                
                 var request = new RestRequest("cabinets", Method.GET);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
                 var response = await client.ExecuteTaskAsync(request);
                 if (response.IsSuccessful)
                 {
@@ -577,7 +594,6 @@ namespace SmartDrawerWpfApp.WcfServer
                         }
                     }
                     return lstDevice;
-
                 }
                 else
                     return null;
@@ -599,16 +615,19 @@ namespace SmartDrawerWpfApp.WcfServer
                 int serverPort = Properties.Settings.Default.ServerPort;
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
-                var client = new RestClient(urlServer);
+                var client = new RestClient(urlServer);               
                 client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
                 var request = new RestRequest("cabinets/" + serial, Method.GET);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
                 var response = await client.ExecuteTaskAsync(request);
                 if (response.IsSuccessful)
                 {
-                    
                     var device = JsonDevice.DeserializedJsonAlone(response.Content);
-                    if (device != null) 
-                    {                       
+                    if (device != null)
+                    {
                         Device newDev = new Device
                         {
                             DeviceName = device.name,
@@ -617,7 +636,7 @@ namespace SmartDrawerWpfApp.WcfServer
                             IpAddress = device.IP_addr,
                         };
                         return newDev;
-                      
+
                     }
                     return null;
                 }
@@ -630,51 +649,7 @@ namespace SmartDrawerWpfApp.WcfServer
                 ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Get Cabinet");
                 exp.ShowDialog();
                 return null;
-            }
-
-           /* try
-            {
-                string serverIP = Properties.Settings.Default.ServerIp;
-                int serverPort = Properties.Settings.Default.ServerPort;
-
-                string urlServer = "http://" + serverIP + ":" + serverPort;
-                var client = new RestClient(urlServer);
-                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
-                var request = new RestRequest("cabinets", Method.GET);
-                var response = await client.ExecuteTaskAsync(request);
-                if (response.IsSuccessful)
-                {                  
-                    var devices = JsonDevice.DeserializedJsonList(response.Content);
-                    if ((devices != null) && (devices.Count() > 0))
-                    {
-                        foreach (JsonDevice jd in devices)
-                        {
-                            if (jd.serial_num == serial)
-                            {
-                                Device newDev = new Device
-                                {
-                                    DeviceName = jd.name,
-                                    DeviceSerial = jd.serial_num,
-                                    DeviceLocation = jd.Location,
-                                    IpAddress = jd.IP_addr,
-                                };
-                                return newDev;
-                            }
-                        }
-                    }
-                    return null;
-                }
-                else
-                    return null;
-
-            }
-            catch (Exception error)
-            {
-                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
-                exp.ShowDialog();
-                return null;
-            }*/
-
+            }           
         }
         public static async Task<bool> CreateCabinet(Device dev)
         {
@@ -685,9 +660,12 @@ namespace SmartDrawerWpfApp.WcfServer
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
-                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);               
                 var request = new RestRequest("cabinets/", Method.POST);
-
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
                 request.AddParameter("serial_num", dev.DeviceSerial);
                 request.AddParameter("name", dev.DeviceName);
                 request.AddParameter("location", dev.DeviceLocation);
@@ -719,9 +697,12 @@ namespace SmartDrawerWpfApp.WcfServer
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
-                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);
+                client.Authenticator = new HttpBasicAuthenticator(publicApiLogin, publicApiMdp);              
                 var request = new RestRequest("cabinets/" + dev.DeviceSerial, Method.PUT);
-
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
                 request.AddParameter("name", dev.DeviceName);
                 request.AddParameter("location", dev.DeviceLocation);
                 // If default parameter is nul get found IP
@@ -737,13 +718,56 @@ namespace SmartDrawerWpfApp.WcfServer
             }
             catch (Exception error)
             {
-                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Delete Selection");
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error Update cabinet");
                 exp.ShowDialog();
                 return false;
             }
         }
-    }
-
         #endregion
-        
+        #region sku tiffany
+        public static async Task<JsonSku> GetSkuInfo(string skuQueried)
+        {
+            try
+            {
+                Properties.Settings.Default.Reload();
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);               
+                client.Authenticator = new HttpBasicAuthenticator(privateApiLogin, privateApiMdp);
+                var request = new RestRequest("sku", Method.GET);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
+                request.AddParameter("refNumber", skuQueried);
+                var response = await client.ExecuteTaskAsync(request);
+                if (response.IsSuccessful)
+                {
+                    var skuInfo = JsonSku.DeserializedJsonAlone(response.Content);
+                    if (skuInfo != null)                        
+                        return skuInfo;                    
+                    return null;
+                }
+                else
+                    return null;
+
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Get sku");
+                exp.ShowDialog();
+                return null;
+            }
+        }
+        #endregion
+    }
 }
+
+
+
+
+
+
+
