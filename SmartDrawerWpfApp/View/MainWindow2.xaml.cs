@@ -1,6 +1,7 @@
 ﻿using MahApps.Metro.Controls;
 using SmartDrawerDatabase.DAL;
 using SmartDrawerWpfApp.Model;
+using SmartDrawerWpfApp.Model.DeviceModel;
 using SmartDrawerWpfApp.StaticHelpers;
 using SmartDrawerWpfApp.ViewModel;
 using System;
@@ -71,10 +72,10 @@ namespace SmartDrawerWpfApp.View
             string messageType = message.Substring(0, 4);
             switch (messageType)
             {
-                case "CARD":                  
+                case "CARD":
                     if (NotifyM2MCardEvent != null) NotifyM2MCardEvent(this, message.Substring(4));
                     break;
-                case "PROX":                 
+                case "PROX":
                     if (NotifyBadgeReaderEvent != null) NotifyBadgeReaderEvent(this, message.Substring(4));
                     break;
             }
@@ -109,7 +110,7 @@ namespace SmartDrawerWpfApp.View
 
                 if ((e.Key == Key.OemPeriod) || (e.Key == Key.Oem1))
                 {
-                    ProcessMessage();                
+                    ProcessMessage();
                 }
             }
         }
@@ -175,14 +176,14 @@ namespace SmartDrawerWpfApp.View
                 default:
                     {
                         theModel.isAdmin = false;
-                        theModel.btAdminVisibility = Visibility.Hidden;                        
+                        theModel.btAdminVisibility = Visibility.Hidden;
                         break;
                     }
-                   
+
             }
             LastHeader = tabItem;
 
-            
+
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -199,7 +200,38 @@ namespace SmartDrawerWpfApp.View
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-
+            DevicesHandler.IsDrawerWaitScan[1] = true;
+            theModel.BrushDrawer[1] = Brushes.Cyan;
         }
-    }
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            DevicesHandler.IsDrawerWaitScan[2] = true;
+            theModel.BrushDrawer[2] = Brushes.Cyan;
+        }
+        private void Button_Click_3(object sender, RoutedEventArgs e)
+        {
+            DevicesHandler.IsDrawerWaitScan[3] = true;
+            theModel.BrushDrawer[3] = Brushes.Cyan;
+        }
+        private void Button_Click_4(object sender, RoutedEventArgs e)
+        {
+            DevicesHandler.IsDrawerWaitScan[4] = true;
+            theModel.BrushDrawer[4] = Brushes.Cyan;
+        }
+        private void Button_Click_5(object sender, RoutedEventArgs e)
+        {
+            DevicesHandler.IsDrawerWaitScan[5] = true;
+            theModel.BrushDrawer[5] = Brushes.Cyan;
+        }
+        private void Button_Click_6(object sender, RoutedEventArgs e)
+        {
+            DevicesHandler.IsDrawerWaitScan[6] = true;
+            theModel.BrushDrawer[6] = Brushes.Cyan;
+        }
+        private void Button_Click_7(object sender, RoutedEventArgs e)
+        {
+            DevicesHandler.IsDrawerWaitScan[7] = true;
+            theModel.BrushDrawer[7] = Brushes.Cyan;
+        }
+    }       
 }

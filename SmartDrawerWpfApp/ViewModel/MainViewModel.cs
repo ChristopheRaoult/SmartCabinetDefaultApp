@@ -39,6 +39,7 @@ using SmartDrawerAdmin.ViewModel;
 using SmartDrawerDatabase;
 using System.Data.Entity;
 using System.Data.Entity.Validation;
+using System.Configuration;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -78,7 +79,8 @@ namespace SmartDrawerWpfApp.ViewModel
         private DispatcherTimer startTimer;
         private DispatcherTimer AutoConnectTimer;
         private DispatcherTimer AutoLockTimer;
-        private DispatcherTimer ScanTimer;     
+        private DispatcherTimer ScanTimer;
+        private DispatcherTimer SelectionLifeTimeTimer;
 
         private bool bLatchUnlocked = false;
         private int _autoLockCpt = 120;
@@ -510,6 +512,15 @@ namespace SmartDrawerWpfApp.ViewModel
                     txtDrawer = string.Empty;
                     txtDevice = string.Empty;
                     txtLastDate = string.Empty;
+
+                    SelectionLifeTimeTimer.IsEnabled = false;
+                    SelectionLifeTimeTimer.Stop();
+                }
+                else
+                {
+                    SelectionLifeTimeTimer.IsEnabled = true;
+                    SelectionLifeTimeTimer.Stop();
+                    SelectionLifeTimeTimer.Start();
                 }
 
                 RaisePropertyChanged("txtBarcode");
@@ -738,12 +749,12 @@ namespace SmartDrawerWpfApp.ViewModel
                 _IsFlyoutCassettePositionOpen = value;
                 RaisePropertyChanged("IsFlyoutCassettePositionOpen");
                 if (_IsFlyoutCassettePositionOpen == false)
-                {                    
+                {
                     if (!IsFlyoutCassetteInfoOpen)
                         cancelLighting();
                     SelectionSelected = null;
-                    SelectedCassette = null;                   
-                    bNeedUpdateCriteriaAfterScan = true;
+                    SelectedCassette = null;
+                    bNeedUpdateCriteriaAfterScan = true;                   
                 }
                 else
                 {
@@ -2252,7 +2263,7 @@ namespace SmartDrawerWpfApp.ViewModel
                         txtStatus = mySku.data.status;
                         txtRefNumber = mySku.data.refNumber;
                         txtTagId = mySku.data.rfidNumber;
-                        if (txtStatus == "Present")
+                        if (txtStatus == "Present" || txtStatus == "Added")
                         {
                             txtDevice = WallName;
                             txtDrawer = mySku.data.drawer;
@@ -2265,10 +2276,14 @@ namespace SmartDrawerWpfApp.ViewModel
                             txtLastDate = string.Empty;
                         }
                     }
+                    SelectionLifeTimeTimer.IsEnabled = true;
+                    SelectionLifeTimeTimer.Stop();
+                    SelectionLifeTimeTimer.Start();
                     LightBarcodeTag(txtTagId);
                 }
             } 
             mainview0.TxtBarcodeCtrl.SelectAll();
+            mainview0.TxtBarcodeCtrl.Focus();
         }
 
         void LightBarcodeTag(string tagId)
@@ -2383,13 +2398,16 @@ namespace SmartDrawerWpfApp.ViewModel
                     _previousSelectedCassettes = SelectedCassette;
                     TotalCassettesToPull = SelectedCassette.CassetteSelectionTotalNumber;
                     TotalCassettesPulled = 0;
-                    IsFlyoutCassettePositionOpen = true;
+                    IsFlyoutCassettePositionOpen = true;                   
+
                 }
                 else
                 {
                     IsFlyoutCassettePositionOpen = false;
                     _InLightProcess = false;
                 }
+               
+
             }
             catch (Exception error)
             {
@@ -2569,7 +2587,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 bNeedQuit = true;
                 await mainview0.ShowMessageAsync("Wall Information", "Wall not found in server or server not found - You have to go in admin mode to setup device");
-                SelectedTabIndex = 4;
+                SelectedTabIndex = 3;
             }
             else
             {
@@ -2631,6 +2649,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 WallName = Properties.Settings.Default.WallName;                    
                 InitValue();
                 CreateProcessWindow();
+               
 
                  ctx.Database.Connection.Close();
                  ctx.Dispose();
@@ -2646,7 +2665,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             AutoConnectTimer.IsEnabled = false;
 
-            dayDate = DateTime.Now.ToString("dddd, dd");
+            dayDate = DateTime.Now.ToString("dddd, dd MMMM yyyy");
             dayTime = DateTime.Now.ToString("hh:mm tt");
 
             RfidStatus = DevicesHandler.DevicesConnected;
@@ -2655,6 +2674,16 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 TimeSpan ts = DateTime.Now - DevicesHandler.LastScanTime;
                 LastScanInfo = string.Format("Last scan : {0} min(s) ago", (int)ts.TotalMinutes);
+
+                //todo 
+               if (ts.TotalSeconds > 3600) // no scan for one hour ; rerun it
+               {
+                    for (int loop = 1; loop <= DevicesHandler.NbDrawer; loop++)
+                    {
+                        if (DevicesHandler.DevicesConnected)
+                            DevicesHandler.IsDrawerWaitScan[loop] = true;                       
+                    }
+                }
             }
 
             // 2 drawers open not possible meaning power cut 
@@ -2777,9 +2806,9 @@ namespace SmartDrawerWpfApp.ViewModel
                     if (!Properties.Settings.Default.DoRecheck)
                     {
                       
-                        DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.InLight;
+                        DevicesHandler.DrawerStatus[_bckrecheckLightDrawer] = DrawerStatusList.ScanPending;
                         DrawerStatus[_bckrecheckLightDrawer] = DevicesHandler.DrawerStatus[_bckrecheckLightDrawer];
-                        BrushDrawer[_bckrecheckLightDrawer] = _borderReadyToPull;
+                        BrushDrawer[_bckrecheckLightDrawer] = BrushDrawer[_recheckLightDrawer] = _borderScanPending;
                         _recheckLightDrawer = -1;
 
                         DevicesHandler.IsDrawerWaitScan[_bckrecheckLightDrawer] = true;
@@ -2880,8 +2909,8 @@ namespace SmartDrawerWpfApp.ViewModel
 
                                    if (TotalCassettesPulled == TotalCassettesToPull)
                                    {
-                                       IsFlyoutCassetteInfoOpen = false;
-                                       IsFlyoutCassettePositionOpen = false;
+                                           IsFlyoutCassetteInfoOpen = false;
+                                           IsFlyoutCassettePositionOpen = false;                                       
                                    }
                                    DevicesHandler.StopLighting(_recheckLightDrawer);                                  
                                     _recheckLightDrawer = -1;
@@ -2904,6 +2933,18 @@ namespace SmartDrawerWpfApp.ViewModel
                                 if (SelectionSelected != null)
                                     SelectionSelected.lstTagpulled.Add(uid); 
                             }
+                        }
+                        else
+                        {
+                         await  mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                            {
+                                if ((SelectedTabIndex == 1) && (mainview0.tiBarcodeMode.Visibility == Visibility.Visible))
+                                {
+                                    //txtBarcode = string.Empty;
+                                    mainview0.TxtBarcodeCtrl.SelectAll();
+                                    mainview0.TxtBarcodeCtrl.Focus();
+                                }
+                            }));
                         }
 
                         /*****   Update API ****/
@@ -3059,6 +3100,15 @@ namespace SmartDrawerWpfApp.ViewModel
                         {
                             bNeedUpdateCriteria = false;
                             bNeedUpdateCriteriaAfterScan = true;
+                            await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
+                            {
+                                if ((SelectedTabIndex == 1) && (mainview0.tiBarcodeMode.Visibility == Visibility.Visible))
+                                {
+                                    //txtBarcode = string.Empty;
+                                    mainview0.TxtBarcodeCtrl.SelectAll();
+                                    mainview0.TxtBarcodeCtrl.Focus();
+                                }
+                            }));
                         }
                     }
                 }
@@ -3144,7 +3194,35 @@ namespace SmartDrawerWpfApp.ViewModel
                 ScanTimer.IsEnabled = true;
                 ScanTimer.Start();
             }
-        } 
+        }
+        private void SelectionLifeTimeTimer_Tick(object sender, EventArgs e)
+        {
+            if ((SelectedTabIndex == 1) && (mainview0.tiBarcodeMode.Visibility == Visibility.Visible))
+            {
+                SelectionLifeTimeTimer.IsEnabled = false;
+                SelectionLifeTimeTimer.Stop();
+                if ((SelectedCassette != null) && (SelectedCassette.ListControlNumber.Count > 0))
+                {
+
+                    cancelLighting();
+                    SelectionSelected = null;
+                    SelectedCassette = null;
+                }
+
+                txtStatus = string.Empty;
+                txtRefNumber = string.Empty;
+                txtTagId = string.Empty;
+                txtDrawer = string.Empty;
+                txtDevice = string.Empty;
+                txtLastDate = string.Empty;                 
+                   
+                txtBarcode = string.Empty;
+                mainview0.TxtBarcodeCtrl.SelectAll();
+                mainview0.TxtBarcodeCtrl.Focus();                 
+                
+            }
+        }
+
 
         #endregion
         #region Users
@@ -3561,7 +3639,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     {
                         DevicesHandler.IsDrawerWaitScan[e.DrawerId] = true;
                         DevicesHandler.DrawerStatus[e.DrawerId] = DrawerStatusList.ScanPending;
-                        BrushDrawer[e.DrawerId] = _borderScanPending;                      
+                        BrushDrawer[e.DrawerId] = _borderScanPending;
                         DrawerStatus[e.DrawerId] = DevicesHandler.DrawerStatus[e.DrawerId];
                     }
                 }
@@ -3582,6 +3660,13 @@ namespace SmartDrawerWpfApp.ViewModel
                         ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
                         ScanTimer.IsEnabled = true;
                         ScanTimer.Start();
+                    }
+
+                    if ((SelectedTabIndex == 1) && (mainview0.tiBarcodeMode.Visibility == Visibility.Visible))
+                    {
+                        SelectionLifeTimeTimer.IsEnabled = true;
+                        SelectionLifeTimeTimer.Stop();
+                        SelectionLifeTimeTimer.Start();
                     }
                 }
             }
@@ -3802,6 +3887,11 @@ namespace SmartDrawerWpfApp.ViewModel
                         ScanTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000);
                         ScanTimer.IsEnabled = true;
                         ScanTimer.Start();
+                    }
+                    if ((SelectedTabIndex == 1) && (mainview0.tiBarcodeMode.Visibility == Visibility.Visible))
+                    {
+                        SelectionLifeTimeTimer.IsEnabled = false;
+                        SelectionLifeTimeTimer.Stop();
                     }
                 }
             }
@@ -4239,14 +4329,16 @@ namespace SmartDrawerWpfApp.ViewModel
         {
 
             //reset properties
-             //Properties.Settings.Default.Reset();
+            //Properties.Settings.Default.Reset();
+
+            SelectedTabIndex = 1;
 
             if (Properties.Settings.Default.UpgradeRequired)
             {
                 Properties.Settings.Default.Upgrade();
                 Properties.Settings.Default.UpgradeRequired = false;
                 Properties.Settings.Default.Save();
-            }
+            }          
 
             // add custom accent and theme resource dictionaries to the ThemeManager
             // you should replace MahAppsMetroThemesSample with your application name
@@ -4440,7 +4532,7 @@ namespace SmartDrawerWpfApp.ViewModel
             GpioStatus = false;
             RfidStatus = false;
 
-            dayDate = DateTime.Now.ToString("dddd, dd");
+            dayDate = DateTime.Now.ToString("dddd, dd MMMM yyyy");
             dayTime = DateTime.Now.ToString("hh:mm tt");
             WallStatusOperational = "INITIALISATION";
 
@@ -4473,8 +4565,16 @@ namespace SmartDrawerWpfApp.ViewModel
             startTimer.Tick += StartTimer_Tick;
             startTimer.IsEnabled = true;
             startTimer.Start();
+
+            SelectionLifeTimeTimer = new DispatcherTimer();
+            SelectionLifeTimeTimer.Interval = new TimeSpan(0, 1, 0);
+            SelectionLifeTimeTimer.Tick += SelectionLifeTimeTimer_Tick;
+            SelectionLifeTimeTimer.IsEnabled = false;
+            SelectionLifeTimeTimer.Stop();
+
         }
 
+     
         #endregion
     }
     public class DateTimeToShortDateConverter : IValueConverter
