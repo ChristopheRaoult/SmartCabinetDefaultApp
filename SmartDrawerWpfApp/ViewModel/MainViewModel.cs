@@ -1,3 +1,5 @@
+#define IsTiffany
+
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
 using MahApps.Metro.Controls.Dialogs;
@@ -41,6 +43,8 @@ using System.Data.Entity;
 using System.Data.Entity.Validation;
 using System.Configuration;
 
+
+
 namespace SmartDrawerWpfApp.ViewModel
 {
     /// <summary>
@@ -57,6 +61,8 @@ namespace SmartDrawerWpfApp.ViewModel
     /// </summary>
     public class MainViewModel : ViewModelBase
     {
+
+
         #region Constant
         Brush _borderInScan = new SolidColorBrush(Color.FromRgb(0xF5, 0xA6, 0x23));
         Brush _borderDrawerOpen = Brushes.Green;
@@ -1005,7 +1011,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 await mainview0.Dispatcher.BeginInvoke(new System.Action(() =>
                 {
-                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Populate Device");
+                    ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Populate Users");
                     exp.ShowDialog();
                 }));
             }
@@ -1161,8 +1167,6 @@ namespace SmartDrawerWpfApp.ViewModel
         }
 
         #endregion
-
-
         #region Info window
         private void CreateProcessWindow()
         {
@@ -1197,8 +1201,6 @@ namespace SmartDrawerWpfApp.ViewModel
             });
         }
         #endregion
-
-
         #region Datagrid
 
         private ObservableCollection<BaseObject> _data = new ObservableCollection<BaseObject>();
@@ -1285,7 +1287,6 @@ namespace SmartDrawerWpfApp.ViewModel
                                    Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
                                    Data.Add(new BaseObject(tmpProd, entry.Value));
                                }
-
                            }
                            ctx.Database.Connection.Close();
                            ctx.Dispose();
@@ -1607,6 +1608,7 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         public async void getSelection()
         {         
+            
 
             CassettesSelection tmpCassette = new CassettesSelection();
             tmpCassette.CassetteDrawer1Number = String.Empty;
@@ -1641,6 +1643,10 @@ namespace SmartDrawerWpfApp.ViewModel
 
                 Selection.Clear();
                 getCriteria();
+
+                #if (IsTiffany)
+                #else
+
                 /* Get Selection from API */
                 LogToFile.LogMessageToFile("------- Start Getting Selection --------");
                 bool gotSel = await ProcessSelectionFromServer.GetAndStoreSelectionAsync();
@@ -1728,6 +1734,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
 
                 }
+                #endif
             }
             catch { }
             finally
@@ -2530,8 +2537,8 @@ namespace SmartDrawerWpfApp.ViewModel
             }));
         }
 
-        #endregion
-        #region timer
+#endregion
+#region timer
         private async void StartTimer_Tick(object sender, EventArgs e)
         {
 
@@ -2570,14 +2577,14 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 bNeedQuit = true;
                 await mainview0.ShowMessageAsync("Device Information", "No Server IP define! \r\n Please Configure Server!");
-                SelectedTabIndex = 3;
+                SelectedTabIndex = 4;
             }
 
             if ((string.IsNullOrEmpty (Properties.Settings.Default.WallSerial)) || (string.IsNullOrEmpty(Properties.Settings.Default.WallName)))
             {
                 bNeedQuit = true;
                 await mainview0.ShowMessageAsync("Wall Information", "Wall Not define in app! \r\n Please Add device ");
-                SelectedTabIndex = 3;           
+                SelectedTabIndex = 4;           
             }
 
             if (bNeedQuit) return;
@@ -2587,7 +2594,7 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 bNeedQuit = true;
                 await mainview0.ShowMessageAsync("Wall Information", "Wall not found in server or server not found - You have to go in admin mode to setup device");
-                SelectedTabIndex = 3;
+                SelectedTabIndex = 4;
             }
             else
             {
@@ -2753,7 +2760,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     ScanTimer.IsEnabled = false;
                     ScanTimer.Stop();
 
-                    #region status
+#region status
 
                     if (!RfidStatus)
                     {
@@ -2786,20 +2793,16 @@ namespace SmartDrawerWpfApp.ViewModel
                         WallStatusOperational = "OPERATIONAL";
                     }
 
-                #endregion
-
-               
-
-
-                    #region stop scan
+#endregion
+#region stop scan
                     if (_bStopWall)
                     {
                         _bStopWall = false;
                         if (IsWallInScan())
                             StopWallScan();
                     }
-                    #endregion
-                    #region Recheck light
+#endregion
+#region Recheck light
                     else if ((_recheckLightDrawer != -1) && (_lightDrawer == -1))
                     {
                     int _bckrecheckLightDrawer = _recheckLightDrawer;
@@ -2971,8 +2974,8 @@ namespace SmartDrawerWpfApp.ViewModel
                         { }
                     }
                     }
-                    #endregion
-                    #region Light
+#endregion
+#region Light
                     else if ((_lightDrawer != -1) && (_recheckLightDrawer == -1))
                     {
                         IsInPutItemFastMode = false;
@@ -3047,8 +3050,8 @@ namespace SmartDrawerWpfApp.ViewModel
                         }
 
                     }
-                    #endregion
-                    #region AutoLight Open drawer
+#endregion
+#region AutoLight Open drawer
                     else if ((IsAutoLightDrawerChecked) && (_autoLightDrawer != -1))
                     {
                         int bckDrawer = _autoLightDrawer;
@@ -3057,24 +3060,26 @@ namespace SmartDrawerWpfApp.ViewModel
                         DevicesHandler.LightAll(bckDrawer);
                         DevicesHandler.Device.LEdOnAll(1, 0, false);
                     }
-                #endregion
-                #region Update selection
+#endregion
+#region Update selection
                 else if (bNeedUpdateCriteriaAfterScan)
                     {
                         //Wait end of light process or recheck  
                         if ((SelectionSelected == null) &&(!IsWallInScan()) && (!InLightOrRecheckprocess) && (_recheckLightDrawer == -1) && (_lightDrawer == -1))
                         {
+                            //comment for tiffany
                             getSelection();
                             bNeedUpdateCriteriaAfterScan = false;
                         }
                         else if (IsInPutItemFastMode)
                         {
+                            //Comment for tiffany
                             getSelection();
                             bNeedUpdateCriteriaAfterScan = false;
                         }
                     }
-                #endregion
-                #region scan
+#endregion
+#region scan
                 else if (!IsInPutItemFastMode  && IsWallReady())
                 //else if ((!IsFlyoutCassettePositionOpen) && (IsWallReady()))
                 {
@@ -3112,7 +3117,7 @@ namespace SmartDrawerWpfApp.ViewModel
                         }
                     }
                 }
-                #endregion                                  
+#endregion
             }
             catch (IndexOutOfRangeException err)
             {
@@ -3224,8 +3229,8 @@ namespace SmartDrawerWpfApp.ViewModel
         }
 
 
-        #endregion
-        #region Users
+#endregion
+#region Users
         private async  void  refreshUserFromServer()
         {
             bool gotUsers = false;
@@ -3242,8 +3247,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 }));               
             }            
         }
-        #endregion
-        #region WCF Service
+#endregion
+#region WCF Service
         private ServiceHost host = null;
         SslWallNotificationService WallService = new SslWallNotificationService();
         // WebHttpBinding webBinding;
@@ -3362,8 +3367,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 File.AppendAllText(@"c:/temp/WallPanelLog/logService.txt", exp.Message + "\r\n");
             }
         }
-        #endregion
-        #region Device
+#endregion
+#region Device
 
         int  CptErrorRfid = 0;
 
@@ -4234,8 +4239,8 @@ namespace SmartDrawerWpfApp.ViewModel
                 }));
             }
         }
-        #endregion
-        #region Function
+#endregion
+#region Function
 
         private void ReadDrawerDescription()
         {
@@ -4331,7 +4336,15 @@ namespace SmartDrawerWpfApp.ViewModel
             //reset properties
             //Properties.Settings.Default.Reset();
 
-            SelectedTabIndex = 1;
+#if (IsTiffany)
+{
+    SelectedTabIndex = 1;
+}
+#else
+{
+    SelectedTabIndex = 0;
+}
+#endif
 
             if (Properties.Settings.Default.UpgradeRequired)
             {
@@ -4358,9 +4371,9 @@ namespace SmartDrawerWpfApp.ViewModel
             mainview0.Loaded += Mainview0_Loaded;
             mainview0.NotifyBadgeReaderEvent += Mainview0_NotifyBadgeReaderEvent;
             mainview0.NotifyM2MCardEvent += Mainview0_NotifyM2MCardEvent;
-            mainview0.theModel = this;
+            mainview0.theModel = this;           
 
-            #region Initialize command
+#region Initialize command
             ResetDeviceCommand = new RelayCommand(() => Reset(true));
             btSettingCommand = new RelayCommand(() => Settings());
             btLightFilteredTag = new RelayCommand(() => LightFilteredTag());
@@ -4385,7 +4398,7 @@ namespace SmartDrawerWpfApp.ViewModel
             btDeleteUser = new RelayCommand(() => DeleteUser());
             btEnrollUser = new RelayCommand(() => EnrollUser());
 
-            #endregion
+#endregion
         }
         private void Mainview0_NotifyM2MCardEvent(object sender, string CardID)
         {
@@ -4397,53 +4410,65 @@ namespace SmartDrawerWpfApp.ViewModel
             LastScanInfo = "Badge: " + badgeID; 
             AutoConnectTimer.Stop();
             AutoConnectTimer.Start();
-            foreach (var user in GrantedUsersCache.Cache)
+
+            if (SelectedTabIndex == 4) //in admin mode
             {
-                if (badgeID == user.BadgeNumber)
+                if (EditedUser != null)
                 {
-                    
-                    wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
-                    LoggedUser = user.Login;
-                    btUserVisibility = Visibility.Visible;
-                    var ctx = RemoteDatabase.GetDbContext();
-                    DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
-                    ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
-                    ctx.SaveChanges();
-                    GrantedUsersCache.LastAuthenticatedUser = user;
-                    DevicesHandler.UnlockWall();
-                    AutoLockMsg = "Logout";
-                    bLatchUnlocked = true;
-                    _autoLockCpt = 120;
-                    ctx.Database.Connection.Close();
-                    ctx.Dispose();
-                    return;
+                    EditedUser.BadgeId = badgeID;
+                    RaisePropertyChanged(() => EditedUser);
                 }
             }
-            // If here user not found
-            GrantedUsersCache.Reload();
-            //Try redo with updated info
-            foreach (var user in GrantedUsersCache.Cache)
+            else
             {
-                if (badgeID == user.BadgeNumber)
+                foreach (var user in GrantedUsersCache.Cache)
                 {
-                    wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
-                    LoggedUser = user.Login;
-                    btUserVisibility = Visibility.Visible;
-                    var ctx = RemoteDatabase.GetDbContext();
-                    DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
-                    ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
-                    ctx.SaveChanges();
-                    GrantedUsersCache.LastAuthenticatedUser = user;
-                    DevicesHandler.UnlockWall();
-                    AutoLockMsg = "Logout";
-                    bLatchUnlocked = true;
-                    _autoLockCpt = 120;
-                    ctx.Database.Connection.Close();
-                    ctx.Dispose();
-                    return;
+                    if (badgeID == user.BadgeNumber)
+                    {
+
+                        wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
+                        LoggedUser = user.Login;
+                        btUserVisibility = Visibility.Visible;
+                        var ctx = RemoteDatabase.GetDbContext();
+                        DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
+                        ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
+                        ctx.SaveChanges();
+                        GrantedUsersCache.LastAuthenticatedUser = user;
+                        DevicesHandler.UnlockWall();
+                        AutoLockMsg = "Logout";
+                        bLatchUnlocked = true;
+                        _autoLockCpt = 120;
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+                        return;
+                    }
                 }
+                // If here user not found
+                GrantedUsersCache.Reload();
+                //Try redo with updated info
+                foreach (var user in GrantedUsersCache.Cache)
+                {
+                    if (badgeID == user.BadgeNumber)
+                    {
+                        wallStatus = "Drawer Unlock : Hello " + user.FirstName + " " + user.LastName;
+                        LoggedUser = user.Login;
+                        btUserVisibility = Visibility.Visible;
+                        var ctx = RemoteDatabase.GetDbContext();
+                        DevicesHandler.LastScanAccessTypeName = AccessType.Badge;
+                        ctx.Authentications.Add(new Authentication { GrantedUserId = user.GrantedUserId, DeviceId = DevicesHandler.GetDeviceEntity().DeviceId, AuthentificationDate = DateTime.Now });
+                        ctx.SaveChanges();
+                        GrantedUsersCache.LastAuthenticatedUser = user;
+                        DevicesHandler.UnlockWall();
+                        AutoLockMsg = "Logout";
+                        bLatchUnlocked = true;
+                        _autoLockCpt = 120;
+                        ctx.Database.Connection.Close();
+                        ctx.Dispose();
+                        return;
+                    }
+                }
+                wallStatus = "No Granted User with badge " + badgeID;
             }
-            wallStatus = "No Granted User with badge " + badgeID;
         }
         private void DevicesHandler_FpAuthenticationReceive(object sender, SecurityModules.FingerprintReader.FingerprintReaderEventArgs args)
         {
@@ -4524,6 +4549,25 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void Mainview0_Loaded(object sender, RoutedEventArgs e)
         {
+#if (IsTiffany)
+            {
+                mainview0.tiAdminMode.Visibility = Visibility.Visible;
+                mainview0.tiBarcodeMode.Visibility = Visibility.Visible;
+                mainview0.tiDrawerMode.Visibility = Visibility.Collapsed;
+                mainview0.tiSelectionMode.Visibility = Visibility.Collapsed;
+                mainview0.tiInventoryMode.Visibility = Visibility.Collapsed;
+            }
+#else
+            {
+                mainview0.tiAdminMode.Visibility = Visibility.Visible;
+                mainview0.tiBarcodeMode.Visibility = Visibility.Collapsed;
+                mainview0.tiDrawerMode.Visibility = Visibility.Collapsed;
+                mainview0.tiSelectionMode.Visibility = Visibility.Visible;
+                mainview0.tiInventoryMode.Visibility = Visibility.Collapsed;
+            }
+#endif
+
+
             btUserVisibility = Visibility.Collapsed;
             btAdminVisibility = Visibility.Hidden;
             isAdmin = false;
@@ -4575,7 +4619,7 @@ namespace SmartDrawerWpfApp.ViewModel
         }
 
      
-        #endregion
+#endregion
     }
     public class DateTimeToShortDateConverter : IValueConverter
     {
