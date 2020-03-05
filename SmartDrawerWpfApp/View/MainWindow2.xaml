@@ -468,7 +468,7 @@
                                   Width="500"  Height="70"
                                   VerticalAlignment="Top" 
                                   HorizontalAlignment="Center"  VerticalContentAlignment="Center"  Focusable="True" IsEnabled="true"  FontSize="35"  MaxLength="15" 
-                                  Controls:TextBoxHelper.Watermark="Enter Working Order" Controls:TextBoxHelper.ClearTextButton="True" AcceptsReturn="True"  >
+                                  Controls:TextBoxHelper.Watermark="Scan/ Enter Reference No." Controls:TextBoxHelper.ClearTextButton="True" AcceptsReturn="True"  >
                         <TextBox.InputBindings>
                             <KeyBinding Key="Enter" Command="{Binding searchTxtBarcodeCR}"/>
                         </TextBox.InputBindings>
@@ -746,9 +746,9 @@
                             <TextBlock Grid.Row="2" Grid.Column="0" Text="Device Serial :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
                             <TextBox x:Name="tb_WallSerial" Grid.Row="2" Grid.Column="1"  Margin="10" Text="{Binding WallSerial , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" IsReadOnly="True"/>
                             <TextBlock Grid.Row="3" Grid.Column="0" Text="Device Name :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
-                            <TextBox Grid.Row="3" Grid.Column="1"  Margin="10" Text="{Binding WallName , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="3" Grid.Column="1"  Margin="10" Text="{Binding WallName , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" MaxLength="20" />
                             <TextBlock Grid.Row="4" Grid.Column="0" Text="Device location :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
-                            <TextBox Grid.Row="4" Grid.Column="1"  Margin="10" Text="{Binding WallLocation , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
+                            <TextBox Grid.Row="4" Grid.Column="1"  Margin="10" Text="{Binding WallLocation , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" MaxLength="20"/>
                             <TextBlock Grid.Row="5" Grid.Column="0" Text="Server Notification IP :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
                             <TextBox Grid.Row="5" Grid.Column="1"  Margin="10" Text="{Binding NotificationIp , Mode=TwoWay}" FontSize="20" FontWeight="Bold" VerticalAlignment="Center" />
                             <TextBlock Grid.Row="6" Grid.Column="0" Text="Server Notification Port :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="20"/>
