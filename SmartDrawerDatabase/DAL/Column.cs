@@ -17,5 +17,7 @@ namespace SmartDrawerDatabase.DAL
         [Required]
         [StringLength(20)]
         public string ColumnName { get; set; }
+        [Required]
+        public int ColumnSize { get; set; }
     }
 }

@@ -51,6 +51,7 @@
     <Compile Include="DAL\AccessTypeExtension.cs" />
     <Compile Include="DAL\Authentication.cs" />
     <Compile Include="DAL\Column.cs" />
+    <Compile Include="DAL\Configuration.cs" />
     <Compile Include="DAL\Device.cs" />
     <Compile Include="DAL\DeviceExtension.cs" />
     <Compile Include="DAL\DeviceType.cs" />

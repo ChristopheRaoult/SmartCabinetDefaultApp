@@ -19,6 +19,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using static SmartDrawerWpfApp.ViewModel.MainViewModel;
 
 namespace SmartDrawerWpfApp.View
 {
@@ -29,7 +30,7 @@ namespace SmartDrawerWpfApp.View
     public delegate void NotifyHandlerM2MCardDelegate(Object sender, string cardID);
     public partial class MainWindow2 : MetroWindow
     {
-        public ObservableCollection<BaseObject> Data;
+       // public ObservableCollection<BaseObject> Data;
         public event NotifyHandlerBadgeReaderDelegate NotifyBadgeReaderEvent;
         public event NotifyHandlerBadgeReaderDelegate NotifyM2MCardEvent;
         public MainViewModel theModel = null;
@@ -233,5 +234,31 @@ namespace SmartDrawerWpfApp.View
             DevicesHandler.IsDrawerWaitScan[7] = true;
             theModel.BrushDrawer[7] = Brushes.Cyan;
         }
+
+        private async void dataGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var ctx = await RemoteDatabase.GetDbContextAsync();
+
+                if (ctx.Columns != null && ctx.Columns.Count() > 0)
+                {
+                    foreach (Column col in ctx.Columns)
+                    {
+                        myDatagrid.Columns[col.ColumnIndex].IsHidden = false;
+                        myDatagrid.Columns[col.ColumnIndex].HeaderText = col.ColumnName;
+                    }
+                }
+                //myDatagrid.Columns["Drawer"].IsHidden = false;
+                ctx.Database.Connection.Close();
+                ctx.Dispose();
+            }
+            catch (Exception err)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(err, "Error Datagrid loaded main window");
+                exp.ShowDialog();
+            }
+        }     
+
     }       
 }

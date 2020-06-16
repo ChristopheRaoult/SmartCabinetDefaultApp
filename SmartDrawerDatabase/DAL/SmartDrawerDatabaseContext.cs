@@ -88,6 +88,7 @@ namespace SmartDrawerDatabase.DAL
         public virtual DbSet<PullItem> PullItems { get; set; }
         public virtual DbSet<PullItemDetail> PullItemsDetails { get; set; }
         public virtual DbSet<EventDrawerDetail> EventDrawerDetails { get; set; }
+        public virtual DbSet<Configuration> Configurations { get; set; }
 
     }
 }

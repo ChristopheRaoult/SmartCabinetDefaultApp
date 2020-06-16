@@ -250,7 +250,7 @@ namespace SmartDrawerWpfApp.Wcf
                     if ((mylist != null) && (mylist.Count > 0))
                     {                      
                         mainview0.myDatagrid.SelectedItems.Clear();
-                        if (mainview0.Data != null && mainview0.Data.Count > 0)
+                        if (mainview0.theModel.TagDetails != null && mainview0.theModel.TagDetails.Count > 0)
                         {
                             var watch = System.Diagnostics.Stopwatch.StartNew();
                             foreach (string uid in mylist)

@@ -6,7 +6,7 @@
       <Value Profile="(Default)">127.0.0.1</Value>
     </Setting>
     <Setting Name="DbName" Type="System.String" Scope="User">
-      <Value Profile="(Default)">SmartDrawerDB</Value>
+      <Value Profile="(Default)">SmartDrawerDBWithIC</Value>
     </Setting>
     <Setting Name="DbLogin" Type="System.String" Scope="User">
       <Value Profile="(Default)">sa</Value>

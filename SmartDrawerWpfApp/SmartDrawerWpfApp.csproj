@@ -200,6 +200,20 @@
     <Compile Include="FingerPrint\EnrollFingersForm.designer.cs">
       <DependentUpon>EnrollFingersForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="InfinityService\AlertInfo.cs" />
+    <Compile Include="InfinityService\DiamondMatchSelectionInfo.cs" />
+    <Compile Include="InfinityService\EventInfo.cs" />
+    <Compile Include="InfinityService\InfinityServiceHandler.cs" />
+    <Compile Include="InfinityService\InTransitInfo.cs" />
+    <Compile Include="InfinityService\PostGuidInfo.cs" />
+    <Compile Include="InfinityService\PostLedInfo.cs" />
+    <Compile Include="InfinityService\ReaderStonesInfo.cs" />
+    <Compile Include="InfinityService\RemoteUserInfo.cs" />
+    <Compile Include="InfinityService\RemoveSelectionInfo.cs" />
+    <Compile Include="InfinityService\ReturnInfo.cs" />
+    <Compile Include="InfinityService\SelectionInfo.cs" />
+    <Compile Include="InfinityService\StoneInfo.cs" />
+    <Compile Include="InfinityService\UserInfo.cs" />
     <Compile Include="Model\BaseObject.cs" />
     <Compile Include="Model\CassettesSelection.cs" />
     <Compile Include="Model\DeviceModel\DevicesHandler.cs" />

@@ -32,7 +32,7 @@ namespace SmartDrawerWpfApp
     public delegate void NotifyHandlerM2MCardDelegate(Object sender, string cardID);
     public partial class MainWindow : MetroWindow
     {
-        public ObservableCollection<BaseObject> Data;
+        //public ObservableCollection<BaseObject> Data;
         public event NotifyHandlerBadgeReaderDelegate NotifyBadgeReaderEvent;
         public event NotifyHandlerBadgeReaderDelegate NotifyM2MCardEvent;
         public MainViewModel theModel = null;

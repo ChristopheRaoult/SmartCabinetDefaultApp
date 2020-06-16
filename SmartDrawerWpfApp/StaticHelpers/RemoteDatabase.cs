@@ -98,8 +98,9 @@ namespace SmartDrawerWpfApp.StaticHelpers
                 return dbContext;
             }
 
-            catch (SqlException)
+            catch (SqlException sqle)
             {
+                string sqlerror = sqle.Message;
                 // connection to remote database failed (OpenAsync() raised an SqlException)
                 return null;
             }

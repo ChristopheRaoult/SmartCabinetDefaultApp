@@ -1,4 +1,5 @@
-#define IsTiffany
+//#define IsTiffany
+#define UseInfinity
 
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
@@ -42,8 +43,7 @@ using SmartDrawerDatabase;
 using System.Data.Entity;
 using System.Data.Entity.Validation;
 using System.Configuration;
-
-
+using SmartDrawerWpfApp.InfinityService;
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -87,6 +87,17 @@ namespace SmartDrawerWpfApp.ViewModel
         private DispatcherTimer AutoLockTimer;
         private DispatcherTimer ScanTimer;
         private DispatcherTimer SelectionLifeTimeTimer;
+        private DispatcherTimer InfinityTimer;
+
+
+        private string InfinityServerUrl;
+        private string InfinityServerToken;
+        private int AutoScanTimerValue = 0;
+        private int DoorOpenTooLongTimerValue = 180;
+        public bool IsClosingBusiness = false;
+        public bool IsOpeningBusiness = false;
+        public bool IsClosingCompleted = false;
+        private bool bFirstScan = false;
 
         private bool bLatchUnlocked = false;
         private int _autoLockCpt = 120;
@@ -107,7 +118,7 @@ namespace SmartDrawerWpfApp.ViewModel
         volatile TagFromTxtBox tagOnBadDrawer = new TagFromTxtBox();
         private bool bWasInAutoLight = false;
 
-        private List<BaseObject> _SelectedBaseObjects;
+        private List<ItemDetail> _SelectedBaseObjects;
 
         private DateTime LastDeviceActionTime;
 
@@ -929,6 +940,43 @@ namespace SmartDrawerWpfApp.ViewModel
         private bool FastModeContinuousReading = false;
 
         #endregion
+        #region Config
+        private bool getInfinityUrl()
+        {
+            try
+            {
+                using (var ctx = RemoteDatabase.GetDbContext())
+                {
+                    InfinityServerUrl = ctx.Configurations.Where(c => c.Parameter == "RemoteServerUrl").SingleOrDefault().Value;
+                    InfinityServerToken = ctx.Configurations.Where(c => c.Parameter == "Token").SingleOrDefault().Value;
+                    return true;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    ExceptionMessageBox msg = new ExceptionMessageBox(ex, "Error getting Configuration ");
+                    msg.Show();
+                    return false;
+                });
+            }
+            return false;
+        }
+        private void getScanTimerValue()
+        {
+            using (var ctx = RemoteDatabase.GetDbContext())
+            {
+                string val = ctx.Configurations.Where(c => c.Parameter == "AutoScanTime").SingleOrDefault().Value;
+                int.TryParse(val, out AutoScanTimerValue);
+
+                string val2 = ctx.Configurations.Where(c => c.Parameter == "DoorOpenTooLong").SingleOrDefault().Value;
+                int.TryParse(val2, out DoorOpenTooLongTimerValue);
+            }
+        }
+        #endregion
+
         #region admin
         public bool isAdmin = false;
         Visibility _btAdminVisibility;
@@ -1203,16 +1251,40 @@ namespace SmartDrawerWpfApp.ViewModel
         #endregion
         #region Datagrid
 
-        private ObservableCollection<BaseObject> _data = new ObservableCollection<BaseObject>();
-        public ObservableCollection<BaseObject> Data
+
+        private ObservableCollection<ItemDetail> _TagDetails;
+        public ObservableCollection<ItemDetail> TagDetails
         {
-            get { return _data; }
+            get { return _TagDetails; }
             set
             {
-                _data = value;
-                RaisePropertyChanged(() => Data);
+                _TagDetails = value;
+                RaisePropertyChanged(() => TagDetails);
             }
         }
+        private ItemDetail _ItemSelected;
+        public ItemDetail ItemSelected
+        {
+            get { return _ItemSelected; }
+            set
+            {
+                _ItemSelected = value;
+                if (_ItemSelected != null)
+                {
+                    foreach (var item in TagDetails)
+                    {
+                        if (item.TagId == _ItemSelected.TagId)
+                        {
+                            item.IsSelected = !item.IsSelected;
+                            break;
+                        }
+                    }
+                }
+
+                RaisePropertyChanged(() => ItemSelected);
+            }
+        }
+
         private ObservableCollection<object> _selectedItems = new ObservableCollection<object>();
         public ObservableCollection<object> SelectedItems
         {
@@ -1237,6 +1309,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
             }
         }
+
         DataTable _sourceTable;
         public DataTable SourceTable
         {
@@ -1251,89 +1324,209 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         private static Object thisLock = new Object();
-        public async void getCriteria()
+
+
+        public async void getStoneData()
         {
             //var myConTroller = await mainview0.ShowProgressAsync("Please wait", "Retrieving information from Database",true);
-           // WaitHandler wh = null;
+            WaitHandler wh = null;
             try
             {
-
-                /*wh = new WaitHandler();
+                wh = new WaitHandler();
                 wh.Msg = "Retrieving information from Database";
-                wh.Start();*/
-                ShowProcessWindow("Retrieving information from Database");
+                wh.Start();
 
                 //myConTroller.SetIndeterminate();
                 await Task.Run(() =>
-               {                  
-                   lock (thisLock)
-                   {
-                       Data.Clear();
-                       var ctx = RemoteDatabase.GetDbContext();
-                       int nbCol = ctx.Columns.Count();
-
-                       if (nbCol > 1)
-                       {
-                           foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
-                           {
-                               RfidTag tag = ctx.RfidTags.AddIfNotExisting(entry.Key);
-                               Product pct = ctx.Products.GetByTagUid(entry.Key);
-                               if (pct != null)
-                               {
-                                   Data.Add(new BaseObject(pct, entry.Value));
-                               }
-                               else
-                               {
-                                   Product tmpProd = new Product() { RfidTag = tag, ProductInfo0 = "Unreferenced" };
-                                   Data.Add(new BaseObject(tmpProd, entry.Value));
-                               }
-                           }
-                           ctx.Database.Connection.Close();
-                           ctx.Dispose();
-                       }
-                       else //Only one column , as just tagUID no need to search in DB
-                       {
-                           foreach (KeyValuePair<string, int> entry in DevicesHandler.ListTagPerDrawer)
-                           {
-                               RfidTag tag = new RfidTag() { TagUid = entry.Key };
-                               Product tmpProd = new Product() { RfidTag = tag };
-                               Data.Add(new BaseObject(tmpProd, entry.Value));
-                           }
-                       }
-                       
-
-                       if (Data.Count != 0)
-                           SourceTable = PopulateDataGrid(Data);
-                       else
-                           SourceTable = null;
-                     
-                   }
-
-               });
-                mainview0.Data = Data;
-                mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
-                /*try
                 {
-                    if ((myConTroller != null) && (myConTroller.IsOpen))
+                    lock (thisLock)
                     {
-                        await myConTroller.CloseAsync(); 
+                        using (var ctx = RemoteDatabase.GetDbContext())
+                        {
+                            int nbCol = ctx.Columns.Count();
+                            List<ItemDetail> lstDetails = new List<ItemDetail>();
+                            if (nbCol > 1)
+                            {
+                               
+                                UnknownTags = new Dictionary<string, int>();
+                                List<string> lstUnreferencedTag = new List<string>();
+
+                                Dictionary<string, int> CopyDic = new Dictionary<string, int>(DevicesHandler.ListTagPerDrawer);
+                                if (CopyDic != null)
+                                    foreach (KeyValuePair<string, int> entry in CopyDic)
+                                    {
+                                        Product p = ctx.Products.Where(po => po.RfidTag.TagUid == entry.Key).Include(po => po.RfidTag).FirstOrDefault();
+                                        if (p != null)
+                                        {
+                                            if (p.ProductInfo0 != "Unreferenced")
+                                            {
+                                                ItemDetail id = new ItemDetail()
+                                                {
+                                                    IsEnabled = Visibility.Visible,
+                                                    TagId = p.RfidTag.TagUid,
+                                                    DrawerId = entry.Value,
+                                                    valColumn1 = p.ProductInfo0,
+                                                    valColumn2 = p.ProductInfo1,
+                                                    valColumn3 = p.ProductInfo2,
+                                                    valColumn4 = p.ProductInfo3,
+                                                    valColumn5 = p.ProductInfo4,
+                                                    valColumn6 = p.ProductInfo5,
+                                                    valColumn7 = entry.Value.ToString(),
+                                                    valColumn8 = p.ProductInfo7,
+                                                    valColumn9 = p.ProductInfo8,
+                                                };
+                                                lstDetails.Add(id);
+                                            }
+                                            else
+                                            {
+                                                UnknownTags.Add(entry.Key, entry.Value);
+                                            }
+                                        }
+                                        else
+                                        {
+                                            UnknownTags.Add(entry.Key, entry.Value);
+                                        }
+                                    }
+                                // try to get Uknown stones
+                                if (UnknownTags.Count > 0)
+                                {
+
+                                    if (NetworkStatus)
+                                    {
+                                        List<string> TagListToSearch = new List<string>(this.UnknownTags.Keys);
+                                        var result = InfinityServiceHandler.GetStonesByList(InfinityServerUrl, InfinityServerToken, WallSerial, TagListToSearch);
+                                        if (result.Result)
+                                        {
+                                            foreach (KeyValuePair<string, int> Tag in UnknownTags)
+                                            {
+                                                StoneInfo si = GetStoneInfo(Tag.Key);
+                                                if (si != null)
+                                                {
+                                                    ItemDetail id = new ItemDetail()
+                                                    {
+                                                        IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                                        TagId = Tag.Key,
+                                                        DrawerId = Tag.Value,
+                                                        ItemEventType = Tag.Value,
+                                                        valColumn1 = si.report_number,
+                                                        valColumn2 = si.carat_weight,
+                                                        valColumn3 = si.shape,
+                                                        valColumn4 = si.color,
+                                                        valColumn5 = si.clarity,
+                                                        valColumn6 = si.cut,
+                                                        valColumn7 = Tag.Value.ToString(),
+                                                        valColumn8 = null,
+                                                        valColumn9 = null,
+                                                    };
+                                                    lstDetails.Add(id);
+                                                }
+                                                else //pierre non trouvée - cree une unreferenced
+                                                {
+                                                    ItemDetail id = new ItemDetail()
+                                                    {
+                                                        IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                                        TagId = Tag.Key,
+                                                        DrawerId = Tag.Value,
+                                                        ItemEventType = Tag.Value,
+                                                        valColumn1 = "Unreferenced",
+                                                        valColumn2 = null,
+                                                        valColumn3 = null,
+                                                        valColumn4 = null,
+                                                        valColumn5 = null,
+                                                        valColumn6 = null,
+                                                        valColumn7 = Tag.Value.ToString(),
+                                                        valColumn8 = null,
+                                                        valColumn9 = null,
+                                                    };
+                                                    lstDetails.Add(id);
+                                                    lstUnreferencedTag.Add(Tag.Key);
+                                                }
+                                            }
+                                        }
+                                        else //error from serveur
+                                        {
+                                            foreach (KeyValuePair<string, int> Tag in UnknownTags)
+                                            {
+                                                ItemDetail id = new ItemDetail()
+                                                {
+                                                    IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                                    TagId = Tag.Key,
+                                                    DrawerId = Tag.Value,
+                                                    ItemEventType = Tag.Value,
+                                                    valColumn1 = "Unreferenced",
+                                                    valColumn2 = null,
+                                                    valColumn3 = null,
+                                                    valColumn4 = null,
+                                                    valColumn5 = null,
+                                                    valColumn6 = null,
+                                                    valColumn7 = Tag.Value.ToString(),
+                                                    valColumn8 = null,
+                                                    valColumn9 = null,
+                                                };
+                                                lstDetails.Add(id);
+                                                if (Tag.Value == 1) //notifie que les ajouts
+                                                    lstUnreferencedTag.Add(Tag.Key);
+                                            }
+                                        }
+                                        // Run thread to add it in db
+                                        ProcessNewStone(TagListToSearch);
+
+                                        if (lstUnreferencedTag.Count > 0)
+                                            if (GrantedUsersCache.LastAuthenticatedUser != null)
+                                                ProcessUnreferencedStones(lstUnreferencedTag, GrantedUsersCache.LastAuthenticatedUser.FirstName, GrantedUsersCache.LastAuthenticatedUser.LastName);
+                                            else
+                                                ProcessUnreferencedStones(lstUnreferencedTag, null, null);
+                                    }
+                                    else
+                                    {
+
+                                        LogToFile.LogMessageToFile("------- Quit Get Stone data - no Network  --------");
+
+                                    }
+                                }
+                               
+                            }
+                            else
+                            {
+                                foreach (KeyValuePair<string, int> Tag in DevicesHandler.ListTagPerDrawer)
+                                {                                   
+
+                                    ItemDetail id = new ItemDetail()
+                                    {
+                                        IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                        TagId = Tag.Key,
+                                        DrawerId = Tag.Value,
+                                        ItemEventType = Tag.Value,
+                                        valColumn1 = "Unreferenced",
+                                        valColumn2 = null,
+                                        valColumn3 = null,
+                                        valColumn4 = null,
+                                        valColumn5 = null,
+                                        valColumn6 = null,
+                                        valColumn7 = Tag.Value.ToString(),
+                                        valColumn8 = null,
+                                        valColumn9 = null,
+                                    };
+                                    lstDetails.Add(id);                                  
+                                }
+                            }
+                            TagDetails = new ObservableCollection<ItemDetail>(lstDetails);
+                        }                        
                     }
-                }
-                catch
-                { }*/
-                // wh.Stop();
-                HideProcessWindow();
+                });
+
+                mainview0.Dispatcher.Invoke(new System.Action(() => { }), DispatcherPriority.ContextIdle, null);
+                wh.Stop();
             }
             catch (Exception error)
             {
                 try
                 {
-                    /* if (wh != null)
-                     {
-                         wh.Stop();                    
+                    if (wh != null)
+                    {
+                        wh.Stop();
 
-                     }*/
-                    HideProcessWindow();
+                    }
                 }
                 catch
                 { }
@@ -1347,25 +1540,20 @@ namespace SmartDrawerWpfApp.ViewModel
             {
                 try
                 {
-                    /*  if (wh != null)
-                      {
-                          wh.Stop();
-                      }*/
-                    HideProcessWindow();
+                    if (wh != null)
+                    {
+                        wh.Stop();
+                    }
                 }
                 catch
                 { }
             }
         }
-        public DataTable PopulateDataGrid(ObservableCollection<BaseObject> giaData)
+        public DataTable PopulateDataGrid(ObservableCollection<ItemDetail> Data)
         {
-            var ctx = RemoteDatabase.GetDbContext();
-            int nbCol = ctx.Columns.Count();
-            ctx.Database.Connection.Close();
-            ctx.Dispose();
 
             DataTable tmpDt = new DataTable();
-            tmpDt.Columns.Add(new System.Data.DataColumn("UID", typeof(string)));
+            tmpDt.Columns.Add(new System.Data.DataColumn("TagId", typeof(string)));
             tmpDt.Columns.Add(new System.Data.DataColumn("Column1", typeof(string)));
             tmpDt.Columns.Add(new System.Data.DataColumn("Column2", typeof(string)));
             tmpDt.Columns.Add(new System.Data.DataColumn("Column3", typeof(string)));
@@ -1375,50 +1563,27 @@ namespace SmartDrawerWpfApp.ViewModel
             tmpDt.Columns.Add(new System.Data.DataColumn("Column7", typeof(string)));
             tmpDt.Columns.Add(new System.Data.DataColumn("Column8", typeof(string)));
             tmpDt.Columns.Add(new System.Data.DataColumn("Column9", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column10", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column11", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column12", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column13", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column14", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column15", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column16", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column17", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column18", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Column19", typeof(string)));
-            tmpDt.Columns.Add(new System.Data.DataColumn("Drawer", typeof(string)));
 
-            foreach (BaseObject bo in giaData)
+
+            foreach (ItemDetail bo in Data)
             {
                 var row = tmpDt.NewRow();
                 tmpDt.Rows.Add(row);
-                row["UID"] = bo.Productinfo.RfidTag.TagUid;
-                row["Drawer"] = bo.drawerId;
-                for (int loop = 0; loop < nbCol; loop++)
+                row["TagId"] = bo.TagId;
+                for (int loop = 1; loop < 10; loop++)
                 {
                     string colName = "Column" + loop;
                     switch (loop)
                     {
-                        case 0: row["UID"] = bo.Productinfo.RfidTag.TagUid; break;
-                        case 1: row[colName] = bo.Productinfo.ProductInfo0; break;
-                        case 2: row[colName] = bo.Productinfo.ProductInfo1; break;
-                        case 3: row[colName] = bo.Productinfo.ProductInfo2; break;
-                        case 4: row[colName] = bo.Productinfo.ProductInfo3; break;
-                        case 5: row[colName] = bo.Productinfo.ProductInfo4; break;
-                        case 6: row[colName] = bo.Productinfo.ProductInfo5; break;
-                        case 7: row[colName] = bo.Productinfo.ProductInfo6; break;
-                        case 8: row[colName] = bo.Productinfo.ProductInfo7; break;
-                        case 9: row[colName] = bo.Productinfo.ProductInfo8; break;
-                        case 10: row[colName] = bo.Productinfo.ProductInfo9; break;
-                        case 11: row[colName] = bo.Productinfo.ProductInfo10; break;
-                        case 12: row[colName] = bo.Productinfo.ProductInfo11; break;
-                        case 13: row[colName] = bo.Productinfo.ProductInfo12; break;
-                        case 14: row[colName] = bo.Productinfo.ProductInfo13; break;
-                        case 15: row[colName] = bo.Productinfo.ProductInfo14; break;
-                        case 16: row[colName] = bo.Productinfo.ProductInfo15; break;
-                        case 17: row[colName] = bo.Productinfo.ProductInfo16; break;
-                        case 18: row[colName] = bo.Productinfo.ProductInfo17; break;
-                        case 19: row[colName] = bo.Productinfo.ProductInfo18; break;
-                        case 20: row[colName] = bo.Productinfo.ProductInfo19; break;
+                        case 1: row[colName] = bo.valColumn1; break;
+                        case 2: row[colName] = bo.valColumn2; break;
+                        case 3: row[colName] = bo.valColumn3; break;
+                        case 4: row[colName] = bo.valColumn4; break;
+                        case 5: row[colName] = bo.valColumn5; break;
+                        case 6: row[colName] = bo.valColumn6; break;
+                        case 7: row[colName] = bo.valColumn7; break;
+                        case 8: row[colName] = bo.valColumn8; break;
+                        case 9: row[colName] = bo.valColumn9; break;
                     }
                 }
             }
@@ -1641,8 +1806,7 @@ namespace SmartDrawerWpfApp.ViewModel
                  wh.Start();*/
                 ShowProcessWindow("Get Selection From server");
 
-                Selection.Clear();
-                getCriteria();
+                Selection.Clear();                
 
                 #if (IsTiffany)
                 #else
@@ -1771,7 +1935,7 @@ namespace SmartDrawerWpfApp.ViewModel
 
 
                 CassettesSelection tmpCassette = new CassettesSelection();
-                _SelectedBaseObjects = new List<BaseObject>();
+                _SelectedBaseObjects = new List<ItemDetail>();
                 tmpCassette.ListControlNumber = new List<string>();
 
                 for (int loop = 0; loop < 8; loop++)
@@ -1787,67 +1951,66 @@ namespace SmartDrawerWpfApp.ViewModel
                 List<string> TmpListCtrlPerDrawer7 = new List<string>(DevicesHandler.GetTagFromDictionnary(7, DevicesHandler.ListTagPerDrawer));
                 foreach (string uid in _SelectionSelected.lstTopull)
                 {
-                    BaseObject theBo = (from c in Data
-                                        where c.Productinfo.RfidTag.TagUid.Equals(uid)
-                                        select c).SingleOrDefault<BaseObject>();
+                    ItemDetail theBo = (from c in TagDetails
+                                        where c.TagId.Equals(uid)
+                                        select c).SingleOrDefault<ItemDetail>();
 
                     if (theBo != null)
                     {
                         _SelectedBaseObjects.Add(theBo);
-                        if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
+                        if (!tmpCassette.ListControlNumber.Contains(theBo.TagId))
                         {
-                            switch (theBo.drawerId)
+                            switch (theBo.DrawerId)
                             {
                                 case 1:
-                                    if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer1.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[1].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 2:
-                                    if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer2.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[2].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 3:
-                                    if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer3.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[3].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 4:
-                                    if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer4.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[4].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 5:
-                                    if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer5.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[5].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 6:
-                                    if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer6.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[6].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 7:
-                                    if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer7.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[7].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
-
                             }
                         }
                     }
@@ -2047,13 +2210,18 @@ namespace SmartDrawerWpfApp.ViewModel
                     IsFlyoutCassettePositionOpen = false;
                     return;
                 }
+
+                List<ItemDetail> ListTagtoLight = TagDetails.Where(item => item.IsSelected == true).ToList();
+
+                if (ListTagtoLight == null) return;
+                if (ListTagtoLight.Count == 0) return;
+
                 CassettesSelection tmpCassette = new CassettesSelection();
-                _SelectedBaseObjects = new List<BaseObject>();
+                _SelectedBaseObjects = new List<ItemDetail>();
                 tmpCassette.ListControlNumber = new List<string>();
 
                 for (int loop = 0; loop < 8; loop++)
                     tmpCassette.TagToLight[loop] = new List<string>();
-
 
                 List<string> TmpListCtrlPerDrawer1 = new List<string>(DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerDrawer));
                 List<string> TmpListCtrlPerDrawer2 = new List<string>(DevicesHandler.GetTagFromDictionnary(2, DevicesHandler.ListTagPerDrawer));
@@ -2063,77 +2231,73 @@ namespace SmartDrawerWpfApp.ViewModel
                 List<string> TmpListCtrlPerDrawer6 = new List<string>(DevicesHandler.GetTagFromDictionnary(6, DevicesHandler.ListTagPerDrawer));
                 List<string> TmpListCtrlPerDrawer7 = new List<string>(DevicesHandler.GetTagFromDictionnary(7, DevicesHandler.ListTagPerDrawer));
 
-                if (SelectedItems != null && SelectedItems.Count > 0)
+                foreach (var item in ListTagtoLight)
                 {
-                    foreach (DataRowView item in SelectedItems)
+                    ItemDetail theBo = (from c in TagDetails
+                                        where c.TagId.Equals(item.TagId)
+                                        select c).SingleOrDefault<ItemDetail>();
+
+                    if (theBo != null)
                     {
-                        string uid = item.Row.ItemArray[0].ToString();
-                        BaseObject theBo = (from c in Data
-                                            where c.Productinfo.RfidTag.TagUid.Equals(uid)
-                                            select c).SingleOrDefault<BaseObject>();
-
-                        if (theBo != null)
+                        _SelectedBaseObjects.Add(theBo);
+                        if (!tmpCassette.ListControlNumber.Contains(theBo.TagId))
                         {
-                            _SelectedBaseObjects.Add(theBo);
-                            if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
+                            switch (theBo.DrawerId)
                             {
-                                switch (theBo.drawerId)
-                                {
-                                    case 1:
-                                        if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 2:
-                                        if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 3:
-                                        if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 4:
-                                        if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 5:
-                                        if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 6:
-                                        if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
-                                    case 7:
-                                        if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
-                                        {
-                                            tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
-                                            tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
-                                        }
-                                        break;
+                                case 1:
+                                    if (TmpListCtrlPerDrawer1.Contains(theBo.TagId))
+                                    {
+                                        tmpCassette.TagToLight[1].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
+                                    }
+                                    break;
+                                case 2:
+                                    if (TmpListCtrlPerDrawer2.Contains(theBo.TagId))
+                                    {
+                                        tmpCassette.TagToLight[2].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
+                                    }
+                                    break;
+                                case 3:
+                                    if (TmpListCtrlPerDrawer3.Contains(theBo.TagId))
+                                    {
+                                        tmpCassette.TagToLight[3].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
+                                    }
+                                    break;
+                                case 4:
+                                    if (TmpListCtrlPerDrawer4.Contains(theBo.TagId))
+                                    {
+                                        tmpCassette.TagToLight[4].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
+                                    }
+                                    break;
+                                case 5:
+                                    if (TmpListCtrlPerDrawer5.Contains(theBo.TagId))
+                                    {
+                                        tmpCassette.TagToLight[5].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
+                                    }
+                                    break;
+                                case 6:
+                                    if (TmpListCtrlPerDrawer6.Contains(theBo.TagId))
+                                    {
+                                        tmpCassette.TagToLight[6].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
+                                    }
+                                    break;
+                                case 7:
+                                    if (TmpListCtrlPerDrawer7.Contains(theBo.TagId))
+                                    {
+                                        tmpCassette.TagToLight[7].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
+                                    }
+                                    break;
 
-                                }
                             }
                         }
                     }
-                }                
+                }
                 tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count.ToString(); ;
                 tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count.ToString(); ;
                 tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count.ToString(); ;
@@ -2148,7 +2312,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     SelectedCassette = tmpCassette;
                     _previousSelectedCassettes = SelectedCassette;
                     TotalCassettesToPull = SelectedCassette.CassetteSelectionTotalNumber;
-                    TotalCassettesPulled = 0;                  
+                    TotalCassettesPulled = 0;
                     IsFlyoutCassettePositionOpen = true;
                 }
                 else
@@ -2200,7 +2364,7 @@ namespace SmartDrawerWpfApp.ViewModel
         {
             try
             {
-                if ((Data == null) || (Data.Count == 0)) return;
+                if ((TagDetails == null) || (TagDetails.Count == 0)) return;
 
                 bool bfind = false;
 
@@ -2304,7 +2468,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     return;
                 }
                 CassettesSelection tmpCassette = new CassettesSelection();
-                _SelectedBaseObjects = new List<BaseObject>();
+                _SelectedBaseObjects = new List<ItemDetail>();
                 tmpCassette.ListControlNumber = new List<string>();
 
                 for (int loop = 0; loop < 8; loop++)
@@ -2323,67 +2487,66 @@ namespace SmartDrawerWpfApp.ViewModel
                 if (!string.IsNullOrEmpty(tagId))
                 {
                     string uid = tagId;
-                    BaseObject theBo = (from c in Data
-                                        where c.Productinfo.RfidTag.TagUid.Equals(uid)
-                                        select c).SingleOrDefault<BaseObject>();
+                    ItemDetail theBo = (from c in TagDetails
+                                        where c.TagId.Equals(uid)
+                                        select c).SingleOrDefault<ItemDetail>();
 
                     if (theBo != null)
                     {
                         _SelectedBaseObjects.Add(theBo);
-                        if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
+                        if (!tmpCassette.ListControlNumber.Contains(theBo.TagId))
                         {
-                            switch (theBo.drawerId)
+                            switch (theBo.DrawerId)
                             {
                                 case 1:
-                                    if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer1.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[1].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 2:
-                                    if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer2.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[2].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 3:
-                                    if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer3.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[3].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 4:
-                                    if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer4.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[4].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 5:
-                                    if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer5.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[5].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 6:
-                                    if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer6.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[6].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
                                 case 7:
-                                    if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    if (TmpListCtrlPerDrawer7.Contains(theBo.TagId))
                                     {
-                                        tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
-                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.TagToLight[7].Add(theBo.TagId);
+                                        tmpCassette.ListControlNumber.Add(theBo.TagId);
                                     }
                                     break;
-
                             }
                         }
                     }
@@ -2546,9 +2709,29 @@ namespace SmartDrawerWpfApp.ViewModel
             //refreshUserFromServer();
 
            startTimer.Stop();
-            startTimer.IsEnabled = false;
+           startTimer.IsEnabled = false;
 
-            // No serial in Configuration - Connect to get rfid serial           
+            // No serial in Configuration - Connect to get rfid serial      
+
+#if UseInfinity
+
+            if (!getInfinityUrl())
+            {
+                string Info = string.Format("Unable to get Configuration - Check SQL server - Application will stop \r\n Host : {0}\r\nLogin : {1}\r\nDbName : {2} ", RemoteDatabase.Host, RemoteDatabase.Login, RemoteDatabase.Name);
+                await mainview0.ShowMessageAsync("INFORMATION", Info);
+                System.Windows.Application.Current.Shutdown();
+                return;
+            }
+
+            getScanTimerValue();
+            ProcessInfinityUser(null);           
+            doPing();
+            InfinityTimer = new DispatcherTimer();
+            InfinityTimer.Interval = new TimeSpan(0, 1, 0);
+            InfinityTimer.Tick += InfinityTimer_Tick;
+            InfinityTimer.IsEnabled = true;
+            InfinityTimer.Start();
+#endif
 
 
             DevicesHandler.FindAndConnectDevice();
@@ -2668,6 +2851,12 @@ namespace SmartDrawerWpfApp.ViewModel
                 refreshUserFromServer();
             }));
         }
+
+        private void InfinityTimer_Tick(object sender, EventArgs e)
+        {
+            doPing();
+        }
+
         private void AutoConnectTimer_Tick(object sender, EventArgs e)
         {
             AutoConnectTimer.IsEnabled = false;
@@ -3067,15 +3256,23 @@ namespace SmartDrawerWpfApp.ViewModel
                         //Wait end of light process or recheck  
                         if ((SelectionSelected == null) &&(!IsWallInScan()) && (!InLightOrRecheckprocess) && (_recheckLightDrawer == -1) && (_lightDrawer == -1))
                         {
-                            //comment for tiffany
+                        //comment for tiffany
+                        #if (IsTiffany)
+                        #else
+                            getStoneData();
                             getSelection();
+                        #endif
                             bNeedUpdateCriteriaAfterScan = false;
                         }
                         else if (IsInPutItemFastMode)
                         {
-                            //Comment for tiffany
-                            getSelection();
-                            bNeedUpdateCriteriaAfterScan = false;
+                        //Comment for tiffany
+                        #if (IsTiffany)
+                        #else                            
+                           getStoneData();
+                           getSelection();
+                        #endif
+                        bNeedUpdateCriteriaAfterScan = false;
                         }
                     }
 #endregion
@@ -3367,6 +3564,684 @@ namespace SmartDrawerWpfApp.ViewModel
                 File.AppendAllText(@"c:/temp/WallPanelLog/logService.txt", exp.Message + "\r\n");
             }
         }
+        #endregion
+        #region Infinity
+        private async void doPing()
+        {
+            InfinityService.EventInfo newEvent = new InfinityService.EventInfo();
+            newEvent.reader = new Reader { serial = WallSerial };
+            newEvent.reader.drawer = null;
+            newEvent.user = null;
+            newEvent.timestamp = UnixTimeStamp.ConvertToUnixTimestamp(DateTime.Now.ToUniversalTime());
+
+            List<string> lstInventory = new List<string>();
+            Event Event = new Event() { EventType = EventType.PING, stones = null };
+            List<Event> lstEvent = new List<Event>();
+            lstEvent.Add(Event);
+            newEvent.events = lstEvent.ToArray();
+            bool result = await InfinityServiceHandler.SendEvents(InfinityServerUrl, InfinityServerToken, WallSerial, newEvent);
+            if (result)
+            {
+                //if no network - send not notified scan
+                if (!NetworkStatus)
+                {
+                    NetworkStatus = true;
+                }
+                else
+                    NetworkStatus = true;
+                if (InfinityServiceHandler.LastReturnInfo != null)
+                {
+                    if (InfinityServiceHandler.LastReturnInfo.hostUpdated == 1)
+                    {
+                        //Todo
+                        bool ret = await InfinityServiceHandler.GetEndpoint(InfinityServerToken);
+                        if (ret)
+                        {
+                            string newEndpoint = InfinityServiceHandler.LastEndPoint;
+                            InfinityServerUrl = newEndpoint;
+                            using (var ctx = RemoteDatabase.GetDbContext())
+                            {
+                                var conf = ctx.Configurations.Where(c => c.Parameter == "RemoteServerUrl").SingleOrDefault();
+                                if (conf != null)
+                                {
+                                    conf.Value = newEndpoint;
+                                    ctx.Entry(conf).State = EntityState.Modified;
+                                    ctx.SaveChanges();
+                                }
+                            }
+                        }
+                    }
+
+                    if (InfinityServiceHandler.LastReturnInfo.log != 0)
+                    {
+                        DateTime logTime = logTime = DateTime.Now;
+                        if (InfinityServiceHandler.LastReturnInfo.log < 0)
+                        {
+                            logTime = DateTime.Now.AddDays(InfinityServiceHandler.LastReturnInfo.log);
+                        }
+
+                        string filename = LogToFile.GetTempPath() + string.Format("smartAppWpfLog_{0}.txt", logTime.ToString("yyMMdd"));
+                        await InfinityServiceHandler.SendLog(InfinityServerUrl, InfinityServerToken, WallSerial, filename);
+                    }
+
+                    if (InfinityServiceHandler.LastReturnInfo.clearDbase == 1)
+                    {
+                        ClearDatabase();
+                    }
+                    if (InfinityServiceHandler.LastReturnInfo.adminRights == 1)
+                    {
+                        isAdmin = true;
+                      /*  UserViewableTimer = new DispatcherTimer();
+                        UserViewableTimer.Tick += UserViewableTimer_Tick;
+                        UserViewableTimer.Interval = new TimeSpan(0, 10, 0);
+                        UserViewableTimer.IsEnabled = true;
+                        UserViewableTimer.Start();*/
+                    }
+                    if (InfinityServiceHandler.LastReturnInfo.userList == 1)
+                        ProcessInfinityUser(null);
+                    if (InfinityServiceHandler.LastReturnInfo.addUsers == 1)
+                        UpdateInfinityUsers();
+
+                    if (InfinityServiceHandler.LastReturnInfo.setOperational == 1)
+                    {
+                        HideProcessWindow();
+                        IsOpeningBusiness = false;
+                        IsClosingBusiness = false;
+                        IsClosingCompleted = false;
+                    }
+
+                    //TODO HOw We renew selection for Diamond match and transit for wall?
+                    /*if (InfinityServiceHandler.LastReturnInfo.diamondMatch > 0)
+                    {
+                        bool bNeedUpateSel = true;
+                        if ((Selection != null) && (Selection.Count > 0))
+                        {
+                            if (Selection[0].Ref == "REQUEST_MATCHING")
+                                bNeedUpateSel = false;
+                        }
+                        if (bNeedUpateSel)
+                        {
+
+                            SelectedTabIndex = 1;
+                            getSelection();
+                        }
+                    }*/
+                }
+            }
+            else
+            {
+                NetworkStatus = false;
+            }
+        }
+        private void ProcessInfinityUser(GrantedUser gu)
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    if (gu == null)
+                    {
+                        using (var ctx = RemoteDatabase.GetDbContext())
+                        {
+                            var lstDev = ctx.GrantedUsers
+                            .Where(u => u.UserRankId > 1).ToList();
+                            foreach (var dv in lstDev)
+                            {
+                                UserInfo tmpUser = new UserInfo()
+                                {
+                                    username = dv.Login,
+                                    password = dv.Password,
+                                    name = dv.FirstName + " " + dv.LastName,
+                                    local_user_id = dv.GrantedUserId,
+                                    extra = dv.BadgeNumber,
+                                };
+                                await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        UserInfo tmpUser = new UserInfo()
+                        {
+                            username = gu.Login,
+                            password = gu.Password,
+                            name = gu.FirstName + " " + gu.LastName,
+                            local_user_id = gu.GrantedUserId,
+                            extra = gu.BadgeNumber,
+                        };
+                        await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
+                    }
+                }
+
+                catch (Exception error)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Populate User");
+                        exp.ShowDialog();
+                    });
+                }
+            });
+        }
+        private void UpdateInfinityUsers()
+        {
+            Task.Run(async () =>
+            {
+                try
+                {
+                    bool ret = await InfinityServiceHandler.GetRemoteUsers(InfinityServerUrl, InfinityServerToken, WallSerial);
+                    if (ret)
+                    {
+                        using (var ctx = RemoteDatabase.GetDbContext())
+                        {
+                            foreach (var us in InfinityServiceHandler.LastRemoteUserInfo)
+                            {
+                                var original = ctx.GrantedUsers.GetByLogin(us.username);
+                                if (original != null)
+                                {
+                                    original.Login = us.username;
+                                    if (!string.IsNullOrWhiteSpace(us.password))
+                                        original.Password = us.password;
+
+                                    if (!string.IsNullOrWhiteSpace(us.name))
+                                    {
+                                        string[] tmpUser = us.name.Split(' ');
+                                        if (tmpUser.Length == 2)
+                                        {
+                                            original.FirstName = tmpUser[0];
+                                            original.LastName = tmpUser[1];
+                                        }
+                                    }
+                                    original.BadgeNumber = us.badge;
+                                    ctx.Entry(original).State = EntityState.Modified;
+                                    ctx.SaveChanges();
+
+
+                                    if (!string.IsNullOrWhiteSpace((string)us.fingerprints))
+                                    {
+                                        var fingerprints = ctx.Fingerprints.Where(fp => fp.GrantedUserId == original.GrantedUserId).ToList();
+                                        if (fingerprints != null)
+                                            foreach (var tmp in fingerprints)
+                                                ctx.Fingerprints.Remove(tmp);
+                                        ctx.SaveChanges();
+                                        string[] tmpFp = us.fingerprints.ToString().Split(',');
+                                        int nIndex = 0;
+                                        if (tmpFp.Length > 0)
+                                        {
+                                            foreach (string newFp in tmpFp)
+                                                ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                                                {
+                                                    Index = (int)nIndex++,
+                                                    GrantedUserId = original.GrantedUserId,
+                                                    Template = newFp
+                                                });
+                                            ctx.SaveChanges();
+                                        }
+
+                                    }
+
+                                }
+                                else
+                                {
+                                    string[] tmpUser = us.name.Split(' ');
+                                    GrantedUser newUser = null;
+                                    newUser = new GrantedUser()
+                                    {
+                                        ServerGrantedUserId = 0,
+                                        Login = us.username,
+                                        Password = us.password,
+                                        FirstName = tmpUser.Length == 2 ? tmpUser[0] : us.name,
+                                        LastName = tmpUser.Length == 2 ? tmpUser[1] : us.name,
+                                        BadgeNumber = us.badge,
+                                        UpdateAt = DateTime.Now,
+                                        UserRankId = 3,
+                                    };
+
+                                    ctx.GrantedUsers.Add(newUser);
+                                    ctx.SaveChanges();
+
+                                    if (!string.IsNullOrWhiteSpace((string)us.fingerprints))
+                                    {
+                                        var fingerprints = ctx.Fingerprints.Where(fp => fp.GrantedUserId == (newUser.GrantedUserId)).ToList();
+                                        if (fingerprints != null)
+                                            foreach (var tmp in fingerprints)
+                                                ctx.Fingerprints.Remove(tmp);
+                                        ctx.SaveChanges();
+                                        string[] tmpFp = us.fingerprints.ToString().Split(',');
+                                        int nIndex = 0;
+                                        if (tmpFp.Length > 0)
+                                        {
+                                            foreach (string newFp in tmpFp)
+                                                ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                                                {
+                                                    Index = (int)nIndex++,
+                                                    GrantedUserId = original.GrantedUserId,
+                                                    Template = newFp
+                                                });
+                                            ctx.SaveChanges();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception error)
+                {
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Populate User");
+                        exp.ShowDialog();
+                    });
+                }
+            });
+        }
+        private void ClearDatabase()
+        {
+            try
+            {
+
+                LogToFile.LogMessageToFile("------- Start Clear Database --------");
+                using (var ctx = RemoteDatabase.GetDbContext())
+                {
+                    ctx.EventDrawerDetails.Clear();
+                    ctx.Inventories.Clear();
+                    ctx.InventoryProducts.Clear();
+                    ctx.Products.Clear();
+                    ctx.RfidTags.Clear();
+                    ctx.SaveChanges();
+
+
+                    //create empty scan for device
+                    var newInventory = new SmartDrawerDatabase.DAL.Inventory
+                    {
+                        DeviceId = DevicesHandler.GetDeviceEntity().DeviceId,
+                        AccessTypeId = 1,
+                        TotalAdded = 0,
+                        TotalPresent = 0,
+                        TotalRemoved = 0,
+                        InventoryDate = DateTime.Now
+                    };
+                    ctx.Inventories.Add(newInventory);
+                    ctx.SaveChanges();
+
+                    DevicesHandler.ReleaseDevices();
+                    LogToFile.LogMessageToFile("------- End Clear Database --------");
+
+                }
+            }
+            catch (Exception e)
+            {
+                LogToFile.LogMessageToFile("Exception : " + e.Message);
+                LogToFile.LogMessageToFile("------- End Clear Database --------");
+            }
+        }
+        private void ProcessNewStone(List<string> TagList)
+        {
+            Task.Run(() =>
+            {
+                if ((InfinityServiceHandler.LastStonesListNotScan != null) && (InfinityServiceHandler.LastStonesListNotScan.Count() > 0))
+                {
+                    foreach (string tagId in TagList)
+                    {
+                        StoneInfo sto = (from si in InfinityServiceHandler.LastStonesListNotScan
+                                         where si.tag_id == tagId
+                                         select si).SingleOrDefault();
+
+                        if (sto != null)
+                        {
+                            using (var ctx = RemoteDatabase.GetDbContext())
+                            {
+                                var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == sto.tag_id);
+                                if (rfidTag == null) // create tag with stone info
+                                {
+                                    // Create Unknown tag
+                                    RfidTag newTag = new RfidTag() { TagUid = sto.tag_id };
+                                    ctx.RfidTags.Add(newTag);
+                                    Product p = new Product()
+                                    {
+                                        RfidTag = newTag,
+                                        ProductInfo0 = sto.report_number,
+                                        ProductInfo1 = sto.carat_weight,
+                                        ProductInfo2 = sto.shape,
+                                        ProductInfo3 = sto.color,
+                                        ProductInfo4 = sto.clarity,
+                                        ProductInfo5 = sto.cut,
+                                    };
+                                    ctx.Products.Add(p);
+                                    ctx.SaveChanges();
+                                }
+                                else //product to update it
+                                {
+                                    Product pToUpdate = ctx.Products.Where(po => po.RfidTag.TagUid == sto.tag_id).Include(po => po.RfidTag).FirstOrDefault();
+                                    if (pToUpdate != null)
+                                    {
+                                        pToUpdate.ProductInfo0 = sto.report_number;
+                                        pToUpdate.ProductInfo1 = sto.carat_weight;
+                                        pToUpdate.ProductInfo2 = sto.shape;
+                                        pToUpdate.ProductInfo3 = sto.color;
+                                        pToUpdate.ProductInfo4 = sto.clarity;
+                                        pToUpdate.ProductInfo5 = sto.cut;
+                                        ctx.Entry(pToUpdate).State = EntityState.Modified;
+                                        ctx.SaveChanges();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        private StoneInfo GetStoneInfo(string TagId)
+        {
+            if (InfinityServiceHandler.LastStonesListNotScan == null) return null;
+            StoneInfo si = null;
+            si = (from sto in InfinityServiceHandler.LastStonesListNotScan
+                  where sto.tag_id == TagId
+                  select sto).SingleOrDefault();
+
+            return si;
+        }
+        Dictionary<string, int> UnknownTags = new Dictionary<string, int>();
+      
+        private void ProcessNewStone()
+        {
+            if ((InfinityServiceHandler.LastStonesListNotScan != null) && (InfinityServiceHandler.LastStonesListNotScan.Count() > 0))
+            {
+                foreach (var sto in InfinityServiceHandler.LastStonesListNotScan)
+                {
+                    using (var ctx = RemoteDatabase.GetDbContext())
+                    {
+                        // find if Tag exist in local db
+                        var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == sto.tag_id);
+                        if (rfidTag == null) // create tag with stone info
+                        {
+                            /* Create Unknown tag*/
+                            RfidTag newTag = new RfidTag() { TagUid = sto.tag_id };
+                            ctx.RfidTags.Add(newTag);
+                            Product p = new Product()
+                            {
+                                RfidTag = newTag,
+                                ProductInfo0 = sto.report_number,
+                                ProductInfo1 = sto.carat_weight,
+                                ProductInfo2 = sto.shape,
+                                ProductInfo3 = sto.color,
+                                ProductInfo4 = sto.clarity,
+                                ProductInfo5 = sto.cut,
+                            };
+                            ctx.Products.Add(p);
+                            ctx.SaveChanges();
+                        }
+                        else //product to update it
+                        {
+                            Product pToUpdate = ctx.Products.Where(po => po.RfidTag.TagUid == sto.tag_id).Include(po => po.RfidTag).FirstOrDefault();
+                            if (pToUpdate != null)
+                            {
+                                pToUpdate.ProductInfo0 = sto.report_number;
+                                pToUpdate.ProductInfo1 = sto.carat_weight;
+                                pToUpdate.ProductInfo2 = sto.shape;
+                                pToUpdate.ProductInfo3 = sto.color;
+                                pToUpdate.ProductInfo4 = sto.clarity;
+                                pToUpdate.ProductInfo5 = sto.cut;
+                                ctx.Entry(pToUpdate).State = EntityState.Modified;
+                                ctx.SaveChanges();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void ProcessUnreferencedStones(List<string> TagList, string firstname, string lastName)
+        {
+            Task.Run(async () =>
+            {
+                AlertInfo alert = new AlertInfo();
+                alert.timestamp = UnixTimeStamp.ConvertToUnixTimestamp(DateTime.Now.ToUniversalTime());
+                alert.type = 2;
+                alert.comment = lastName + ',' + firstname + ",";
+                alert.comment += string.Join(",", TagList);
+                await InfinityServiceHandler.SendAlert(InfinityServerUrl, InfinityServerToken, WallSerial, alert);
+            });
+        }
+        private InfinityService.EventInfo ProcessEvent(Inventory inv, bool bClosingBusiness, bool bOpeningBusiness, bool bIsClosingComplete)
+        {
+            // List<string> TagInwall = GetListOfallOtherdrawer(inv.DrawerNumber, inv.InventoryDate);
+
+            InfinityService.EventInfo newEvent = new InfinityService.EventInfo();
+            newEvent.reader = new Reader { serial = inv.Device.DeviceSerial };
+            if (inv.Device.DeviceTypeId == 15) // un wall
+                newEvent.reader.drawer = inv.DrawerNumber;
+            else
+                newEvent.reader.drawer = null;
+
+            if (inv.GrantedUser != null)
+            {
+                newEvent.user = new User() { id = inv.GrantedUserId.Value, name = inv.GrantedUser.FirstName + " " + inv.GrantedUser.LastName };
+            }
+            else
+            {
+                newEvent.user = null;
+            }
+
+            newEvent.timestamp = UnixTimeStamp.ConvertToUnixTimestamp(inv.InventoryDate.ToUniversalTime());
+
+
+            List<string> lstArrival = new List<string>();
+            List<string> lstIn = new List<string>();
+            List<string> lstOut = new List<string>();
+            List<string> lstInventory = new List<string>();
+
+            foreach (var tag in inv.InventoryProducts)
+            {
+                switch (tag.MovementType)
+                {
+                    case (int)MovementType.Added:
+                        lstInventory.Add(tag.RfidTag.TagUid);
+                        if (UnknownTags.Keys.Contains(tag.RfidTag.TagUid))
+                        {
+                            if (!lstArrival.Contains(tag.RfidTag.TagUid))
+                                lstArrival.Add(tag.RfidTag.TagUid);
+                        }
+                        else
+                        {
+                            if (!lstIn.Contains(tag.RfidTag.TagUid))
+                                lstIn.Add(tag.RfidTag.TagUid);
+                        }
+                        break;
+                    case (int)MovementType.Removed:
+                        if (!lstOut.Contains(tag.RfidTag.TagUid))
+                            lstOut.Add(tag.RfidTag.TagUid);
+                        break;
+                    case (int)MovementType.Present:
+                        if (!lstInventory.Contains(tag.RfidTag.TagUid))
+                            lstInventory.Add(tag.RfidTag.TagUid);
+                        break;
+                }
+            }
+
+            /* if (TagInwall.Count > 0)
+             {
+                 foreach (string uid in TagInwall)
+                 {
+                     if (!lstInventory.Contains(uid))
+                     lstInventory.Add(uid);
+                 }
+             }*/
+
+            List<Event> lstEvent = new List<Event>();
+
+            if (lstArrival.Count > 0)
+            {
+                Event ArrivalEvent = new Event() { EventType = EventType.ARRIVAL, stones = lstArrival.ToArray() };
+                lstEvent.Add(ArrivalEvent);
+            }
+            if (lstIn.Count > 0)
+            {
+                Event InEvent = new Event() { EventType = EventType.IN, stones = lstIn.ToArray() };
+                lstEvent.Add(InEvent);
+            }
+            if (lstOut.Count > 0)
+            {
+                if (bIsClosingComplete)
+                {
+                    Event OutEvent = new Event() { EventType = EventType.VAULT, stones = lstOut.ToArray() };
+                    lstEvent.Add(OutEvent);
+                }
+                else
+                {
+                    Event OutEvent = new Event() { EventType = EventType.OUT, stones = lstOut.ToArray() };
+                    lstEvent.Add(OutEvent);
+                }
+            }
+            if (bIsClosingComplete)
+            {
+                if (lstInventory.Count > 0)
+                {
+                    Event InventoryEvent = new Event() { EventType = EventType.CLOSEBIZ, stones = lstInventory.ToArray() };
+                    lstEvent.Add(InventoryEvent);
+                }
+                else
+                {
+                    Event InventoryEvent = new Event() { EventType = EventType.CLOSEBIZ };
+                    lstEvent.Add(InventoryEvent);
+                }
+            }
+            else if (bOpeningBusiness)
+            {
+                if (lstInventory.Count > 0)
+                {
+                    Event InventoryEvent = new Event() { EventType = EventType.OPENBIZ, stones = lstInventory.ToArray() };
+                    lstEvent.Add(InventoryEvent);
+                }
+                else
+                {
+                    Event InventoryEvent = new Event() { EventType = EventType.OPENBIZ };
+                    lstEvent.Add(InventoryEvent);
+                }
+            }
+            else if (bClosingBusiness)
+            {
+                if (lstInventory.Count > 0)
+                {
+                    Event InventoryEvent = new Event() { EventType = EventType.CLOSEBIZ, stones = lstInventory.ToArray() };
+                    lstEvent.Add(InventoryEvent);
+                }
+                else
+                {
+                    Event InventoryEvent = new Event() { EventType = EventType.CLOSEBIZ };
+                    lstEvent.Add(InventoryEvent);
+                }
+            }
+            else
+            {
+                if (bFirstScan)
+                {
+                    bFirstScan = false;
+                    if (lstInventory.Count > 0)
+                    {
+                        Event InventoryEvent = new Event() { EventType = EventType.RESTART, stones = lstInventory.ToArray() };
+                        lstEvent.Add(InventoryEvent);
+                    }
+                    else
+                    {
+                        Event InventoryEvent = new Event() { EventType = EventType.RESTART };
+                        lstEvent.Add(InventoryEvent);
+                    }
+                }
+                else
+                {
+                    if (lstInventory.Count > 0)
+                    {
+                        Event InventoryEvent = new Event() { EventType = EventType.INVENTORY, stones = lstInventory.ToArray() };
+                        lstEvent.Add(InventoryEvent);
+                    }
+                    else
+                    {
+                        Event InventoryEvent = new Event() { EventType = EventType.INVENTORY };
+                        lstEvent.Add(InventoryEvent);
+                    }
+                }
+            }
+            newEvent.events = lstEvent.ToArray();
+            return newEvent;
+
+        }
+        private async void ProcessInfinity(int drawerId)
+        {
+            try
+            {
+                LogToFile.LogMessageToFile("------- Start Process infinity  --------");
+                if (!NetworkStatus)
+                {
+                    LogToFile.LogMessageToFile("------- Quit Process infinity - no Network  --------");
+                    return;
+                }
+
+                using (var ctx = RemoteDatabase.GetDbContext())
+                {
+                    var NotSendInventory = ctx.Inventories.GetNotNotifiedInventory(drawerId);
+                    if (NotSendInventory != null)
+                    {
+                        LogToFile.LogMessageToFile("Nb inventory to Proceed : " + NotSendInventory.Count);
+                        foreach (Inventory inv in NotSendInventory)
+                        {
+                            // Send it
+                            InfinityService.EventInfo tmpEvent = ProcessEvent(inv, IsClosingBusiness, IsOpeningBusiness, IsClosingCompleted);
+                            if (tmpEvent.events.Count() > 0)
+                            {
+                                bool result = await InfinityServiceHandler.SendEvents(InfinityServerUrl, InfinityServerToken, WallSerial, tmpEvent);
+
+                                if (result)
+                                {
+                                    if (InfinityServiceHandler.LastReturnInfo != null)
+                                    {
+                                        if (InfinityServiceHandler.LastReturnInfo.setOperational == 1)
+                                        {
+                                            HideProcessWindow();
+                                            IsOpeningBusiness = false;
+                                            IsClosingBusiness = false;
+                                            IsClosingCompleted = false;
+                                        }
+                                        else if (InfinityServiceHandler.LastReturnInfo.deviceStatus != "operational")
+                                        {
+                                            if ((!IsClosingBusiness) && (!IsOpeningBusiness) && !(IsClosingCompleted))
+                                            {
+                                                IsOpeningBusiness = false;
+                                                IsClosingBusiness = true;
+                                                IsClosingCompleted = true;
+                                            }
+                                        }
+                                    }
+                                    ctx.Inventories.UpdateInventoryForNotification(inv);
+                                    ctx.SaveChanges();
+                                }
+                                else
+                                {
+                                    // error network 
+                                    LogToFile.LogMessageToFile("------- Network error --------");
+                                    NetworkStatus = false;
+                                    return;
+                                }
+                            }
+                            else // If no event, no tag in scan, not send it but notify local
+                            {
+                                ctx.Inventories.UpdateInventoryForNotification(inv);
+                                ctx.SaveChanges();
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    ExceptionMessageBox msg = new ExceptionMessageBox(ex, "Error Send Events");
+                    msg.Show();
+                });
+            }
+        }
+
 #endregion
 #region Device
 
@@ -3427,6 +4302,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                 DevicesHandler.DrawerStatus[loop] = DrawerStatusList.ScanPending;
                                 DrawerStatus[loop] = DevicesHandler.DrawerStatus[loop];
                                 BrushDrawer[loop] = _borderScanPending;
+                                bFirstScan = true;
                             }
                         }
                     }
@@ -3972,6 +4848,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 Task.Run(() =>
                 {
                     InventoryHandler.HandleNewScanCompleted(e.DrawerId);
+                    #if UseInfinity
+                        ProcessInfinity(e.DrawerId);
+                    #endif
 
                 });
                 DevicesHandler.IsDrawerWaitScan[e.DrawerId] = false;
@@ -4563,7 +5442,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 mainview0.tiBarcodeMode.Visibility = Visibility.Collapsed;
                 mainview0.tiDrawerMode.Visibility = Visibility.Collapsed;
                 mainview0.tiSelectionMode.Visibility = Visibility.Visible;
-                mainview0.tiInventoryMode.Visibility = Visibility.Collapsed;
+                mainview0.tiInventoryMode.Visibility = Visibility.Visible;
             }
 #endif
 

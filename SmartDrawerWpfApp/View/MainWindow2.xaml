@@ -530,144 +530,84 @@
                         </TextBox>
                         <Button  Command="{Binding btClearSelection}" Visibility="Visible" Width="125"  Height="44" BorderThickness="1,1,1,1" BorderBrush="Gainsboro"   Margin="10,5,5,5"  Content=" Clear Selection " Style="{StaticResource DefaultButton2}"  />
                     </StackPanel>
-                    <syncfusion:SfDataGrid Name="myDatagrid" 
-                                               Grid.Row="1"
-                                               HeaderRowHeight="60"
+                    <syncfusion:SfDataGrid Name="myDatagrid" Grid.Row="1" Margin="0 8 0 0"
+                                               HeaderRowHeight="80"
+                                               RowHeight="60"                                               
                                                VerticalAlignment="Stretch"  
                                                HorizontalAlignment="Stretch"
                                                AutoGenerateColumns="False"                                                                             
-                                               SelectionMode="Multiple"   
+                                               SelectionMode="None"   
                                                SelectionUnit="Row"
-                                               Foreground="#000000"
-                                               RowSelectionBrush="#5A33BCBA"
-                                               SelectionForegroundBrush="#000000"
+                                               SelectionForegroundBrush="{DynamicResource AccentColorBrush}"
+                                               RowSelectionBrush="LightGray"
                                                AllowDraggingColumns="False"                                           
                                                AllowEditing="False"
-                                               AllowFiltering="True"
+                                               AllowFiltering="False"
                                                AllowGrouping="True"  
+                                               AllowSorting="True"
                                                ShowGroupDropArea="True" 
                                                EnableDataVirtualization="True"
                                                NavigationMode="Row"  
                                                ShowBusyIndicator="True"
-                                               FontFamily="./Fonts/Roboto-Regular.ttf" 
+                                               FontFamily="Verdana" 
                                                FontSize="18" 
-                                               Loaded="myDatagrid_Loaded"
-                                               ItemsSource="{Binding SourceTable}"
-                                               SelectedItems="{Binding SelectedItems, Mode=TwoWay}"                                     
-                                               sfHelper:SfDataGridHelper.SelectedItems="{Binding SelectedItems, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                               Foreground="Black"
+                                               ItemsSource="{Binding TagDetails}"
+                                               SelectedItem="{Binding ItemSelected}"
                                                AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
-                                               AlternationCount="2"
-                                               HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star" Grid.ColumnSpan="2">
+                                               AlternationCount="2"                                              
+                                               HeaderStyle="{StaticResource headerStyle}" 
+                                               ColumnSizer="Star" Loaded="dataGrid_Loaded" Grid.ColumnSpan="2" CellStyle="{DynamicResource GridCellStyle1}" >
+
+
+                        <syncfusion:SfDataGrid.TableSummaryRows>
+                            <syncfusion:GridTableSummaryRow Title=" Total Product(s) Filtered : {ProductCount} "
+                                        Position="Bottom"
+                                        ShowSummaryInRow="True">
+                                <syncfusion:GridSummaryRow.SummaryColumns>
+                                    <syncfusion:GridSummaryColumn Name="ProductCount"
+                                                Format="'{Count:d}'"
+                                                MappingName="TagId"
+                                                SummaryType="CountAggregate" />
+                                </syncfusion:GridSummaryRow.SummaryColumns>
+                            </syncfusion:GridTableSummaryRow>
+                        </syncfusion:SfDataGrid.TableSummaryRows>
 
                         <syncfusion:SfDataGrid.Columns>
-                            <syncfusion:GridTextColumn  x:Name="ColTagUid"
-                                                                 HeaderText="Tag UID"
-                                                                 MappingName="UID"
-                                                                 IsHidden="true">
 
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column1"
-                                                                 HeaderText="Column1"
-                                                                 MappingName="Column1"
-                                                                 IsHidden="True">
+                            <syncfusion:GridTemplateColumn Width="50" AllowFiltering="False">
+                                <syncfusion:GridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}" HorizontalAlignment="Center"
+                                        Visibility="{Binding IsEnabled, Mode=TwoWay , UpdateSourceTrigger=PropertyChanged}" >
+                                            <CheckBox.LayoutTransform>
+                                                <ScaleTransform ScaleX="1.5" ScaleY="1.5" />
+                                            </CheckBox.LayoutTransform>
+                                        </CheckBox>
+                                    </DataTemplate>
+                                </syncfusion:GridTemplateColumn.CellTemplate>
+                            </syncfusion:GridTemplateColumn>
+                            <syncfusion:GridTextColumn  x:Name="ColTagUid"  HeaderText="Tag ID" IsHidden="False"
+                                                        MappingName="TagId" TextAlignment="Center"       />
+                            <syncfusion:GridTextColumn  x:Name="Column1"     HeaderText="" IsHidden="True"
+                                                        MappingName=" valColumn1" TextAlignment="Center"  />
+                            <syncfusion:GridTextColumn  x:Name="Column2"     HeaderText="" IsHidden="True"
+                                                        MappingName=" valColumn2" TextAlignment="Center"  />
+                            <syncfusion:GridTextColumn  x:Name="Column3"     HeaderText=""  IsHidden="True"
+                                                        MappingName=" valColumn3" TextAlignment="Center"   />
+                            <syncfusion:GridTextColumn  x:Name="Column4"     HeaderText=""  IsHidden="True"
+                                                        MappingName=" valColumn4" TextAlignment="Center"   />
+                            <syncfusion:GridTextColumn  x:Name="Column5"     HeaderText="" IsHidden="True"
+                                                        MappingName=" valColumn5" TextAlignment="Center"   />
+                            <syncfusion:GridTextColumn  x:Name="Column6"     HeaderText=""  IsHidden="True"
+                                                        MappingName=" valColumn6" TextAlignment="Center"   />
+                            <syncfusion:GridTextColumn  x:Name="Column7"     HeaderText="" IsHidden="True"
+                                                        MappingName=" valColumn7" TextAlignment="Center"  />
+                            <syncfusion:GridTextColumn  x:Name="Column8"     HeaderText="" IsHidden="True"
+                                                        MappingName=" valColumn8" TextAlignment="Center"  />
+                            <syncfusion:GridTextColumn  x:Name="Column9"     HeaderText=""  IsHidden="True"
+                                                        MappingName=" valColumn9" TextAlignment="Center"   />
 
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column2"
-                                                                 HeaderText="Column2"
-                                                                 MappingName="Column2"
-                                                                IsHidden="True">
-
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column3"
-                                                                 HeaderText="Column3"
-                                                                 MappingName="Column3"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column4"
-                                                                 HeaderText="Column4"
-                                                                 MappingName="Column4"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column5"
-                                                                 HeaderText="Column5"
-                                                                 MappingName="Column5"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column6"
-                                                                 HeaderText="Column6"
-                                                                 MappingName="Column6"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column7"
-                                                                 HeaderText="Column7"
-                                                                 MappingName="Column7"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column8"
-                                                                 HeaderText="Column8"
-                                                                 MappingName="Column8"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column9"
-                                                                 HeaderText="Column9"
-                                                                 MappingName="Column9"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column10"
-                                                                 HeaderText="Column10"
-                                                                 MappingName="Column10"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column11"
-                                                                 HeaderText="Column11"
-                                                                 MappingName="Column11"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column12"
-                                                                 HeaderText="Column12"
-                                                                 MappingName="Column12"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column13"
-                                                                 HeaderText="Column13"
-                                                                 MappingName="Column13"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column14"
-                                                                 HeaderText="Column14"
-                                                                 MappingName="Column14"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column15"
-                                                                 HeaderText="Column15"
-                                                                 MappingName="Column15"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column16"
-                                                                 HeaderText="Column16"
-                                                                 MappingName="Column16"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column17"
-                                                                 HeaderText="Column17"
-                                                                 MappingName="Column17"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column18"
-                                                                 HeaderText="Column18"
-                                                                 MappingName="Column18"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Column19"
-                                                                 HeaderText="Column19"
-                                                                 MappingName="Column19"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
-                            <syncfusion:GridTextColumn  x:Name="Drawer"
-                                                                 HeaderText="Drawer"
-                                                                 MappingName="Drawer"
-                                                                IsHidden="True">
-                            </syncfusion:GridTextColumn>
                         </syncfusion:SfDataGrid.Columns>
                     </syncfusion:SfDataGrid>
                 </Grid>

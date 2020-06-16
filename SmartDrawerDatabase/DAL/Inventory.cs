@@ -31,7 +31,9 @@ namespace SmartDrawerDatabase.DAL
         [Required]
         public int TotalRemoved { get; set; }
         [Required]
-        public DateTime InventoryDate { get; set; }        
+        public DateTime InventoryDate { get; set; }
+        [Required]
+        public int IsNotify { get; set; }
         [MaxLength]
         public string InventoryStream { get; set; }
 

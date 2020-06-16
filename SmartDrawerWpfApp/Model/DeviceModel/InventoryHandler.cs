@@ -180,25 +180,24 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
             }
         }
         private static void AddMovementToInventory(SmartDrawerDatabaseContext ctx, Inventory newInventory, IEnumerable tags, MovementType movement , int drawerId)
-        {
-            /* foreach (string uid in tags)
-             {
-                 var rfidTag = ctx.RfidTags.AddIfNotExisting(uid);
-                 int shelveNumber = drawerId;
-
-                 newInventory.InventoryProducts.Add(ctx.InventoryProducts.Add(new InventoryProduct
-                 {
-                     InventoryId = newInventory.InventoryId,
-                     RfidTag = rfidTag,
-                     MovementType = (int)movement,
-                     Shelve = shelveNumber
-                 }));              
-             }  
-             */
+        {           
            List<InventoryProduct> ListProdToAdd = new List<InventoryProduct>();
             foreach (string uid in tags)
             {
-                var rfidTag = ctx.RfidTags.AddIfNotExisting(uid);
+                //var rfidTag = ctx.RfidTags.AddIfNotExisting(uid);
+                var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == uid);
+
+                if (rfidTag == null)
+                {
+                    /* Create Unknown tag*/
+                    RfidTag newTag = new RfidTag() { TagUid = uid };
+                    ctx.RfidTags.Add(newTag);
+                    Product p = new Product() { ProductInfo0 = "Unreferenced", RfidTag = newTag };
+                    ctx.Products.Add(p);
+                    ctx.SaveChanges();
+                    rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == uid);
+                }
+
                 int shelveNumber = drawerId;
                 ListProdToAdd.Add(new InventoryProduct
                 {
