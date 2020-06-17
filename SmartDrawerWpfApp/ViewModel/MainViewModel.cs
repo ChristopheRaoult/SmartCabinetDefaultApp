@@ -863,15 +863,16 @@ namespace SmartDrawerWpfApp.ViewModel
                 try
                 {
                     mainview0.myDatagrid.SearchHelper.AllowFiltering = true;
+                    mainview0.myDatagrid.AllowSorting = false;
                     mainview0.myDatagrid.SearchHelper.ClearSearch();             
                     mainview0.myDatagrid.SearchHelper.Search(_txtSearchCtrl);
-                    mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
+                    //mainview0.myDatagrid.SearchHelper.FindNext(_txtSearchCtrl);
                     mainview0.myDatagrid.SearchHelper.SearchHighlightBrush = _selectionBrush;
                     mainview0.myDatagrid.SearchHelper.SearchBrush = _selectionBrush;
                 }
-                catch 
+                catch (Exception e)
                {
-
+                    string txt = e.Message;
                 }
             }
         }
@@ -1279,6 +1280,11 @@ namespace SmartDrawerWpfApp.ViewModel
                             break;
                         }
                     }
+
+                    //Refresh selection counter
+                    int nbtag = TagDetails.Where(item => item.IsSelected == true).ToList().Count();
+                    txtNbSelectedItem = string.Format("Stone(s) Selected : {0}", nbtag);
+
                 }
 
                 RaisePropertyChanged(() => ItemSelected);
@@ -2943,6 +2949,13 @@ namespace SmartDrawerWpfApp.ViewModel
             //ProgressDialogController myConTroller = null;
             try
                 {
+
+
+                    if (TagDetails != null && mainview0.tiInventoryMode.IsVisible)
+                    {
+                        int nbtag = TagDetails.Where(item => item.IsSelected == true).ToList().Count();
+                        txtNbSelectedItem = string.Format("Stone(s) Selected : {0}", nbtag);
+                    }
 
                     if (InLightOrRecheckprocess)
                         return;

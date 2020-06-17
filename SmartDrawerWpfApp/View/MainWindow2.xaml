@@ -517,8 +517,8 @@
                         <TextBlock  Text="{Binding txtNbSelectedItem}" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="5,0,0,0"  FontSize="25" Foreground="{DynamicResource AccentColorBrush}"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Grid.Row="0" Grid.Column="1"  HorizontalAlignment="Right" >
-                        <Button  Margin="0,0,5,0" Content="{StaticResource keybImg}" VerticalAlignment="Center"  Command="{Binding openKeyboard}" Style="{DynamicResource MetroCircleButtonStyle}" Height="50" />
-                        <TextBox  x:Name="TxtCtrlNumber" Margin="0,0,0,0"                           
+                        <Button  Margin="0,0,5,0" Visibility="Hidden" Content="{StaticResource keybImg}" VerticalAlignment="Center"  Command="{Binding openKeyboard}" Style="{DynamicResource MetroCircleButtonStyle}" Height="50" />
+                        <TextBox  x:Name="TxtCtrlNumber"   Margin="0,0,0,0"   Visibility="Hidden"                        
                                   Text="{Binding txtSearchCtrl,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                                   Width="300" 
                                   VerticalAlignment="Center" 
@@ -542,7 +542,7 @@
                                                RowSelectionBrush="LightGray"
                                                AllowDraggingColumns="False"                                           
                                                AllowEditing="False"
-                                               AllowFiltering="False"
+                                               AllowFiltering="True"
                                                AllowGrouping="True"  
                                                AllowSorting="True"
                                                ShowGroupDropArea="True" 
