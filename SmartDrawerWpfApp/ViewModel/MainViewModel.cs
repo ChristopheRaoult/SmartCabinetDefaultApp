@@ -1,5 +1,6 @@
 //#define IsTiffany
 #define UseInfinity
+//#define SendUnrefTag  for mix tag in device comment it
 
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
@@ -1419,8 +1420,8 @@ namespace SmartDrawerWpfApp.ViewModel
                                                         valColumn3 = si.shape,
                                                         valColumn4 = si.color,
                                                         valColumn5 = si.clarity,
-                                                        valColumn6 = si.cut,
-                                                        valColumn7 = Tag.Value.ToString(),
+                                                        valColumn6 = Tag.Value.ToString(),
+                                                        valColumn7 = null,
                                                         valColumn8 = null,
                                                         valColumn9 = null,
                                                     };
@@ -1439,8 +1440,8 @@ namespace SmartDrawerWpfApp.ViewModel
                                                         valColumn3 = null,
                                                         valColumn4 = null,
                                                         valColumn5 = null,
-                                                        valColumn6 = null,
-                                                        valColumn7 = Tag.Value.ToString(),
+                                                        valColumn6 = Tag.Value.ToString(),
+                                                        valColumn7 = null,
                                                         valColumn8 = null,
                                                         valColumn9 = null,
                                                     };
@@ -1464,8 +1465,8 @@ namespace SmartDrawerWpfApp.ViewModel
                                                     valColumn3 = null,
                                                     valColumn4 = null,
                                                     valColumn5 = null,
-                                                    valColumn6 = null,
-                                                    valColumn7 = Tag.Value.ToString(),
+                                                    valColumn6 = Tag.Value.ToString(),
+                                                    valColumn7 = null,
                                                     valColumn8 = null,
                                                     valColumn9 = null,
                                                 };
@@ -1476,12 +1477,13 @@ namespace SmartDrawerWpfApp.ViewModel
                                         }
                                         // Run thread to add it in db
                                         ProcessNewStone(TagListToSearch);
-
+                                        #if SendUnrefTag
                                         if (lstUnreferencedTag.Count > 0)
                                             if (GrantedUsersCache.LastAuthenticatedUser != null)
                                                 ProcessUnreferencedStones(lstUnreferencedTag, GrantedUsersCache.LastAuthenticatedUser.FirstName, GrantedUsersCache.LastAuthenticatedUser.LastName);
                                             else
                                                 ProcessUnreferencedStones(lstUnreferencedTag, null, null);
+                                         #endif
                                     }
                                     else
                                     {
@@ -1508,8 +1510,8 @@ namespace SmartDrawerWpfApp.ViewModel
                                         valColumn3 = null,
                                         valColumn4 = null,
                                         valColumn5 = null,
-                                        valColumn6 = null,
-                                        valColumn7 = Tag.Value.ToString(),
+                                        valColumn6 = Tag.Value.ToString(),
+                                        valColumn7 = null,
                                         valColumn8 = null,
                                         valColumn9 = null,
                                     };
@@ -3710,6 +3712,18 @@ namespace SmartDrawerWpfApp.ViewModel
                                 };
                                 await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
                             }
+
+
+                            //Add  Unknow user
+                            UserInfo tmpUser2 = new UserInfo()
+                            {
+                                username = "Unknown",
+                                password = "User",
+                                name = "Unknown User",
+                                local_user_id = 999999,
+                                extra = string.Empty,
+                            };
+                            await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser2);
                         }
                     }
                     else
@@ -3999,6 +4013,21 @@ namespace SmartDrawerWpfApp.ViewModel
                                 ctx.Entry(pToUpdate).State = EntityState.Modified;
                                 ctx.SaveChanges();
                             }
+                            else
+                            {
+                                Product p = new Product()
+                                {
+                                    RfidTag = rfidTag,
+                                    ProductInfo0 = sto.report_number,
+                                    ProductInfo1 = sto.carat_weight,
+                                    ProductInfo2 = sto.shape,
+                                    ProductInfo3 = sto.color,
+                                    ProductInfo4 = sto.clarity,
+                                    ProductInfo5 = sto.cut,
+                                };
+                                ctx.Products.Add(p);
+                                ctx.SaveChanges();
+                            }
                         }
                     }
                 }
@@ -4033,7 +4062,7 @@ namespace SmartDrawerWpfApp.ViewModel
             }
             else
             {
-                newEvent.user = null;
+                newEvent.user = new User() { id = 999999, name = "Unknown User" };
             }
 
             newEvent.timestamp = UnixTimeStamp.ConvertToUnixTimestamp(inv.InventoryDate.ToUniversalTime());

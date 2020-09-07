@@ -7,6 +7,10 @@ using System.Web.Script.Serialization;
 
 namespace SmartDrawerWpfApp.InfinityService
 {
+    /// <summary>
+    /// Object to send Alert 
+    /// Use to send unreferenced stones to server
+    /// </summary>
     public class AlertInfo
     {
         public User user { get; set; }
