@@ -345,6 +345,8 @@ namespace SmartDrawerWpfApp.Wcf
                             foreach (string uid in jitp.listOfTagToPull)
                             {
                                 RfidTag tag = ctx.RfidTags.AddIfNotExisting(uid);
+                                Product p = new Product() { ProductInfo0 = "Unreferenced", RfidTag = tag };
+                                ctx.Products.Add(p);  
                                 ctx.PullItemsDetails.Add(new PullItemDetail
                                 {
                                     PullItem = pullItemToAdd,

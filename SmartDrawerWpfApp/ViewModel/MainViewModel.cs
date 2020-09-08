@@ -3952,6 +3952,21 @@ namespace SmartDrawerWpfApp.ViewModel
                                         ctx.Entry(pToUpdate).State = EntityState.Modified;
                                         ctx.SaveChanges();
                                     }
+                                    else
+                                    {
+                                        Product p = new Product()
+                                        {
+                                            RfidTag = rfidTag,
+                                            ProductInfo0 = sto.report_number,
+                                            ProductInfo1 = sto.carat_weight,
+                                            ProductInfo2 = sto.shape,
+                                            ProductInfo3 = sto.color,
+                                            ProductInfo4 = sto.clarity,
+                                            ProductInfo5 = sto.cut,
+                                        };
+                                        ctx.Products.Add(p);
+                                        ctx.SaveChanges();
+                                    }
                                 }
                             }
                         }
