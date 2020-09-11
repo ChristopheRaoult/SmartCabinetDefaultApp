@@ -3635,7 +3635,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             logTime = DateTime.Now.AddDays(InfinityServiceHandler.LastReturnInfo.log);
                         }
 
-                        string filename = LogToFile.GetTempPath() + string.Format("smartAppWpfLog_{0}.txt", logTime.ToString("yyMMdd"));
+                        string filename = LogToFile.GetTempPath() + string.Format("smartDrawerLog_{0}.txt", logTime.ToString("yyMMdd"));
                         await InfinityServiceHandler.SendLog(InfinityServerUrl, InfinityServerToken, WallSerial, filename);
                     }
 

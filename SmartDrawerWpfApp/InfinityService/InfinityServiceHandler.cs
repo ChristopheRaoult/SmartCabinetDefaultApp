@@ -772,20 +772,29 @@ namespace SmartDrawerWpfApp.InfinityService
 
                 if (File.Exists(filePath))
                 {
+                    string copyPath = LogToFile.GetTempPath() + string.Format("Copiedfile.txt");
+                    if (File.Exists(copyPath))
+                        File.Delete(copyPath);
+                    
+                    using (var from = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var to = File.OpenWrite(copyPath))
+                    {
+                        from.CopyTo(to);
+                    }
+
                     string urlServer = url;
                     var client = new RestClient(urlServer);
-                    client.Timeout = 20000;
-                    client.ReadWriteTimeout = 20000;
+                    client.Timeout = 60000;
+                    client.ReadWriteTimeout = 60000;
 
                     var request = new RestRequest("api/device/log", Method.POST);
-                    request.AddHeader("Authorization", "Bearer " + token);
-                    request.AddHeader("s", DeviceSerial);
-                    request.AddFile("Log", filePath);
-                    cts.CancelAfter(new TimeSpan(0, 0, 20));
-                    var response = await client.ExecuteTaskAsync(request, cts.Token);
+                    request.AddHeader("Authorization", "Bearer " + token + "." + DeviceSerial);
 
-                    string ret = response.Content;
+                    request.AddFile("Log", copyPath);
+                    cts.CancelAfter(new TimeSpan(0, 2, 0));
                     LogToFile.LogMessageToFile("Send Log:" + filePath);
+                    var response = await client.ExecuteTaskAsync(request, cts.Token);
+                    string ret = response.Content;
                     LogToFile.LogMessageToFile("Received : " + response.Content);
                     LogToFile.LogMessageToFile("------- Stop Send Logs --------");
 
@@ -797,18 +806,22 @@ namespace SmartDrawerWpfApp.InfinityService
                         return false;
                 }
                 else
+                {
+                    LogToFile.LogMessageToFile("File not exits : " + filePath);
+                    LogToFile.LogMessageToFile("------- Stop Send Log --------");
                     return false;
+                }
             }
             catch (OperationCanceledException oce)
             {
                 LogToFile.LogMessageToFile("OperationCanceledException : " + oce.Message);
-                LogToFile.LogMessageToFile("------- Stop Send Events --------");
+                LogToFile.LogMessageToFile("------- Stop Send Log --------");
                 return false;
             }
             catch (Exception exp)
             {
                 LogToFile.LogMessageToFile("Exception : " + exp.Message);
-                LogToFile.LogMessageToFile("------- Stop Send Events --------");
+                LogToFile.LogMessageToFile("------- Stop Send Log --------");
                 return false;
             }
 
