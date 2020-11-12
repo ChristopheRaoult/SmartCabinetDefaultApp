@@ -33,7 +33,8 @@ namespace SmartDrawerDatabase.DAL
         public string LastName { get; set; }
         [Required]
         public DateTime UpdateAt { get; set; }
-
+        [StringLength(128)]
+        public string userId { get; set; }
         public virtual UserRank UserRank { get; set; }
         public virtual ICollection<GrantedAccess> GrantedAccesses { get; set; }
         public virtual ICollection<Inventory> Inventories { get; set; }

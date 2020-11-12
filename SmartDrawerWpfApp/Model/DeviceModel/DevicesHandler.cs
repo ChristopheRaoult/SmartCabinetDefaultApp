@@ -24,6 +24,8 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         public const int NbInventoryToKeep = 50;
         public static Dictionary<string, int> DeviceList { get; private set; }
 
+        public static string ReactInfinityToken;
+
         private static bool isVersionV3 = true;
 
         public static RfidReader Device;

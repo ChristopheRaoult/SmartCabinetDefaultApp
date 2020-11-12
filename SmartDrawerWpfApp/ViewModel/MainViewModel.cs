@@ -1,5 +1,5 @@
 //#define IsTiffany
-#define UseInfinity
+//#define UseInfinity
 //#define SendUnrefTag  for mix tag in device comment it
 
 using GalaSoft.MvvmLight;
@@ -45,6 +45,10 @@ using System.Data.Entity;
 using System.Data.Entity.Validation;
 using System.Configuration;
 using SmartDrawerWpfApp.InfinityService;
+using Quobject.EngineIoClientDotNet.Client.Transports;
+using Quobject.SocketIoClientDotNet.Client;
+using SmartDrawerWpfApp.InfinityServiceForReact;
+
 
 namespace SmartDrawerWpfApp.ViewModel
 {
@@ -91,8 +95,15 @@ namespace SmartDrawerWpfApp.ViewModel
         private DispatcherTimer InfinityTimer;
 
 
-        private string InfinityServerUrl;
+        private string InfinityServerUrl = null;
         private string InfinityServerToken;
+
+        public string ReactInfinityUrl = null;
+        public string ReactDeviceUser;
+        public string ReactDevicePassword;
+        public string ReactToken;
+
+
         private int AutoScanTimerValue = 0;
         private int DoorOpenTooLongTimerValue = 180;
         public bool IsClosingBusiness = false;
@@ -951,6 +962,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     InfinityServerUrl = ctx.Configurations.Where(c => c.Parameter == "RemoteServerUrl").SingleOrDefault().Value;
                     InfinityServerToken = ctx.Configurations.Where(c => c.Parameter == "Token").SingleOrDefault().Value;
+                    ReactInfinityUrl = ctx.Configurations.Where(c => c.Parameter == "ReactServerURL").SingleOrDefault().Value;
+                    ReactDeviceUser = ctx.Configurations.Where(c => c.Parameter == "ReactDeviceUser").SingleOrDefault().Value;
+                    ReactDevicePassword = ctx.Configurations.Where(c => c.Parameter == "ReactDevicePassword").SingleOrDefault().Value;
                     return true;
                 }
 
@@ -2730,17 +2744,29 @@ namespace SmartDrawerWpfApp.ViewModel
                 System.Windows.Application.Current.Shutdown();
                 return;
             }
+           
+               
+            
 
-            getScanTimerValue();
-            ProcessInfinityUser(null);           
-            doPing();
+            
+            if (!string.IsNullOrEmpty(ReactInfinityUrl))  
+            {
+                if (!await ReactLogin())
+                {
+                    string Info = string.Format("Unable to log to React Infinity server");
+                    await mainview0.ShowMessageAsync("INFORMATION", Info);
+                    System.Windows.Application.Current.Shutdown();
+                    return;
+                }
+            }          
+
             InfinityTimer = new DispatcherTimer();
             InfinityTimer.Interval = new TimeSpan(0, 1, 0);
             InfinityTimer.Tick += InfinityTimer_Tick;
             InfinityTimer.IsEnabled = true;
             InfinityTimer.Start();
 #endif
-
+            getScanTimerValue();
 
             DevicesHandler.FindAndConnectDevice();
             if ((DevicesHandler.Device != null) &&(DevicesHandler.Device.IsConnected))
@@ -2816,46 +2842,61 @@ namespace SmartDrawerWpfApp.ViewModel
                  Device mydev = ctx.Devices.GetByRfidSerialNumber(Properties.Settings.Default.RfidSerial);
                  if (mydev == null)
                  {
-                        Device newDev = new Device() { DeviceTypeId = 15, DeviceName = Properties.Settings.Default.WallName, DeviceSerial = Properties.Settings.Default.WallSerial, RfidSerial = Properties.Settings.Default.RfidSerial,DeviceLocation = Properties.Settings.Default.WallLocation, UpdateAt = DateTime.Now };
-                        ctx.Devices.Add(newDev);
+                    Device newDev = new Device() { DeviceTypeId = 15, DeviceName = Properties.Settings.Default.WallName, DeviceSerial = Properties.Settings.Default.WallSerial, RfidSerial = Properties.Settings.Default.RfidSerial,DeviceLocation = Properties.Settings.Default.WallLocation, UpdateAt = DateTime.Now };
+                    ctx.Devices.Add(newDev);
 
-                        try
+                    try
+                    {
+                        await ctx.SaveChangesAsync();
+                    }
+                    catch (DbEntityValidationException ex)
+                    {
+                        foreach (var eve in ex.EntityValidationErrors)
                         {
-                            await ctx.SaveChangesAsync();
-                        }
-                        catch (DbEntityValidationException ex)
-                        {
-                            foreach (var eve in ex.EntityValidationErrors)
+                            Console.WriteLine(@"Entity of type ""{0}"" in state ""{1}"" 
+                        has the following validation errors:",
+                                eve.Entry.Entity.GetType().Name,
+                                eve.Entry.State);
+                            foreach (var ve in eve.ValidationErrors)
                             {
-                                Console.WriteLine(@"Entity of type ""{0}"" in state ""{1}"" 
-                           has the following validation errors:",
-                                    eve.Entry.Entity.GetType().Name,
-                                    eve.Entry.State);
-                                foreach (var ve in eve.ValidationErrors)
-                                {
-                                    Console.WriteLine(@"- Property: ""{0}"", Error: ""{1}""",
-                                        ve.PropertyName, ve.ErrorMessage);
-                                }
+                                Console.WriteLine(@"- Property: ""{0}"", Error: ""{1}""",
+                                    ve.PropertyName, ve.ErrorMessage);
                             }
-                            throw;
                         }
-
-                       
+                        throw;
+                    }                       
                  }
                 
                 WallSerial = Properties.Settings.Default.WallSerial;
                 WallName = Properties.Settings.Default.WallName;                    
                 InitValue();
                 CreateProcessWindow();
-               
 
-                 ctx.Database.Connection.Close();
+            if (!string.IsNullOrEmpty(ReactInfinityUrl))
+            {
+                if (!await ReactRegisterDevices())
+                {
+                    string Info = string.Format("Unable to Register device(s) - Application will stop \r\n");
+                    await mainview0.ShowMessageAsync("INFORMATION", Info);
+                    System.Windows.Application.Current.Shutdown();
+                    return;
+                }
+
+                CreateSocketIOClient(ReactInfinityUrl);
+            }
+
+            await ProcessInfinityUser(null);
+            doPing();
+
+
+            ctx.Database.Connection.Close();
                  ctx.Dispose();
 
            // }));
 
             await mainview0.Dispatcher.BeginInvoke(new System.Action( () =>
             {
+                //todo - we drive user (middleware or react? ) 
                 refreshUserFromServer();
             }));
         }
@@ -2871,8 +2912,18 @@ namespace SmartDrawerWpfApp.ViewModel
 
             dayDate = DateTime.Now.ToString("dddd, dd MMMM yyyy");
             dayTime = DateTime.Now.ToString("hh:mm tt");
-
             RfidStatus = DevicesHandler.DevicesConnected;
+            #if UseInfinity 
+                if (!IsDeviceRegistered)
+                {
+                    registerDevice();
+                }
+                if (!IsDeviceRegistered)
+                {
+                    AutoConnectTimer.IsEnabled = true;
+                    return;
+                }
+            #endif
 
             if (RfidStatus)
             {
@@ -2894,7 +2945,7 @@ namespace SmartDrawerWpfApp.ViewModel
             if ((DevicesHandler.DrawerStatus[1] == DrawerStatusList.Open) && (DevicesHandler.DrawerStatus[2] == DrawerStatusList.Open))
                 DevicesHandler.ReleaseDevices();
 
-            if (!DevicesHandler.DevicesConnected)
+            if (!DevicesHandler.DevicesConnected )
                 //DevicesHandler.TryInitializeLocalDeviceAsync();
                 DoConnect();
 
@@ -3274,18 +3325,22 @@ namespace SmartDrawerWpfApp.ViewModel
                         //comment for tiffany
                         #if (IsTiffany)
                         #else
-                            getStoneData();
-                            getSelection();
+                        #if UseInfinity
+                               getStoneData();
                         #endif
-                            bNeedUpdateCriteriaAfterScan = false;
+                               getSelection();
+                        #endif
+                        bNeedUpdateCriteriaAfterScan = false;
                         }
                         else if (IsInPutItemFastMode)
                         {
                         //Comment for tiffany
                         #if (IsTiffany)
-                        #else                            
-                           getStoneData();
-                           getSelection();
+                        #else
+                        #if UseInfinity
+                              getStoneData();
+                        #endif
+                             getSelection();
                         #endif
                         bNeedUpdateCriteriaAfterScan = false;
                         }
@@ -3580,166 +3635,348 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         #endregion
-        #region Infinity
+        #region Infinity 
         private async void doPing()
         {
-            InfinityService.EventInfo newEvent = new InfinityService.EventInfo();
-            newEvent.reader = new Reader { serial = WallSerial };
-            newEvent.reader.drawer = null;
-            newEvent.user = null;
-            newEvent.timestamp = UnixTimeStamp.ConvertToUnixTimestamp(DateTime.Now.ToUniversalTime());
-
-            List<string> lstInventory = new List<string>();
-            Event Event = new Event() { EventType = EventType.PING, stones = null };
-            List<Event> lstEvent = new List<Event>();
-            lstEvent.Add(Event);
-            newEvent.events = lstEvent.ToArray();
-            bool result = await InfinityServiceHandler.SendEvents(InfinityServerUrl, InfinityServerToken, WallSerial, newEvent);
-            if (result)
+            if (!string.IsNullOrEmpty(InfinityServerUrl))
             {
-                //if no network - send not notified scan
-                if (!NetworkStatus)
+                InfinityService.EventInfo newEvent = new InfinityService.EventInfo();
+                newEvent.reader = new Reader { serial = WallSerial };
+                newEvent.reader.drawer = null;
+                newEvent.user = null;
+                newEvent.timestamp = UnixTimeStamp.ConvertToUnixTimestamp(DateTime.Now.ToUniversalTime());
+
+                List<string> lstInventory = new List<string>();
+                Event Event = new Event() { EventType = EventType.PING, stones = null };
+                List<Event> lstEvent = new List<Event>();
+                lstEvent.Add(Event);
+                newEvent.events = lstEvent.ToArray();
+                bool result = await InfinityServiceHandler.SendEvents(InfinityServerUrl, InfinityServerToken, WallSerial, newEvent);
+                if (result)
                 {
-                    NetworkStatus = true;
-                }
-                else
-                    NetworkStatus = true;
-                if (InfinityServiceHandler.LastReturnInfo != null)
-                {
-                    if (InfinityServiceHandler.LastReturnInfo.hostUpdated == 1)
+                    //if no network - send not notified scan
+                    if (!NetworkStatus)
                     {
-                        //Todo
-                        bool ret = await InfinityServiceHandler.GetEndpoint(InfinityServerToken);
-                        if (ret)
+                        NetworkStatus = true;
+                    }
+                    else
+                        NetworkStatus = true;
+                    if (InfinityServiceHandler.LastReturnInfo != null)
+                    {
+                        if (InfinityServiceHandler.LastReturnInfo.hostUpdated == 1)
                         {
-                            string newEndpoint = InfinityServiceHandler.LastEndPoint;
-                            InfinityServerUrl = newEndpoint;
-                            using (var ctx = RemoteDatabase.GetDbContext())
+                            //Todo
+                            bool ret = await InfinityServiceHandler.GetEndpoint(InfinityServerToken);
+                            if (ret)
                             {
-                                var conf = ctx.Configurations.Where(c => c.Parameter == "RemoteServerUrl").SingleOrDefault();
-                                if (conf != null)
+                                string newEndpoint = InfinityServiceHandler.LastEndPoint;
+                                InfinityServerUrl = newEndpoint;
+                                using (var ctx = RemoteDatabase.GetDbContext())
                                 {
-                                    conf.Value = newEndpoint;
-                                    ctx.Entry(conf).State = EntityState.Modified;
-                                    ctx.SaveChanges();
+                                    var conf = ctx.Configurations.Where(c => c.Parameter == "RemoteServerUrl").SingleOrDefault();
+                                    if (conf != null)
+                                    {
+                                        conf.Value = newEndpoint;
+                                        ctx.Entry(conf).State = EntityState.Modified;
+                                        ctx.SaveChanges();
+                                    }
                                 }
                             }
                         }
-                    }
 
-                    if (InfinityServiceHandler.LastReturnInfo.log != 0)
-                    {
-                        DateTime logTime = logTime = DateTime.Now;
-                        if (InfinityServiceHandler.LastReturnInfo.log < 0)
+                        if (InfinityServiceHandler.LastReturnInfo.log != 0)
                         {
-                            logTime = DateTime.Now.AddDays(InfinityServiceHandler.LastReturnInfo.log);
+                            DateTime logTime = logTime = DateTime.Now;
+                            if (InfinityServiceHandler.LastReturnInfo.log < 0)
+                            {
+                                logTime = DateTime.Now.AddDays(InfinityServiceHandler.LastReturnInfo.log);
+                            }
+
+                            string filename = LogToFile.GetTempPath() + string.Format("smartDrawerLog_{0}.txt", logTime.ToString("yyMMdd"));
+                            await InfinityServiceHandler.SendLog(InfinityServerUrl, InfinityServerToken, WallSerial, filename);
                         }
 
-                        string filename = LogToFile.GetTempPath() + string.Format("smartDrawerLog_{0}.txt", logTime.ToString("yyMMdd"));
-                        await InfinityServiceHandler.SendLog(InfinityServerUrl, InfinityServerToken, WallSerial, filename);
-                    }
-
-                    if (InfinityServiceHandler.LastReturnInfo.clearDbase == 1)
-                    {
-                        ClearDatabase();
-                    }
-                    if (InfinityServiceHandler.LastReturnInfo.adminRights == 1)
-                    {
-                        isAdmin = true;
-                      /*  UserViewableTimer = new DispatcherTimer();
-                        UserViewableTimer.Tick += UserViewableTimer_Tick;
-                        UserViewableTimer.Interval = new TimeSpan(0, 10, 0);
-                        UserViewableTimer.IsEnabled = true;
-                        UserViewableTimer.Start();*/
-                    }
-                    if (InfinityServiceHandler.LastReturnInfo.userList == 1)
-                        ProcessInfinityUser(null);
-                    if (InfinityServiceHandler.LastReturnInfo.addUsers == 1)
-                        UpdateInfinityUsers();
-
-                    if (InfinityServiceHandler.LastReturnInfo.setOperational == 1)
-                    {
-                        HideProcessWindow();
-                        IsOpeningBusiness = false;
-                        IsClosingBusiness = false;
-                        IsClosingCompleted = false;
-                    }
-
-                    //TODO HOw We renew selection for Diamond match and transit for wall?
-                    /*if (InfinityServiceHandler.LastReturnInfo.diamondMatch > 0)
-                    {
-                        bool bNeedUpateSel = true;
-                        if ((Selection != null) && (Selection.Count > 0))
+                        if (InfinityServiceHandler.LastReturnInfo.clearDbase == 1)
                         {
-                            if (Selection[0].Ref == "REQUEST_MATCHING")
-                                bNeedUpateSel = false;
+                            ClearDatabase();
                         }
-                        if (bNeedUpateSel)
+                        if (InfinityServiceHandler.LastReturnInfo.adminRights == 1)
                         {
-
-                            SelectedTabIndex = 1;
-                            getSelection();
+                            isAdmin = true;
+                            /*  UserViewableTimer = new DispatcherTimer();
+                              UserViewableTimer.Tick += UserViewableTimer_Tick;
+                              UserViewableTimer.Interval = new TimeSpan(0, 10, 0);
+                              UserViewableTimer.IsEnabled = true;
+                              UserViewableTimer.Start();*/
                         }
-                    }*/
+                        if (InfinityServiceHandler.LastReturnInfo.userList == 1)
+                            ProcessInfinityUser(null);
+                        if (InfinityServiceHandler.LastReturnInfo.addUsers == 1)
+                            UpdateInfinityUsers();
+
+                        if (InfinityServiceHandler.LastReturnInfo.setOperational == 1)
+                        {
+                            HideProcessWindow();
+                            IsOpeningBusiness = false;
+                            IsClosingBusiness = false;
+                            IsClosingCompleted = false;
+                        }
+
+                        //TODO HOw We renew selection for Diamond match and transit for wall?
+                        /*if (InfinityServiceHandler.LastReturnInfo.diamondMatch > 0)
+                        {
+                            bool bNeedUpateSel = true;
+                            if ((Selection != null) && (Selection.Count > 0))
+                            {
+                                if (Selection[0].Ref == "REQUEST_MATCHING")
+                                    bNeedUpateSel = false;
+                            }
+                            if (bNeedUpateSel)
+                            {
+
+                                SelectedTabIndex = 1;
+                                getSelection();
+                            }
+                        }*/
+                    }
+                }
+                else
+                {
+                    NetworkStatus = false;
                 }
             }
-            else
-            {
-                NetworkStatus = false;
-            }
         }
-        private void ProcessInfinityUser(GrantedUser gu)
+        /* private void ProcessInfinityUser(GrantedUser gu)
+         {
+             if (!string.IsNullOrEmpty(InfinityServerUrl))
+             {
+                 Task.Run(async () =>
+             {
+                 try
+                 {
+                     if (gu == null)
+                     {
+                         using (var ctx = RemoteDatabase.GetDbContext())
+                         {
+                             var lstDev = ctx.GrantedUsers
+                             .Where(u => u.UserRankId > 1).ToList();
+                             foreach (var dv in lstDev)
+                             {
+                                 UserInfo tmpUser = new UserInfo()
+                                 {
+                                     username = dv.Login,
+                                     password = dv.Password,
+                                     name = dv.FirstName + " " + dv.LastName,
+                                     local_user_id = dv.GrantedUserId,
+                                     extra = dv.BadgeNumber,
+                                 };
+                                 await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
+                             }
+
+
+                             //Add  Unknow user
+                             UserInfo tmpUser2 = new UserInfo()
+                             {
+                                 username = "Unknown",
+                                 password = "User",
+                                 name = "Unknown User",
+                                 local_user_id = 999999,
+                                 extra = string.Empty,
+                             };
+                             await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser2);
+                         }
+                     }
+                     else
+                     {
+                         UserInfo tmpUser = new UserInfo()
+                         {
+                             username = gu.Login,
+                             password = gu.Password,
+                             name = gu.FirstName + " " + gu.LastName,
+                             local_user_id = gu.GrantedUserId,
+                             extra = gu.BadgeNumber,
+                         };
+                         await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
+                     }
+                 }
+
+                 catch (Exception error)
+                 {
+                     Application.Current.Dispatcher.Invoke(() =>
+                     {
+                         ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Populate User");
+                         exp.ShowDialog();
+                     });
+                 }
+             });
+             }
+         }*/
+        private async Task<bool> ProcessInfinityUser(GrantedUser gu)
         {
-            Task.Run(async () =>
+           
+            await Task.Run(async () =>
             {
                 try
                 {
-                    if (gu == null)
+                    if (!string.IsNullOrEmpty(InfinityServerUrl)) //Phase 2 - sebd user define
                     {
-                        using (var ctx = RemoteDatabase.GetDbContext())
+
+                        if (gu == null)
                         {
-                            var lstDev = ctx.GrantedUsers
-                            .Where(u => u.UserRankId > 1).ToList();
-                            foreach (var dv in lstDev)
+                            using (var ctx = RemoteDatabase.GetDbContext())
                             {
-                                UserInfo tmpUser = new UserInfo()
+                                var lstDev = ctx.GrantedUsers
+                                .Where(u => u.UserRankId > 1).ToList();
+                                foreach (var dv in lstDev)
                                 {
-                                    username = dv.Login,
-                                    password = dv.Password,
-                                    name = dv.FirstName + " " + dv.LastName,
-                                    local_user_id = dv.GrantedUserId,
-                                    extra = dv.BadgeNumber,
-                                };
-                                await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
+                                    UserInfo tmpUser = new UserInfo()
+                                    {
+                                        username = dv.Login,
+                                        password = dv.Password,
+                                        name = dv.FirstName + " " + dv.LastName,
+                                        local_user_id = dv.GrantedUserId,
+                                        extra = dv.BadgeNumber,
+                                    };
+                                    await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
+                                }
                             }
-
-
-                            //Add  Unknow user
-                            UserInfo tmpUser2 = new UserInfo()
+                        }
+                        else
+                        {
+                            UserInfo tmpUser = new UserInfo()
                             {
-                                username = "Unknown",
-                                password = "User",
-                                name = "Unknown User",
-                                local_user_id = 999999,
-                                extra = string.Empty,
+                                username = gu.Login,
+                                password = gu.Password,
+                                name = gu.FirstName + " " + gu.LastName,
+                                local_user_id = gu.GrantedUserId,
+                                extra = gu.BadgeNumber,
                             };
-                            await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser2);
+                            await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
                         }
                     }
-                    else
+                    if (!string.IsNullOrEmpty(ReactInfinityUrl)) // Phase 3 - get knwon user from server and store it
                     {
-                        UserInfo tmpUser = new UserInfo()
+                        if (gu == null)
                         {
-                            username = gu.Login,
-                            password = gu.Password,
-                            name = gu.FirstName + " " + gu.LastName,
-                            local_user_id = gu.GrantedUserId,
-                            extra = gu.BadgeNumber,
-                        };
-                        await InfinityServiceHandler.SendUser(InfinityServerUrl, InfinityServerToken, WallSerial, tmpUser);
+                            var result = await InfinityServiceForReactHandler.GetAllUsers(ReactInfinityUrl, ReactToken);
+                            if (result)
+                            {
+                                if (InfinityServiceForReactHandler.LastUserInfo != null)
+                                {
+                                    using (var ctx = RemoteDatabase.GetDbContext())
+                                    {
+                                        foreach (var user in InfinityServiceForReactHandler.LastUserInfo.data)
+                                        {
+                                            var original = ctx.GrantedUsers.Where(u => u.Login == user.email).SingleOrDefault();
+                                            if (original == null)  //need to create 
+                                            {
+                                                GrantedUser newUser = new GrantedUser()
+                                                {
+                                                    ServerGrantedUserId = 0,
+                                                    Login = user.email,
+                                                    Password = PasswordHashing.Sha256Of("123456"),
+                                                    FirstName = user.firstName,
+                                                    LastName = user.lastName,
+                                                    BadgeNumber = user.badgeId,
+                                                    UpdateAt = user.updatedAt,
+                                                    UserRankId = 3,
+                                                    userId = user._id,
+                                                };
+                                                ctx.GrantedUsers.Add(newUser);
+                                                ctx.SaveChanges(); //to get new userID;
+                                                if (user.fingerPrint != null)
+                                                {
+                                                    foreach (var fp in user.fingerPrint)
+                                                    {
+                                                        ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                                                        {
+                                                            Index = (int)fp.index,
+                                                            GrantedUserId = newUser.GrantedUserId,
+                                                            Template = fp.data
+                                                        });
+                                                    }
+                                                }
+                                                // Grant on all devices                                                
+                                                var TmpDev = ctx.Devices.GetBySerialNumber(WallSerial);
+                                                if (TmpDev != null)
+                                                    ctx.GrantedAccesses.AddOrUpdateAccess(newUser, TmpDev, ctx.GrantTypes.All());
+                                                 
+                                            }
+                                            else  //need to update
+                                            {
+                                                TimeSpan ts = user.updatedAt - original.UpdateAt;
+                                                if (ts.TotalSeconds > 1.0)
+                                                {
+
+                                                    original.Login = user.email;
+                                                    original.Password = PasswordHashing.Sha256Of("123456");
+                                                    original.LastName = user.firstName;
+                                                    original.FirstName = user.lastName;
+                                                    original.BadgeNumber = user.badgeId;
+                                                    original.UpdateAt = user.updatedAt;
+                                                    original.userId = user._id;
+                                                    ctx.Entry(original).State = EntityState.Modified;
+
+                                                    if (original.Fingerprints != null)
+                                                        ctx.Fingerprints.RemoveRange(ctx.Fingerprints.Where(x => x.GrantedUserId == original.GrantedUserId));
+                                                    ctx.SaveChanges();
+                                                    if (user.fingerPrint != null)
+                                                    {
+                                                        foreach (var fp in user.fingerPrint)
+                                                        {
+                                                            ctx.Fingerprints.Add(new SmartDrawerDatabase.DAL.Fingerprint
+                                                            {
+                                                                Index = (int)fp.index,
+                                                                GrantedUserId = original.GrantedUserId,
+                                                                Template = fp.data
+                                                            });
+                                                        }
+                                                    }
+
+                                                }
+                                            }
+                                        }
+                                        ctx.SaveChanges();
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            ReactUpdateUserBadgeAndFp ruubf = new ReactUpdateUserBadgeAndFp();
+                            ruubf._id = gu.userId;
+                            ruubf.badgeId = gu.BadgeNumber;
+                            List<InfinityServiceForReact.Fingerprint> listFp = new List<InfinityServiceForReact.Fingerprint>();
+                            if (gu.Fingerprints != null)
+                            {
+                                foreach (var fp in gu.Fingerprints)
+                                {
+                                    InfinityServiceForReact.Fingerprint tmpFp = new InfinityServiceForReact.Fingerprint()
+                                    {
+                                        index = fp.Index,
+                                        data = fp.Template,
+                                    };
+                                    listFp.Add(tmpFp);
+                                }
+                            }
+
+                            ruubf.fingerPrint = listFp.ToArray();
+                            var result = await InfinityServiceForReactHandler.UpdateUser(ReactInfinityUrl, ReactToken, ruubf);
+                            if (result)
+                            {
+                                if (InfinityServiceForReactHandler.LastReturnUpdateUser != null)
+                                {
+                                    if (InfinityServiceForReactHandler.LastReturnUpdateUser.status == false)
+                                    {
+                                        await mainview0.ShowMessageAsync("Error", "Unable to update user on server");
+                                    }
+                                }
+                            }
+                            else
+                                await mainview0.ShowMessageAsync("Error", "Unable to update user on server");
+                        }
                     }
                 }
-
                 catch (Exception error)
                 {
                     Application.Current.Dispatcher.Invoke(() =>
@@ -3749,10 +3986,13 @@ namespace SmartDrawerWpfApp.ViewModel
                     });
                 }
             });
+            return true;
         }
         private void UpdateInfinityUsers()
         {
-            Task.Run(async () =>
+            if (!string.IsNullOrEmpty(InfinityServerUrl))
+            {
+                Task.Run(async () =>
             {
                 try
                 {
@@ -3862,6 +4102,7 @@ namespace SmartDrawerWpfApp.ViewModel
                     });
                 }
             });
+            }
         }
         private void ClearDatabase()
         {
@@ -3904,59 +4145,32 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
         private void ProcessNewStone(List<string> TagList)
-        {
+        {            
             Task.Run(() =>
             {
-                if ((InfinityServiceHandler.LastStonesListNotScan != null) && (InfinityServiceHandler.LastStonesListNotScan.Count() > 0))
+                if (!string.IsNullOrEmpty(InfinityServerUrl))  // do for phase 2
                 {
-                    foreach (string tagId in TagList)
+                    if ((InfinityServiceHandler.LastStonesListNotScan != null) && (InfinityServiceHandler.LastStonesListNotScan.Count() > 0))
                     {
-                        StoneInfo sto = (from si in InfinityServiceHandler.LastStonesListNotScan
-                                         where si.tag_id == tagId
-                                         select si).SingleOrDefault();
-
-                        if (sto != null)
+                        foreach (string tagId in TagList)
                         {
-                            using (var ctx = RemoteDatabase.GetDbContext())
+                            StoneInfo sto = (from si in InfinityServiceHandler.LastStonesListNotScan
+                                             where si.tag_id == tagId
+                                             select si).SingleOrDefault();
+
+                            if (sto != null)
                             {
-                                var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == sto.tag_id);
-                                if (rfidTag == null) // create tag with stone info
+                                using (var ctx = RemoteDatabase.GetDbContext())
                                 {
-                                    // Create Unknown tag
-                                    RfidTag newTag = new RfidTag() { TagUid = sto.tag_id };
-                                    ctx.RfidTags.Add(newTag);
-                                    Product p = new Product()
+                                    var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == sto.tag_id);
+                                    if (rfidTag == null) // create tag with stone info
                                     {
-                                        RfidTag = newTag,
-                                        ProductInfo0 = sto.report_number,
-                                        ProductInfo1 = sto.carat_weight,
-                                        ProductInfo2 = sto.shape,
-                                        ProductInfo3 = sto.color,
-                                        ProductInfo4 = sto.clarity,
-                                        ProductInfo5 = sto.cut,
-                                    };
-                                    ctx.Products.Add(p);
-                                    ctx.SaveChanges();
-                                }
-                                else //product to update it
-                                {
-                                    Product pToUpdate = ctx.Products.Where(po => po.RfidTag.TagUid == sto.tag_id).Include(po => po.RfidTag).FirstOrDefault();
-                                    if (pToUpdate != null)
-                                    {
-                                        pToUpdate.ProductInfo0 = sto.report_number;
-                                        pToUpdate.ProductInfo1 = sto.carat_weight;
-                                        pToUpdate.ProductInfo2 = sto.shape;
-                                        pToUpdate.ProductInfo3 = sto.color;
-                                        pToUpdate.ProductInfo4 = sto.clarity;
-                                        pToUpdate.ProductInfo5 = sto.cut;
-                                        ctx.Entry(pToUpdate).State = EntityState.Modified;
-                                        ctx.SaveChanges();
-                                    }
-                                    else
-                                    {
+                                        // Create Unknown tag
+                                        RfidTag newTag = new RfidTag() { TagUid = sto.tag_id };
+                                        ctx.RfidTags.Add(newTag);
                                         Product p = new Product()
                                         {
-                                            RfidTag = rfidTag,
+                                            RfidTag = newTag,
                                             ProductInfo0 = sto.report_number,
                                             ProductInfo1 = sto.carat_weight,
                                             ProductInfo2 = sto.shape,
@@ -3967,12 +4181,104 @@ namespace SmartDrawerWpfApp.ViewModel
                                         ctx.Products.Add(p);
                                         ctx.SaveChanges();
                                     }
+                                    else //product to update it
+                                    {
+                                        Product pToUpdate = ctx.Products.Where(po => po.RfidTag.TagUid == sto.tag_id).Include(po => po.RfidTag).FirstOrDefault();
+                                        if (pToUpdate != null)
+                                        {
+                                            pToUpdate.ProductInfo0 = sto.report_number;
+                                            pToUpdate.ProductInfo1 = sto.carat_weight;
+                                            pToUpdate.ProductInfo2 = sto.shape;
+                                            pToUpdate.ProductInfo3 = sto.color;
+                                            pToUpdate.ProductInfo4 = sto.clarity;
+                                            pToUpdate.ProductInfo5 = sto.cut;
+                                            ctx.Entry(pToUpdate).State = EntityState.Modified;
+                                            ctx.SaveChanges();
+                                        }
+                                        else
+                                        {
+                                            Product p = new Product()
+                                            {
+                                                RfidTag = rfidTag,
+                                                ProductInfo0 = sto.report_number,
+                                                ProductInfo1 = sto.carat_weight,
+                                                ProductInfo2 = sto.shape,
+                                                ProductInfo3 = sto.color,
+                                                ProductInfo4 = sto.clarity,
+                                                ProductInfo5 = sto.cut,
+                                            };
+                                            ctx.Products.Add(p);
+                                            ctx.SaveChanges();
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            });
+                if (!string.IsNullOrEmpty(ReactInfinityUrl)) //Do for react
+                {
+                    if ((InfinityServiceForReactHandler.LastSkuInfo != null) && (InfinityServiceForReactHandler.LastSkuInfo.data.Count() > 0))
+                    {
+                        foreach (string tagId in TagList)
+                        {
+                            SkuData sd = GetStoneInfoForReact(tagId);
+
+                            if (sd != null)
+                            {
+                                using (var ctx = RemoteDatabase.GetDbContext())
+                                {
+                                    var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == sd.rfId.rfid);
+                                    if (rfidTag == null) // create tag with stone info
+                                    {
+                                        // Create Unknown tag
+                                        RfidTag newTag = new RfidTag() { TagUid = sd.rfId.rfid };
+                                        ctx.RfidTags.Add(newTag);
+                                        Product p = new Product()
+                                        {
+                                            RfidTag = newTag,
+                                            ProductInfo0 = sd.clientRefId,
+                                            ProductInfo1 = sd.weight.ToString("0.00"),
+                                            ProductInfo2 = sd.shape,
+                                            ProductInfo3 = sd.colorCategory,
+                                            ProductInfo4 = sd.clarity,
+                                            ProductInfo5 = sd.cut,
+                                            ProductInfo6 = sd._id,
+                                            ProductInfo7 = sd.colorType,
+                                            ProductInfo8 = sd.infinityRefId,
+                                            ProductInfo9 = sd.pwvImport,
+                                            ProductInfo10 = sd.dmGuid,
+                                        };
+                                        ctx.Products.Add(p);
+                                        ctx.SaveChanges();                                      
+
+                                    }
+                                    else //product to update it - no udpate diamond info
+                                    {
+                                        Product pToUpdate = ctx.Products.Where(po => po.RfidTag.TagUid == sd.rfId.rfid).Include(po => po.RfidTag).FirstOrDefault();
+                                        if (pToUpdate != null)
+                                        {
+                                            pToUpdate.ProductInfo0 = sd.clientRefId;
+                                            pToUpdate.ProductInfo1 = sd.weight.ToString("0.00");
+                                            pToUpdate.ProductInfo2 = sd.shape;
+                                            pToUpdate.ProductInfo3 = sd.colorCategory;
+                                            pToUpdate.ProductInfo4 = sd.clarity;
+                                            pToUpdate.ProductInfo5 = sd.cut;
+                                            pToUpdate.ProductInfo6 = sd._id;
+                                            pToUpdate.ProductInfo7 = sd.colorType;
+                                            pToUpdate.ProductInfo8 = sd.infinityRefId;
+                                            pToUpdate.ProductInfo9 = sd.pwvImport;
+                                            pToUpdate.ProductInfo10 = sd.dmGuid;
+                                            ctx.Entry(pToUpdate).State = EntityState.Modified;
+                                            ctx.SaveChanges();                                           
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });            
         }
         private StoneInfo GetStoneInfo(string TagId)
         {
@@ -3984,55 +4290,39 @@ namespace SmartDrawerWpfApp.ViewModel
 
             return si;
         }
+        private SkuData GetStoneInfoForReact(string TagId)
+        {
+            SkuData sd = null;
+            if (InfinityServiceForReactHandler.LastSkuInfo != null)
+            {
+                sd = (from sto in InfinityServiceForReactHandler.LastSkuInfo.data
+                      where sto.rfId.rfid == TagId
+                      select sto).SingleOrDefault();
+            }
+            return sd;
+        }
         Dictionary<string, int> UnknownTags = new Dictionary<string, int>();
       
         private void ProcessNewStone()
         {
-            if ((InfinityServiceHandler.LastStonesListNotScan != null) && (InfinityServiceHandler.LastStonesListNotScan.Count() > 0))
+            if (!string.IsNullOrEmpty(InfinityServerUrl))
             {
-                foreach (var sto in InfinityServiceHandler.LastStonesListNotScan)
+                if ((InfinityServiceHandler.LastStonesListNotScan != null) && (InfinityServiceHandler.LastStonesListNotScan.Count() > 0))
                 {
-                    using (var ctx = RemoteDatabase.GetDbContext())
+                    foreach (var sto in InfinityServiceHandler.LastStonesListNotScan)
                     {
-                        // find if Tag exist in local db
-                        var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == sto.tag_id);
-                        if (rfidTag == null) // create tag with stone info
+                        using (var ctx = RemoteDatabase.GetDbContext())
                         {
-                            /* Create Unknown tag*/
-                            RfidTag newTag = new RfidTag() { TagUid = sto.tag_id };
-                            ctx.RfidTags.Add(newTag);
-                            Product p = new Product()
+                            // find if Tag exist in local db
+                            var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == sto.tag_id);
+                            if (rfidTag == null) // create tag with stone info
                             {
-                                RfidTag = newTag,
-                                ProductInfo0 = sto.report_number,
-                                ProductInfo1 = sto.carat_weight,
-                                ProductInfo2 = sto.shape,
-                                ProductInfo3 = sto.color,
-                                ProductInfo4 = sto.clarity,
-                                ProductInfo5 = sto.cut,
-                            };
-                            ctx.Products.Add(p);
-                            ctx.SaveChanges();
-                        }
-                        else //product to update it
-                        {
-                            Product pToUpdate = ctx.Products.Where(po => po.RfidTag.TagUid == sto.tag_id).Include(po => po.RfidTag).FirstOrDefault();
-                            if (pToUpdate != null)
-                            {
-                                pToUpdate.ProductInfo0 = sto.report_number;
-                                pToUpdate.ProductInfo1 = sto.carat_weight;
-                                pToUpdate.ProductInfo2 = sto.shape;
-                                pToUpdate.ProductInfo3 = sto.color;
-                                pToUpdate.ProductInfo4 = sto.clarity;
-                                pToUpdate.ProductInfo5 = sto.cut;
-                                ctx.Entry(pToUpdate).State = EntityState.Modified;
-                                ctx.SaveChanges();
-                            }
-                            else
-                            {
+                                /* Create Unknown tag*/
+                                RfidTag newTag = new RfidTag() { TagUid = sto.tag_id };
+                                ctx.RfidTags.Add(newTag);
                                 Product p = new Product()
                                 {
-                                    RfidTag = rfidTag,
+                                    RfidTag = newTag,
                                     ProductInfo0 = sto.report_number,
                                     ProductInfo1 = sto.carat_weight,
                                     ProductInfo2 = sto.shape,
@@ -4043,6 +4333,36 @@ namespace SmartDrawerWpfApp.ViewModel
                                 ctx.Products.Add(p);
                                 ctx.SaveChanges();
                             }
+                            else //product to update it
+                            {
+                                Product pToUpdate = ctx.Products.Where(po => po.RfidTag.TagUid == sto.tag_id).Include(po => po.RfidTag).FirstOrDefault();
+                                if (pToUpdate != null)
+                                {
+                                    pToUpdate.ProductInfo0 = sto.report_number;
+                                    pToUpdate.ProductInfo1 = sto.carat_weight;
+                                    pToUpdate.ProductInfo2 = sto.shape;
+                                    pToUpdate.ProductInfo3 = sto.color;
+                                    pToUpdate.ProductInfo4 = sto.clarity;
+                                    pToUpdate.ProductInfo5 = sto.cut;
+                                    ctx.Entry(pToUpdate).State = EntityState.Modified;
+                                    ctx.SaveChanges();
+                                }
+                                else
+                                {
+                                    Product p = new Product()
+                                    {
+                                        RfidTag = rfidTag,
+                                        ProductInfo0 = sto.report_number,
+                                        ProductInfo1 = sto.carat_weight,
+                                        ProductInfo2 = sto.shape,
+                                        ProductInfo3 = sto.color,
+                                        ProductInfo4 = sto.clarity,
+                                        ProductInfo5 = sto.cut,
+                                    };
+                                    ctx.Products.Add(p);
+                                    ctx.SaveChanges();
+                                }
+                            }
                         }
                     }
                 }
@@ -4050,7 +4370,9 @@ namespace SmartDrawerWpfApp.ViewModel
         }
         private void ProcessUnreferencedStones(List<string> TagList, string firstname, string lastName)
         {
-            Task.Run(async () =>
+            if (!string.IsNullOrEmpty(InfinityServerUrl))
+            {
+                Task.Run(async () =>
             {
                 AlertInfo alert = new AlertInfo();
                 alert.timestamp = UnixTimeStamp.ConvertToUnixTimestamp(DateTime.Now.ToUniversalTime());
@@ -4059,6 +4381,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 alert.comment += string.Join(",", TagList);
                 await InfinityServiceHandler.SendAlert(InfinityServerUrl, InfinityServerToken, WallSerial, alert);
             });
+            }
         }
         private InfinityService.EventInfo ProcessEvent(Inventory inv, bool bClosingBusiness, bool bOpeningBusiness, bool bIsClosingComplete)
         {
@@ -4299,10 +4622,290 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
-#endregion
-#region Device
+        //phase 3
 
-        int  CptErrorRfid = 0;
+        private async Task<bool> ReactLogin()
+        {
+            bool ret = false;
+            if (await InfinityServiceForReactHandler.Login(ReactInfinityUrl, ReactDeviceUser, ReactDevicePassword))
+            {
+                if (InfinityServiceForReactHandler.LastReturnLogin != null)
+                {
+                    ReactToken = InfinityServiceForReactHandler.LastReturnLogin.data.token;
+                    return true;
+                }
+            }
+            return ret;
+        }
+
+        private async Task<bool> ReactRegisterDevices()
+        {
+            bool ret = true;             
+         
+            bool tmpRet = await InfinityServiceForReactHandler.RegisterDevice(ReactInfinityUrl, ReactToken, WallSerial);
+            if (!tmpRet)
+            {
+                ret = false;
+            }
+            else
+            {
+                if (InfinityServiceForReactHandler.LastReturnRegisterDevice != null)
+                {
+                    if (!string.IsNullOrEmpty(InfinityServiceForReactHandler.LastReturnRegisterDevice.data.token))
+                        DevicesHandler.ReactInfinityToken = InfinityServiceForReactHandler.LastReturnRegisterDevice.data.token;
+                    else
+                        ret = false;
+                }
+                else
+                    ret = false;
+            }
+            
+            
+            return ret;
+        }
+
+        public Socket clientSocket;
+        public bool IsClientSocketConnected = false;
+        public void CreateSocketIOClient(string url)
+        {
+
+            clientSocket = IO.Socket(url);
+            clientSocket.On(Socket.EVENT_CONNECT, () =>
+            {
+                IsClientSocketConnected = true;
+                LogToFile.LogMessageToFile("Info React - Connect to " + url);
+                NetworkStatus = true;
+            });
+            clientSocket.On(Socket.EVENT_ERROR, (data) =>
+            {
+                LogToFile.LogMessageToFile("Receive Error : " + data);
+            });
+            clientSocket.On(Socket.EVENT_CONNECT_ERROR, (data) =>
+            {
+                LogToFile.LogMessageToFile("Receive Connect Error : " + data);
+            });
+            clientSocket.On(Socket.EVENT_CONNECT_TIMEOUT, (data) =>
+            {
+                LogToFile.LogMessageToFile("Receive Connect Timeout : " + data);
+            });
+            clientSocket.On(Socket.EVENT_RECONNECT, (data) =>
+            {
+                LogToFile.LogMessageToFile("Receive Reconnect : " + data);
+            });
+
+            clientSocket.On(Socket.EVENT_DISCONNECT, () =>
+            {
+                IsClientSocketConnected = false;
+                IsDeviceRegistered = false;
+                LogToFile.LogMessageToFile("Info React - Disconnect from " + url);
+                NetworkStatus = false;
+            });
+
+            clientSocket.On("success", (data) =>
+            {
+                LogToFile.LogMessageToFile("Receive Success : " + data);
+            });
+            clientSocket.On("failure", (data) =>
+            {
+                LogToFile.LogMessageToFile("Receive Failure : " + data);
+            });
+            /*  clientSocket.On("diamondMatchRegistration", (data) =>
+              {
+                  LogToFile.LogMessageToFile("Receive diamondMatchRegistration : " + data);
+                  _lastDMRegistrationData = RetDMSocket.DeserializedJsonList(data.ToString());
+                  eventDMRegistration.Set();
+
+              });
+              clientSocket.On("diamondMatch", (data) =>
+              {
+                  LogToFile.LogMessageToFile("Receive  diamondMatch : " + data);
+                  _lastDMMatchData = RetDMSocket.DeserializedJsonList(data.ToString());
+                  eventDMMatch.Set();
+              });*/
+
+            clientSocket.On("ledTrigger", (data) =>
+            {
+                LogToFile.LogMessageToFile("Receive  ledTrigger : " + data);
+
+            });
+            clientSocket.On("registerDevice", (data) =>
+            {
+                LogToFile.LogMessageToFile("Receive  registerDevice : " + data);
+                _lastRegistrationDeviceData = RetDMSocket2.DeserializedJsonList(data.ToString());
+                eventRegistrationDevice.Set();
+            });
+
+        }
+
+        public bool IsDeviceRegistered = false;
+        private static EventWaitHandle eventRegistrationDevice = new EventWaitHandle(false, EventResetMode.AutoReset);
+        private RetDMSocket2 _lastRegistrationDeviceData = null;
+        public void registerDevice()
+        {           
+            
+            RegisterDeviceInfo rdi = new RegisterDeviceInfo() { serialNumber = WallSerial };
+            if (EmitRegisterDevice(rdi))
+            {
+                DevicesHandler.ReactInfinityToken = _lastRegistrationDeviceData.body.token;
+                IsDeviceRegistered = true;
+            }
+            else
+                LogToFile.LogMessageToFile("Info React - Unable to register device - timeout 5s");            
+        }
+        public bool EmitRegisterDevice(RegisterDeviceInfo rdi)
+        {
+            if ((clientSocket == null) || (!IsClientSocketConnected))
+                CreateSocketIOClient(ReactInfinityUrl);
+
+            if ((clientSocket != null) && (IsClientSocketConnected))
+            {
+                _lastRegistrationDeviceData = null;
+                eventRegistrationDevice.Reset();
+                string data = RegisterDeviceInfo.SerializedJsonAlone(rdi);
+                LogToFile.LogMessageToFile("Send React - registerDevice : " + data);
+                var ret = clientSocket.Emit("registerDevice", data);
+
+                if (eventRegistrationDevice.WaitOne(5000, false))
+                {
+                    if (_lastRegistrationDeviceData != null)
+                    {
+                        return true;
+                    }
+                }
+                else
+                    return false;
+            }
+            return false;
+        }
+       
+
+        private async void ProcessInfinityReact(int drawerId)
+        {
+            try
+            {               
+                using (var ctx = RemoteDatabase.GetDbContext())
+                { 
+                    var NotSendInventory = ctx.Inventories.GetNotNotifiedInventory(drawerId);
+                    if (NotSendInventory != null)
+                    {
+                        foreach (Inventory inv in NotSendInventory)
+                        {
+                            // Send it
+                            ReactEventInfo tmpEvent = ProcessEventForReact(inv);
+                            if (tmpEvent.events.Count() > 0)
+                            {
+                                if ((clientSocket == null) || (!IsClientSocketConnected))
+                                    CreateSocketIOClient(ReactInfinityUrl);
+
+                                if ((clientSocket != null) && (IsClientSocketConnected))
+                                {
+
+                                    string data = ReactEventInfo.SerializedJsonAlone(tmpEvent);
+                                    //string data2 = JsonConvert.SerializeObject(tmpEvent);
+                                    LogToFile.LogMessageToFile("Send React - Event createRawActivity : " + data);
+                                    var ret = clientSocket.Emit("createRawActivity", data);
+                                }
+
+                                ctx.Inventories.UpdateInventoryForNotification(inv);
+                                ctx.SaveChanges();
+
+                            }
+                            else // If no event, no tag in scan, not send it but notify local
+                            {
+                                ctx.Inventories.UpdateInventoryForNotification(inv);
+                                ctx.SaveChanges();
+                            }
+                        }
+                    }
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    ExceptionMessageBox msg = new ExceptionMessageBox(ex, "Error Process Infinity For React");
+                    msg.Show();
+                });
+            }
+        }
+
+        private ReactEventInfo ProcessEventForReact(Inventory inv)
+        {
+            ReactEventInfo newEvent = new ReactEventInfo();
+            newEvent.token = DevicesHandler.ReactInfinityToken;
+            newEvent.inventory_id = inv.InventoryId;
+            newEvent.reader = new ReactReader { serial = WallSerial };
+            if (inv.Device.DeviceTypeId == 15) // un wall
+                newEvent.reader.drawer = inv.DrawerNumber;
+            else
+                newEvent.reader.drawer = 0;
+
+            if (inv.GrantedUser != null)
+            {
+                newEvent.user = inv.GrantedUser.userId;
+            }
+            else
+            {
+                newEvent.user = "5f92d7c7f9cdf76de85734a3";
+            }
+
+            newEvent.timestamp = ReactUnixTimeStamp.ConvertToUnixTimestamp(inv.InventoryDate.ToUniversalTime());
+
+            List<string> lstIn = new List<string>();
+            List<string> lstOut = new List<string>();
+            List<string> lstInventory = new List<string>();
+
+            foreach (var tag in inv.InventoryProducts)
+            {
+                switch (tag.MovementType)
+                {
+                    case (int)MovementType.Added:
+                        lstInventory.Add(tag.RfidTag.TagUid);
+                        lstIn.Add(tag.RfidTag.TagUid);
+                        break;
+                    case (int)MovementType.Removed:
+                        lstOut.Add(tag.RfidTag.TagUid);
+                        break;
+                    case (int)MovementType.Present:
+                        lstInventory.Add(tag.RfidTag.TagUid);
+                        break;
+
+                }
+            }
+            List<ReactEvent> lstEvent = new List<ReactEvent>();
+            //if (lstIn.Count > 0)
+            if (1 == 1)
+            {
+                ReactEvent InEvent = new ReactEvent() { EventType = ReactEventType.IN, stones = lstIn.ToArray() };
+                lstEvent.Add(InEvent);
+            }
+
+            //if (lstOut.Count > 0)
+            if (1 == 1)
+            {
+                ReactEvent OutEvent = new ReactEvent() { EventType = ReactEventType.OUT, stones = lstOut.ToArray() };
+                lstEvent.Add(OutEvent);
+            }
+
+            // if (lstInventory.Count > 0)
+            if (1 == 1)
+            {
+                ReactEvent InventoryEvent = new ReactEvent() { EventType = ReactEventType.INVENTORY, stones = lstInventory.ToArray() };
+                lstEvent.Add(InventoryEvent);
+            }
+
+
+            newEvent.events = lstEvent.ToArray();
+            return newEvent;
+        }
+
+
+
+        #endregion
+        #region Device
+
+        int CptErrorRfid = 0;
 
         private void DevicesHandler_GpioConnected(object sender, DrawerEventArgs e)
         {
@@ -4906,7 +5509,10 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     InventoryHandler.HandleNewScanCompleted(e.DrawerId);
                     #if UseInfinity
+                    if (!string.IsNullOrEmpty(InfinityServerUrl))
                         ProcessInfinity(e.DrawerId);
+                    if (!string.IsNullOrEmpty(ReactInfinityUrl))
+                        ProcessInfinityReact(e.DrawerId);
                     #endif
 
                 });
@@ -5499,7 +6105,14 @@ namespace SmartDrawerWpfApp.ViewModel
                 mainview0.tiBarcodeMode.Visibility = Visibility.Collapsed;
                 mainview0.tiDrawerMode.Visibility = Visibility.Collapsed;
                 mainview0.tiSelectionMode.Visibility = Visibility.Visible;
-                mainview0.tiInventoryMode.Visibility = Visibility.Visible;
+                mainview0.tiInventoryMode.Visibility = Visibility.Collapsed;
+
+                using (var ctx = RemoteDatabase.GetDbContext())
+                {
+                    int nbCol = ctx.Columns.Count();
+                    if (nbCol > 1)
+                        mainview0.tiInventoryMode.Visibility = Visibility.Visible;
+                }
             }
 #endif
 

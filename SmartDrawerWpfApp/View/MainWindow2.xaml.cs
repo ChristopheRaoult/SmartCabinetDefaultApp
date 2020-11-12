@@ -1,9 +1,11 @@
 ﻿using MahApps.Metro.Controls;
+using Newtonsoft.Json;
 using SmartDrawerDatabase.DAL;
 using SmartDrawerWpfApp.Model;
 using SmartDrawerWpfApp.Model.DeviceModel;
 using SmartDrawerWpfApp.StaticHelpers;
 using SmartDrawerWpfApp.ViewModel;
+using SmartDrawerWpfApp.Wcf;
 using Syncfusion.UI.Xaml.Grid;
 using System;
 using System.Collections.Generic;
@@ -39,6 +41,19 @@ namespace SmartDrawerWpfApp.View
         public MainWindow2()
         {
             InitializeComponent();
+
+            //test
+
+           /* JsonItemToPull jitp = new JsonItemToPull();
+            jitp.pullItemDate = DateTime.Now;
+            jitp.description = "Test Sel";
+            jitp.ServerPullItemId = 1;
+            jitp.userId = 9707;
+            jitp.listOfTagToPull = new string[] { "3020631331", "3020631334" };
+
+            string body = JsonConvert.SerializeObject(jitp);*/
+
+
             if (string.IsNullOrEmpty(Properties.Settings.Default.DbPassword))
             {
                 string pwd = "rfid";

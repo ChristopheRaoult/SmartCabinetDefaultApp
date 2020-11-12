@@ -107,6 +107,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\SecurityModules\FingerprintReader\lib\DPFPVerNET.dll</HintPath>
     </Reference>
+    <Reference Include="EngineIoClientDotNet, Version=0.9.22.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\EngineIoClientDotNet.0.9.22\lib\net45\EngineIoClientDotNet.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
@@ -133,6 +136,9 @@
     </Reference>
     <Reference Include="SDK_SC_RfidReader">
       <HintPath>..\..\..\GIA Project\WallPanelWpfApp-GIATest\SDK_SC_RfidReader\bin\Debug\SDK_SC_RfidReader.dll</HintPath>
+    </Reference>
+    <Reference Include="SocketIoClientDotNet, Version=0.9.13.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\SocketIoClientDotNet.0.9.13\lib\net45\SocketIoClientDotNet.dll</HintPath>
     </Reference>
     <Reference Include="Syncfusion.Data.WPF, Version=15.3460.0.26, Culture=neutral, PublicKeyToken=3d67ed1f87d44c89, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -185,6 +191,9 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="WebSocket4Net, Version=0.14.1.0, Culture=neutral, PublicKeyToken=eb4e154b696bf72a, processorArchitecture=MSIL">
+      <HintPath>..\packages\WebSocket4Net.0.14.1\lib\net45\WebSocket4Net.dll</HintPath>
+    </Reference>
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -200,6 +209,18 @@
     <Compile Include="FingerPrint\EnrollFingersForm.designer.cs">
       <DependentUpon>EnrollFingersForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="InfinityServiceForReact\InfinityServiceForReactHandler.cs" />
+    <Compile Include="InfinityServiceForReact\LoginInfo.cs" />
+    <Compile Include="InfinityServiceForReact\ReactEventInfo.cs" />
+    <Compile Include="InfinityServiceForReact\ReactUpdateUserBadgeAndFp.cs" />
+    <Compile Include="InfinityServiceForReact\ReactUserInfo.cs" />
+    <Compile Include="InfinityServiceForReact\RegisterDeviceInfo.cs" />
+    <Compile Include="InfinityServiceForReact\RetDMSocket.cs" />
+    <Compile Include="InfinityServiceForReact\ReturnLogin.cs" />
+    <Compile Include="InfinityServiceForReact\ReturnRegisterDevice.cs" />
+    <Compile Include="InfinityServiceForReact\ReturnUpdateUser.cs" />
+    <Compile Include="InfinityServiceForReact\SkuInfo.cs" />
+    <Compile Include="InfinityServiceForReact\utilityClass.cs" />
     <Compile Include="InfinityService\AlertInfo.cs" />
     <Compile Include="InfinityService\DiamondMatchSelectionInfo.cs" />
     <Compile Include="InfinityService\EventInfo.cs" />

@@ -28,7 +28,7 @@ namespace SmartDrawerWpfApp.Wcf
                     Name = svcCredentials[0],
                     Password = svcCredentials[1]
                 };
-                if ((user.Name == "WallUser" && user.Password == "RfidW@ll!"))
+                if ((user.Name == "RFID" && user.Password == "RfidW@ll!"))
                 {
                     //User is authrized and originating call will proceed  
                     return true;
