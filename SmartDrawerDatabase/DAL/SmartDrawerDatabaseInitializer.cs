@@ -7,8 +7,9 @@ using System.Threading.Tasks;
 
 namespace SmartDrawerDatabase.DAL
 {
-   public class SmartDrawerDatabaseInitializer : DropCreateDatabaseIfModelChanges<SmartDrawerDatabaseContext>
+    // public class SmartDrawerDatabaseInitializer : DropCreateDatabaseIfModelChanges<SmartDrawerDatabaseContext>
     //public class SmartDrawerDatabaseInitializer : DropCreateDatabaseAlways<SmartDrawerDatabaseContext>
+    public class SmartDrawerDatabaseInitializer : CreateDatabaseIfNotExists<SmartDrawerDatabaseContext>
     {
 
         public override void InitializeDatabase(SmartDrawerDatabaseContext context)

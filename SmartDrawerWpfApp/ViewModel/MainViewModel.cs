@@ -1,4 +1,4 @@
-#define IsTiffany
+//#define IsTiffany
 
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
