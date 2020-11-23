@@ -5,16 +5,21 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace SmartDrawerWpfApp.InfinityServiceForReact
-{
+{ 
     public class RegisterDeviceData
     {
+        public string token { get; set; }
+        public object[] userIds { get; set; }
         public bool isActive { get; set; }
         public bool isDeleted { get; set; }
         public string _id { get; set; }
+        public string name { get; set; }
         public string serialNumber { get; set; }
+        public string companyId { get; set; }
+        public string deviceTypeId { get; set; }
+        public string description { get; set; }
         public string updatedBy { get; set; }
         public string createdBy { get; set; }
-        public string token { get; set; }
         public DateTime createdAt { get; set; }
         public DateTime updatedAt { get; set; }
         public int __v { get; set; }

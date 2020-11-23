@@ -1,5 +1,5 @@
 //#define IsTiffany
-//#define UseInfinity
+#define UseInfinity
 //#define SendUnrefTag  for mix tag in device comment it
 
 using GalaSoft.MvvmLight;
@@ -42,7 +42,9 @@ using SmartDrawerWpfApp.WcfServer;
 using SmartDrawerAdmin.ViewModel;
 using SmartDrawerDatabase;
 using System.Data.Entity;
+using System.Data.Entity.Migrations;
 using System.Data.Entity.Validation;
+using System.Data.SqlClient;
 using System.Configuration;
 using SmartDrawerWpfApp.InfinityService;
 using Quobject.EngineIoClientDotNet.Client.Transports;
@@ -1391,8 +1393,8 @@ namespace SmartDrawerWpfApp.ViewModel
                                                     valColumn3 = p.ProductInfo2,
                                                     valColumn4 = p.ProductInfo3,
                                                     valColumn5 = p.ProductInfo4,
-                                                    valColumn6 = p.ProductInfo5,
-                                                    valColumn7 = entry.Value.ToString(),
+                                                    valColumn6 = entry.Value.ToString(),
+                                                    valColumn7 = p.ProductInfo6,
                                                     valColumn8 = p.ProductInfo7,
                                                     valColumn9 = p.ProductInfo8,
                                                 };
@@ -1415,33 +1417,60 @@ namespace SmartDrawerWpfApp.ViewModel
                                     if (NetworkStatus)
                                     {
                                         List<string> TagListToSearch = new List<string>(this.UnknownTags.Keys);
-                                        var result = InfinityServiceHandler.GetStonesByList(InfinityServerUrl, InfinityServerToken, WallSerial, TagListToSearch);
-                                        if (result.Result)
+                                        if (!string.IsNullOrEmpty(InfinityServerUrl))
                                         {
-                                            foreach (KeyValuePair<string, int> Tag in UnknownTags)
+                                            var result = InfinityServiceHandler.GetStonesByList(InfinityServerUrl, InfinityServerToken, WallSerial, TagListToSearch);
+                                            if (result.Result)
                                             {
-                                                StoneInfo si = GetStoneInfo(Tag.Key);
-                                                if (si != null)
+                                                foreach (KeyValuePair<string, int> Tag in UnknownTags)
                                                 {
-                                                    ItemDetail id = new ItemDetail()
+                                                    StoneInfo si = GetStoneInfo(Tag.Key);
+                                                    if (si != null)
                                                     {
-                                                        IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
-                                                        TagId = Tag.Key,
-                                                        DrawerId = Tag.Value,
-                                                        ItemEventType = Tag.Value,
-                                                        valColumn1 = si.report_number,
-                                                        valColumn2 = si.carat_weight,
-                                                        valColumn3 = si.shape,
-                                                        valColumn4 = si.color,
-                                                        valColumn5 = si.clarity,
-                                                        valColumn6 = Tag.Value.ToString(),
-                                                        valColumn7 = null,
-                                                        valColumn8 = null,
-                                                        valColumn9 = null,
-                                                    };
-                                                    lstDetails.Add(id);
+                                                        ItemDetail id = new ItemDetail()
+                                                        {
+                                                            IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                                            TagId = Tag.Key,
+                                                            DrawerId = Tag.Value,
+                                                            ItemEventType = Tag.Value,
+                                                            valColumn1 = si.report_number,
+                                                            valColumn2 = si.carat_weight,
+                                                            valColumn3 = si.shape,
+                                                            valColumn4 = si.color,
+                                                            valColumn5 = si.clarity,
+                                                            valColumn6 = Tag.Value.ToString(),
+                                                            valColumn7 = null,
+                                                            valColumn8 = null,
+                                                            valColumn9 = null,
+                                                        };
+                                                        lstDetails.Add(id);
+                                                    }
+                                                    else //pierre non trouvée - cree une unreferenced
+                                                    {
+                                                        ItemDetail id = new ItemDetail()
+                                                        {
+                                                            IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                                            TagId = Tag.Key,
+                                                            DrawerId = Tag.Value,
+                                                            ItemEventType = Tag.Value,
+                                                            valColumn1 = "Unreferenced",
+                                                            valColumn2 = null,
+                                                            valColumn3 = null,
+                                                            valColumn4 = null,
+                                                            valColumn5 = null,
+                                                            valColumn6 = Tag.Value.ToString(),
+                                                            valColumn7 = null,
+                                                            valColumn8 = null,
+                                                            valColumn9 = null,
+                                                        };
+                                                        lstDetails.Add(id);
+                                                        lstUnreferencedTag.Add(Tag.Key);
+                                                    }
                                                 }
-                                                else //pierre non trouvée - cree une unreferenced
+                                            }
+                                            else //error from serveur
+                                            {
+                                                foreach (KeyValuePair<string, int> Tag in UnknownTags)
                                                 {
                                                     ItemDetail id = new ItemDetail()
                                                     {
@@ -1460,35 +1489,90 @@ namespace SmartDrawerWpfApp.ViewModel
                                                         valColumn9 = null,
                                                     };
                                                     lstDetails.Add(id);
-                                                    lstUnreferencedTag.Add(Tag.Key);
+                                                    if (Tag.Value == 1) //notifie que les ajouts
+                                                        lstUnreferencedTag.Add(Tag.Key);
                                                 }
                                             }
                                         }
-                                        else //error from serveur
+                                        if (!string.IsNullOrEmpty(ReactInfinityUrl)) //Do for react
                                         {
-                                            foreach (KeyValuePair<string, int> Tag in UnknownTags)
+                                            var result = InfinityServiceForReactHandler.GetSku(ReactInfinityUrl, ReactToken, TagListToSearch);
+                                            if (result.Result)
                                             {
-                                                ItemDetail id = new ItemDetail()
+                                                foreach (KeyValuePair<string, int> Tag in UnknownTags)
                                                 {
-                                                    IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
-                                                    TagId = Tag.Key,
-                                                    DrawerId = Tag.Value,
-                                                    ItemEventType = Tag.Value,
-                                                    valColumn1 = "Unreferenced",
-                                                    valColumn2 = null,
-                                                    valColumn3 = null,
-                                                    valColumn4 = null,
-                                                    valColumn5 = null,
-                                                    valColumn6 = Tag.Value.ToString(),
-                                                    valColumn7 = null,
-                                                    valColumn8 = null,
-                                                    valColumn9 = null,
-                                                };
-                                                lstDetails.Add(id);
-                                                if (Tag.Value == 1) //notifie que les ajouts
-                                                    lstUnreferencedTag.Add(Tag.Key);
+                                                    SkuData sd = GetStoneInfoForReact(Tag.Key);
+                                                    if (sd != null)
+                                                    {
+                                                        ItemDetail id = new ItemDetail()
+                                                        {
+                                                            IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                                            TagId = Tag.Key,
+                                                            DrawerId = Tag.Value,
+                                                            ItemEventType = Tag.Value,
+                                                            valColumn1 = sd.clientRefId,
+                                                            valColumn2 = sd.weight.ToString("0.00"),
+                                                            valColumn3 = sd.shape,
+                                                            valColumn4 = sd.colorCategory,
+                                                            valColumn5 = sd.clarity,
+                                                            valColumn6 = Tag.Value.ToString(),
+                                                            valColumn7 = sd._id,
+                                                            valColumn8 = sd.colorType,
+                                                            valColumn9 = sd.infinityRefId,
+                                                        };
+                                                        lstDetails.Add(id);
+                                                    }
+                                                    else //pierre non trouvé - cree une unreferenced
+                                                    {
+                                                        ItemDetail id = new ItemDetail()
+                                                        {
+                                                            IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                                            TagId = Tag.Key,
+                                                            DrawerId = Tag.Value,
+                                                            ItemEventType = Tag.Value,
+                                                            valColumn1 = "Unreferenced",
+                                                            valColumn2 = null,
+                                                            valColumn3 = null,
+                                                            valColumn4 = null,
+                                                            valColumn5 = null,
+                                                            valColumn6 = Tag.Value.ToString(),
+                                                            valColumn7 = null,
+                                                            valColumn8 = null,
+                                                            valColumn9 = null,
+                                                        };
+                                                        lstDetails.Add(id);                                                       
+                                                        if (Tag.Value == 1) //notifie que les ajouts
+                                                            lstUnreferencedTag.Add(Tag.Key);
+                                                    }
+                                                }
+                                            }
+                                            else //error from serveur
+                                            {
+                                                foreach (KeyValuePair<string, int> Tag in UnknownTags)
+                                                {
+                                                    ItemDetail id = new ItemDetail()
+                                                    {
+                                                        IsEnabled = Tag.Value >= 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Hidden,
+                                                        TagId = Tag.Key,
+                                                        DrawerId = Tag.Value,
+                                                        ItemEventType = Tag.Value,
+                                                        valColumn1 = "Unreferenced",
+                                                        valColumn2 = null,
+                                                        valColumn3 = null,
+                                                        valColumn4 = null,
+                                                        valColumn5 = null,
+                                                        valColumn6 = Tag.Value.ToString(),
+                                                        valColumn7 = null,
+                                                        valColumn8 = null,
+                                                        valColumn9 = null,
+                                                    };
+                                                    lstDetails.Add(id);                                                
+                                                    if (Tag.Value == 1) //notifie que les ajouts
+                                                        lstUnreferencedTag.Add(Tag.Key);
+                                                }
                                             }
                                         }
+
                                         // Run thread to add it in db
                                         ProcessNewStone(TagListToSearch);
                                         #if SendUnrefTag
@@ -2729,8 +2813,9 @@ namespace SmartDrawerWpfApp.ViewModel
 
             //debug user
             //refreshUserFromServer();
+            
 
-           startTimer.Stop();
+            startTimer.Stop();
            startTimer.IsEnabled = false;
 
             // No serial in Configuration - Connect to get rfid serial      
@@ -2758,7 +2843,9 @@ namespace SmartDrawerWpfApp.ViewModel
                     System.Windows.Application.Current.Shutdown();
                     return;
                 }
-            }          
+            }
+
+         
 
             InfinityTimer = new DispatcherTimer();
             InfinityTimer.Interval = new TimeSpan(0, 1, 0);
@@ -2869,12 +2956,22 @@ namespace SmartDrawerWpfApp.ViewModel
                 
                 WallSerial = Properties.Settings.Default.WallSerial;
                 WallName = Properties.Settings.Default.WallName;                    
-                InitValue();
+               
                 CreateProcessWindow();
 
             if (!string.IsNullOrEmpty(ReactInfinityUrl))
             {
-                if (!await ReactRegisterDevices())
+               /* if (!await ReactRegisterDevices())
+                {
+                    string Info = string.Format("Unable to Register device(s) - Application will stop \r\n");
+                    await mainview0.ShowMessageAsync("INFORMATION", Info);
+                    System.Windows.Application.Current.Shutdown();
+                    return;
+                }*/
+
+                CreateSocketIOClient(ReactInfinityUrl);
+                Thread.Sleep(1000);
+                if (!registerDevice())
                 {
                     string Info = string.Format("Unable to Register device(s) - Application will stop \r\n");
                     await mainview0.ShowMessageAsync("INFORMATION", Info);
@@ -2882,9 +2979,12 @@ namespace SmartDrawerWpfApp.ViewModel
                     return;
                 }
 
-                CreateSocketIOClient(ReactInfinityUrl);
+                //debug product insertion
+                /*List<string> TagListToSearch = new List<string>() { "3023403200" };
+                var result = await InfinityServiceForReactHandler.GetSku(ReactInfinityUrl, ReactToken, TagListToSearch);               
+                ProcessNewStone(TagListToSearch);*/
             }
-
+            InitValue();
             await ProcessInfinityUser(null);
             doPing();
 
@@ -4144,9 +4244,9 @@ namespace SmartDrawerWpfApp.ViewModel
                 LogToFile.LogMessageToFile("------- End Clear Database --------");
             }
         }
-        private void ProcessNewStone(List<string> TagList)
+        public async Task<bool> ProcessNewStone(List<string> TagList)
         {            
-            Task.Run(() =>
+            await Task.Run(() =>
             {
                 if (!string.IsNullOrEmpty(InfinityServerUrl))  // do for phase 2
                 {
@@ -4218,22 +4318,25 @@ namespace SmartDrawerWpfApp.ViewModel
                 }
                 if (!string.IsNullOrEmpty(ReactInfinityUrl)) //Do for react
                 {
+                    LogToFile.LogMessageToFile("------- Start Process new stone --------");
+
                     if ((InfinityServiceForReactHandler.LastSkuInfo != null) && (InfinityServiceForReactHandler.LastSkuInfo.data.Count() > 0))
                     {
-                        foreach (string tagId in TagList)
+                        using (var ctx2 = RemoteDatabase.GetDbContext())
                         {
-                            SkuData sd = GetStoneInfoForReact(tagId);
-
-                            if (sd != null)
+                            foreach (string tagId in TagList)
                             {
-                                using (var ctx = RemoteDatabase.GetDbContext())
+                                SkuData sd = GetStoneInfoForReact(tagId);
+
+                                if (sd != null)
                                 {
-                                    var rfidTag = ctx.RfidTags.FirstOrDefault(tag => tag.TagUid == sd.rfId.rfid);
+
+                                    var rfidTag = ctx2.RfidTags.FirstOrDefault(tag => tag.TagUid == sd.rfId.rfid);
                                     if (rfidTag == null) // create tag with stone info
                                     {
                                         // Create Unknown tag
                                         RfidTag newTag = new RfidTag() { TagUid = sd.rfId.rfid };
-                                        ctx.RfidTags.Add(newTag);
+                                        ctx2.RfidTags.Add(newTag);
                                         Product p = new Product()
                                         {
                                             RfidTag = newTag,
@@ -4249,15 +4352,17 @@ namespace SmartDrawerWpfApp.ViewModel
                                             ProductInfo9 = sd.pwvImport,
                                             ProductInfo10 = sd.dmGuid,
                                         };
-                                        ctx.Products.Add(p);
-                                        ctx.SaveChanges();                                      
+                                        ctx2.Products.Add(p);
+                                        ctx2.SaveChanges();
 
                                     }
                                     else //product to update it - no udpate diamond info
                                     {
-                                        Product pToUpdate = ctx.Products.Where(po => po.RfidTag.TagUid == sd.rfId.rfid).Include(po => po.RfidTag).FirstOrDefault();
+
+                                        Product pToUpdate = ctx2.Products.Where(po => po.RfidTag.TagUid == sd.rfId.rfid).Include(po => po.RfidTag).FirstOrDefault();
                                         if (pToUpdate != null)
                                         {
+                                            LogToFile.LogMessageToFile("Product  found :" + sd.clientRefId);
                                             pToUpdate.ProductInfo0 = sd.clientRefId;
                                             pToUpdate.ProductInfo1 = sd.weight.ToString("0.00");
                                             pToUpdate.ProductInfo2 = sd.shape;
@@ -4269,8 +4374,10 @@ namespace SmartDrawerWpfApp.ViewModel
                                             pToUpdate.ProductInfo8 = sd.infinityRefId;
                                             pToUpdate.ProductInfo9 = sd.pwvImport;
                                             pToUpdate.ProductInfo10 = sd.dmGuid;
-                                            ctx.Entry(pToUpdate).State = EntityState.Modified;
-                                            ctx.SaveChanges();                                           
+
+                                            ctx2.Entry(pToUpdate).State = EntityState.Modified;
+                                            ctx2.SaveChanges();
+
                                         }
                                     }
                                 }
@@ -4278,7 +4385,11 @@ namespace SmartDrawerWpfApp.ViewModel
                         }
                     }
                 }
-            });            
+
+            });
+           
+            LogToFile.LogMessageToFile("------- End Process new stone --------");
+            return true;
         }
         private StoneInfo GetStoneInfo(string TagId)
         {
@@ -4731,7 +4842,7 @@ namespace SmartDrawerWpfApp.ViewModel
             clientSocket.On("registerDevice", (data) =>
             {
                 LogToFile.LogMessageToFile("Receive  registerDevice : " + data);
-                _lastRegistrationDeviceData = RetDMSocket2.DeserializedJsonList(data.ToString());
+                _lastRegistrationDeviceData = RetDMSocket2.DeserializedJsonList(data.ToString());              
                 eventRegistrationDevice.Set();
             });
 
@@ -4740,17 +4851,19 @@ namespace SmartDrawerWpfApp.ViewModel
         public bool IsDeviceRegistered = false;
         private static EventWaitHandle eventRegistrationDevice = new EventWaitHandle(false, EventResetMode.AutoReset);
         private RetDMSocket2 _lastRegistrationDeviceData = null;
-        public void registerDevice()
-        {           
-            
+        //private ReturnRegisterDevice _lastRegistrationDeviceData = null;
+        public bool registerDevice()
+        {
+            IsDeviceRegistered = false ;
             RegisterDeviceInfo rdi = new RegisterDeviceInfo() { serialNumber = WallSerial };
             if (EmitRegisterDevice(rdi))
             {
-                DevicesHandler.ReactInfinityToken = _lastRegistrationDeviceData.body.token;
+                DevicesHandler.ReactInfinityToken = _lastRegistrationDeviceData.body.token;              
                 IsDeviceRegistered = true;
             }
             else
-                LogToFile.LogMessageToFile("Info React - Unable to register device - timeout 5s");            
+                LogToFile.LogMessageToFile("Info React - Unable to register device ");
+            return IsDeviceRegistered;
         }
         public bool EmitRegisterDevice(RegisterDeviceInfo rdi)
         {
@@ -4769,7 +4882,10 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     if (_lastRegistrationDeviceData != null)
                     {
-                        return true;
+                        if (_lastRegistrationDeviceData.status == "success")
+                            return true;
+                        else
+                            return false;
                     }
                 }
                 else

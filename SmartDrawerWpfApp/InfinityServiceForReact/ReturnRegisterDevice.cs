@@ -9,7 +9,7 @@ namespace SmartDrawerWpfApp.InfinityServiceForReact
 {
     public class ReturnRegisterDevice
     {
-        public bool status { get; set; }
+        public string status { get; set; }
         public string message { get; set; }
         public RegisterDeviceData data { get; set; }
 
@@ -19,4 +19,6 @@ namespace SmartDrawerWpfApp.InfinityServiceForReact
             return jsSerializer.Deserialize<ReturnRegisterDevice>(responseJson);
         }
     }
+
+
 }
