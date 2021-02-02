@@ -34,7 +34,7 @@ namespace SmartDrawerDatabase.DAL
             var inv = inventories.FirstOrDefault(iv => iv.InventoryId == newInventory.InventoryId);
             if (inv != null)
             {
-                inv.IsNotify = 1;
+                inv.IsNotify = 1;               
                 return true;
             }
             return false;

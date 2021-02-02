@@ -15,6 +15,8 @@
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <IsWebBootstrapper>true</IsWebBootstrapper>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
     <PublishUrl>Z:\Deploy\SmartDrawerAppBeta\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Web</InstallFrom>
@@ -39,8 +41,6 @@
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -213,14 +213,18 @@
       <DependentUpon>EnrollFingersForm.cs</DependentUpon>
     </Compile>
     <Compile Include="InfinityServiceForReact\InfinityServiceForReactHandler.cs" />
+    <Compile Include="InfinityServiceForReact\LedTriggerInfo.cs" />
     <Compile Include="InfinityServiceForReact\LoginInfo.cs" />
     <Compile Include="InfinityServiceForReact\ReactEventInfo.cs" />
+    <Compile Include="InfinityServiceForReact\ReactLedSelectionInfo.cs" />
     <Compile Include="InfinityServiceForReact\ReactUpdateUserBadgeAndFp.cs" />
     <Compile Include="InfinityServiceForReact\ReactUserInfo.cs" />
     <Compile Include="InfinityServiceForReact\RegisterDeviceInfo.cs" />
     <Compile Include="InfinityServiceForReact\RetDMSocket.cs" />
     <Compile Include="InfinityServiceForReact\ReturnLogin.cs" />
+    <Compile Include="InfinityServiceForReact\ReturnRawActivity.cs" />
     <Compile Include="InfinityServiceForReact\ReturnRegisterDevice.cs" />
+    <Compile Include="InfinityServiceForReact\ReturnUpdateDiamondMatch.cs" />
     <Compile Include="InfinityServiceForReact\ReturnUpdateUser.cs" />
     <Compile Include="InfinityServiceForReact\SkuInfo.cs" />
     <Compile Include="InfinityServiceForReact\utilityClass.cs" />

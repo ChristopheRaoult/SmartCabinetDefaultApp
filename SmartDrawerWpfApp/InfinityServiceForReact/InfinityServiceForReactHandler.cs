@@ -62,6 +62,26 @@ namespace SmartDrawerWpfApp.InfinityServiceForReact
             set { _LastDiamondMatchSelectionInfo = value; }
         }*/
 
+        private static ReturnRawActivity _LastReturnRawActivity;
+        public static ReturnRawActivity LastReturnRawActivity
+        {
+            get { return _LastReturnRawActivity; }
+            set { _LastReturnRawActivity = value; }
+        }
+
+        private static ReturnUpdateDiamondMatch _LastReturnUpdateDiamondMatch;
+        public static ReturnUpdateDiamondMatch LastReturnUpdateDiamondMatch
+        {
+            get { return _LastReturnUpdateDiamondMatch; }
+            set { _LastReturnUpdateDiamondMatch = value; }
+        }
+
+        private static LedTriggerInfo _LastLedSelection;
+        public static LedTriggerInfo LastLedSelection
+        {
+            get { return _LastLedSelection; }
+            set { _LastLedSelection = value; }
+        }
 
         /// <summary>
         /// Function to Get Token to use API REACT - 
@@ -403,6 +423,213 @@ namespace SmartDrawerWpfApp.InfinityServiceForReact
             {
                 LogToFile.LogMessageToFile("Received Exception : " + e.Message);
                 LogToFile.LogMessageToFile("------- End  Register --------");
+                return false;
+            }
+        }
+
+        public static async Task<bool> SendRawActivity(string url, string token, ReactEventInfo rei)
+        {
+            if (string.IsNullOrEmpty(url)) return false;
+            var cts = new CancellationTokenSource();
+            try
+            {
+                LogToFile.LogMessageToFile("------- Start Send Raw Activity --------");
+                string urlServer = url;
+                var client = new RestClient(urlServer);
+                client.Timeout = Timeout * 1000;
+                client.ReadWriteTimeout = Timeout * 1000;
+
+                var request = new RestRequest("api/v1/raw-activity", Method.POST);
+                request.AddHeader("Authorization", token);
+
+                string body = ReactEventInfo.SerializedJsonAlone(rei);
+                request.AddParameter("application/json", body, ParameterType.RequestBody);
+                cts.CancelAfter(new TimeSpan(0, 0, Timeout));
+                LogToFile.LogMessageToFile("Send :" + client.BuildUri(request));
+                LogToFile.LogMessageToFile("Body :" + body);
+                var response = await client.ExecuteTaskAsync(request, cts.Token);
+                LogToFile.LogMessageToFile("Received : " + response.Content);
+
+                if (response.Content.Contains("\"status\":"))
+                {
+                    var tmp = ReturnRawActivity.DeserializedJsonList(response.Content);
+                    if (tmp != null)
+                        _LastReturnRawActivity = tmp;
+                    else
+                        _LastReturnRawActivity = null;
+                    LogToFile.LogMessageToFile("------- End Send Raw Activity --------");
+                    return true;
+                }
+                else
+                    LogToFile.LogMessageToFile("------- End Send Raw Activity --------");
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                LogToFile.LogMessageToFile("Received OperationCanceledException from timeout " + Timeout);
+                LogToFile.LogMessageToFile("------- End Send Raw Activity --------");
+                return false;
+            }
+            catch (Exception e)
+            {
+                LogToFile.LogMessageToFile("Received Exception : " + e.Message);
+                LogToFile.LogMessageToFile("------- End Send Raw Activity --------");
+                return false;
+            }
+        }
+
+        public static async Task<bool> UpdateDiamondMatch(string url, string token, ReactDiamondMatchInfo rdmi)
+        {
+            if (string.IsNullOrEmpty(url)) return false;
+            var cts = new CancellationTokenSource();
+            try
+            {
+                LogToFile.LogMessageToFile("------- Start Send Update DiamondMatch --------");
+                string urlServer = url;
+                var client = new RestClient(urlServer);
+                client.Timeout = Timeout * 1000;
+                client.ReadWriteTimeout = Timeout * 1000;
+
+                var request = new RestRequest("api/v1/device-integration/diamond-match", Method.POST);
+                request.AddHeader("Authorization", token);
+
+                string body = ReactDiamondMatchInfo.SerializedJsonAlone(rdmi);
+                request.AddParameter("application/json", body, ParameterType.RequestBody);
+                cts.CancelAfter(new TimeSpan(0, 0, Timeout));
+                LogToFile.LogMessageToFile("Send :" + client.BuildUri(request));
+                LogToFile.LogMessageToFile("Body :" + body);
+                var response = await client.ExecuteTaskAsync(request, cts.Token);
+                LogToFile.LogMessageToFile("Received : " + response.Content);
+
+                if (response.Content.Contains("\"status\":"))
+                {
+                    var tmp = ReturnUpdateDiamondMatch.DeserializedJsonList(response.Content);
+                    if (tmp != null)
+                        _LastReturnUpdateDiamondMatch = tmp;
+                    else
+                        _LastReturnUpdateDiamondMatch = null;
+                    LogToFile.LogMessageToFile("------- End Send Update DiamondMatch --------");
+                    return true;
+                }
+                else
+                    LogToFile.LogMessageToFile("------- End Send Update DiamondMatch --------");
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                LogToFile.LogMessageToFile("Received OperationCanceledException from timeout " + Timeout);
+                LogToFile.LogMessageToFile("------- End Send Update DiamondMatch --------");
+                return false;
+            }
+            catch (Exception e)
+            {
+                LogToFile.LogMessageToFile("Received Exception : " + e.Message);
+                LogToFile.LogMessageToFile("------- End Send Update DiamondMatch --------");
+                return false;
+            }
+        }
+
+
+        public static async Task<bool> GetLedSelection(string url, string token, string deviceSerial)
+        {
+            if (string.IsNullOrEmpty(url)) return false;
+            var cts = new CancellationTokenSource();
+            try
+            {
+                LogToFile.LogMessageToFile("------- Start Get Led --------");
+                string urlServer = url;
+                var client = new RestClient(urlServer);
+                client.Timeout = Timeout * 1000;
+                client.ReadWriteTimeout = Timeout * 1000;
+
+                var request = new RestRequest("api/v1/device-integration/led-selection", Method.GET);
+                request.AddHeader("Authorization", token);
+
+
+                request.AddParameter("serialNumber", deviceSerial);
+                cts.CancelAfter(new TimeSpan(0, 0, Timeout));
+                LogToFile.LogMessageToFile("Send :" + client.BuildUri(request));
+                var response = await client.ExecuteTaskAsync(request, cts.Token);
+                LogToFile.LogMessageToFile("Received : " + response.Content);
+
+                if (response.Content.Contains("\"status\":"))
+                {
+                    var tmp = LedTriggerInfo.DeserializedJsonList(response.Content);
+                    if (tmp != null)
+                        _LastLedSelection = tmp;
+                    else
+                        _LastLedSelection = null;
+                    LogToFile.LogMessageToFile("------- End  Get Led Selection --------");
+                    return true;
+                }
+                else
+                    LogToFile.LogMessageToFile("------- End  Get Led Selection --------");
+                return false;
+
+
+            }
+            catch (OperationCanceledException)
+            {
+                LogToFile.LogMessageToFile("Received OperationCanceledException from timeout " + Timeout);
+                LogToFile.LogMessageToFile("------- End Get Led Selection --------");
+                return false;
+            }
+            catch (Exception e)
+            {
+                LogToFile.LogMessageToFile("Received Exception : " + e.Message);
+                LogToFile.LogMessageToFile("------- End Get Led Selection --------");
+                return false;
+            }
+        }
+
+        public static async Task<bool> UpdateLedSelection(string url, string token, ReactLedSelectionInfo rlsi)
+        {
+            if (string.IsNullOrEmpty(url)) return false;
+            var cts = new CancellationTokenSource();
+            try
+            {
+                LogToFile.LogMessageToFile("------- Start Send Update LED Selection --------");
+                string urlServer = url;
+                var client = new RestClient(urlServer);
+                client.Timeout = Timeout * 1000;
+                client.ReadWriteTimeout = Timeout * 1000;
+
+                var request = new RestRequest("api/v1/device-integration/triggered-led", Method.POST);
+                request.AddHeader("Authorization", token);
+
+                string body = ReactLedSelectionInfo.SerializedJsonAlone(rlsi);
+                request.AddParameter("application/json", body, ParameterType.RequestBody);
+                cts.CancelAfter(new TimeSpan(0, 0, Timeout));
+                LogToFile.LogMessageToFile("Send :" + client.BuildUri(request));
+                LogToFile.LogMessageToFile("Body :" + body);
+                var response = await client.ExecuteTaskAsync(request, cts.Token);
+                LogToFile.LogMessageToFile("Received : " + response.Content);
+
+                if (response.Content.Contains("\"status\":"))
+                {
+                    //TODO
+                    var tmp = ReturnUpdateDiamondMatch.DeserializedJsonList(response.Content);
+                    if (tmp != null)
+                        _LastReturnUpdateDiamondMatch = tmp;
+                    else
+                        _LastReturnUpdateDiamondMatch = null;
+                    LogToFile.LogMessageToFile("------- End Send Update LED Selection --------");
+                    return true;
+                }
+                else
+                    LogToFile.LogMessageToFile("------- End Send Update LED Selection --------");
+                return false;
+            }
+            catch (OperationCanceledException)
+            {
+                LogToFile.LogMessageToFile("Received OperationCanceledException from timeout " + Timeout);
+                LogToFile.LogMessageToFile("------- End Send Update LED Selection --------");
+                return false;
+            }
+            catch (Exception e)
+            {
+                LogToFile.LogMessageToFile("Received Exception : " + e.Message);
+                LogToFile.LogMessageToFile("------- End Send Update LED Selection --------");
                 return false;
             }
         }

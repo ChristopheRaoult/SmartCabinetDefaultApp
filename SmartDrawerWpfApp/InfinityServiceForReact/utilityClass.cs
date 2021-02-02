@@ -66,7 +66,9 @@ namespace SmartDrawerWpfApp.InfinityServiceForReact
         public long phone { get; set; }
         public Companyid companyId { get; set; }
         public string updatedBy { get; set; }
-        public string createdBy { get; set; }
+        // public string createdBy { get; set; }
+        public Createdby createdBy { get; set; }
+
         public Addressid addressId { get; set; }
         public Fingerprint[] fingerPrint { get; set; }
         public string badgeId { get; set; }
@@ -123,6 +125,29 @@ namespace SmartDrawerWpfApp.InfinityServiceForReact
         public DateTime createdAt { get; set; }
         public DateTime updatedAt { get; set; }
     }
+    public class Createdby
+    {
+        public string _id { get; set; }
+        public bool isActive { get; set; }
+        public bool isDeleted { get; set; }
+        public string firstName { get; set; }
+        public string lastName { get; set; }
+        public string email { get; set; }
+        public string altEmail { get; set; }
+        public string password { get; set; }
+        public long phone { get; set; }
+        public string addressId { get; set; }
+        public string salt { get; set; }
+        public string roleId { get; set; }
+        public string companyId { get; set; }
+        public string createdBy { get; set; }
+        public string updatedBy { get; set; }
+        public DateTime createdAt { get; set; }
+        public DateTime updatedAt { get; set; }
+        public int __v { get; set; }
+        public string badgeId { get; set; }
+        public Fingerprint[] fingerPrint { get; set; }
+    }
 
     public class Addressid
     {
@@ -147,6 +172,7 @@ namespace SmartDrawerWpfApp.InfinityServiceForReact
         public int index { get; set; }
         public string data { get; set; }
     }
+
 
 
 

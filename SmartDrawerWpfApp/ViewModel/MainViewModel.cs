@@ -4704,6 +4704,7 @@ namespace SmartDrawerWpfApp.ViewModel
                                         }
                                     }
                                     ctx.Inventories.UpdateInventoryForNotification(inv);
+                                    ctx.Entry(inv).State = EntityState.Modified;
                                     ctx.SaveChanges();
                                 }
                                 else
@@ -4717,6 +4718,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             else // If no event, no tag in scan, not send it but notify local
                             {
                                 ctx.Inventories.UpdateInventoryForNotification(inv);
+                                ctx.Entry(inv).State = EntityState.Modified;
                                 ctx.SaveChanges();
                             }
                         }
@@ -4910,7 +4912,7 @@ namespace SmartDrawerWpfApp.ViewModel
                             ReactEventInfo tmpEvent = ProcessEventForReact(inv);
                             if (tmpEvent.events.Count() > 0)
                             {
-                                if ((clientSocket == null) || (!IsClientSocketConnected))
+                                /*if ((clientSocket == null) || (!IsClientSocketConnected))
                                     CreateSocketIOClient(ReactInfinityUrl);
 
                                 if ((clientSocket != null) && (IsClientSocketConnected))
@@ -4921,15 +4923,58 @@ namespace SmartDrawerWpfApp.ViewModel
                                     LogToFile.LogMessageToFile("Send React - Event createRawActivity : " + data);
                                     var ret = clientSocket.Emit("createRawActivity", data);
                                 }
+                               
+                                bool ret1 = ctx.Inventories.UpdateInventoryForNotification(inv);
+                                LogToFile.LogMessageToFile(string.Format("Update Inventory {0} : {1}", inv.InventoryId, ret1.ToString()));
+                                try
+                                {
+                                    ctx.Entry(inv).State = EntityState.Modified;
+                                    await ctx.SaveChangesAsync();
+                                    LogToFile.LogMessageToFile(string.Format("Update Inventory saved {0} : {1}", inv.InventoryId, ret1.ToString()));
+                                }
+                                catch (Exception exp1)
+                                {
+                                    LogToFile.LogMessageToFile("Bd Save Exception " + exp1.Message);
+                                }*/
+                                var res = await InfinityServiceForReactHandler.SendRawActivity(ReactInfinityUrl, ReactToken, tmpEvent);
 
-                                ctx.Inventories.UpdateInventoryForNotification(inv);
-                                ctx.SaveChanges();
+                                if (res)
+                                {
+                                    if (InfinityServiceForReactHandler.LastReturnRawActivity != null)
+                                    {
+                                        if (InfinityServiceForReactHandler.LastReturnRawActivity.status)
+                                        {
+                                            bool ret1 = ctx.Inventories.UpdateInventoryForNotification(inv);
+                                            LogToFile.LogMessageToFile(string.Format("Update Inventory {0} : {1}", inv.InventoryId, ret1.ToString()));
+                                            try
+                                            {
+                                                ctx.Entry(inv).State = EntityState.Modified;
+                                                await ctx.SaveChangesAsync();
+                                                LogToFile.LogMessageToFile(string.Format("Update Inventory saved {0} : {1}", inv.InventoryId, ret1.ToString()));
+                                            }
+                                            catch (Exception exp1)
+                                            {
+                                                LogToFile.LogMessageToFile("Bd Save Exception " + exp1.Message);
+                                            }
+                                        }
+                                    }
+                                }
 
                             }
                             else // If no event, no tag in scan, not send it but notify local
                             {
-                                ctx.Inventories.UpdateInventoryForNotification(inv);
-                                ctx.SaveChanges();
+                                bool ret1 = ctx.Inventories.UpdateInventoryForNotification(inv);
+                                LogToFile.LogMessageToFile(string.Format("Update Inventory {0} : {1}", inv.InventoryId, ret1.ToString()));
+                                try
+                                {
+                                    ctx.Entry(inv).State = EntityState.Modified;
+                                    await ctx.SaveChangesAsync();
+                                    LogToFile.LogMessageToFile(string.Format("Update Inventory saved {0} : {1}", inv.InventoryId, ret1.ToString()));
+                                }
+                                catch (Exception exp1)
+                                {
+                                    LogToFile.LogMessageToFile("Bd Save Exception " + exp1.Message);
+                                }
                             }
                         }
                     }

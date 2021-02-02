@@ -15,8 +15,7 @@ namespace SmartDrawerDatabase.DAL
         public SmartDrawerDatabaseContext(string connectionStringOrName) : base(connectionStringOrName)       
         {
             //Database.SetInitializer<SmartDrawerDatabaseContext>(null);
-            Database.SetInitializer<SmartDrawerDatabaseContext>(new SmartDrawerDatabaseInitializer());
-            this.Configuration.AutoDetectChangesEnabled = false;
+            Database.SetInitializer<SmartDrawerDatabaseContext>(new SmartDrawerDatabaseInitializer());           
         }
 
         protected override void OnModelCreating(DbModelBuilder modelBuilder)
