@@ -4,6 +4,13 @@
                     xmlns:MyCtrl="clr-namespace:SmartDrawerWpfApp.View.UC"
                     xmlns:local="clr-namespace:SmartDrawerWpfApp.ViewModel"
                     xmlns:syncfusion="http://schemas.syncfusion.com/wpf">
+
+    <Style x:Key="cbxStyle" TargetType="ComboBox">
+        <Setter Property="FontSize"  Value="35" />
+        <Setter Property="FontWeight" Value="ExtraLight" />
+        <Setter Property="Foreground" Value="Gray" />
+    </Style>
+
     <!-- Style Textblock items-->
     <Style x:Key="itemTextBlock" TargetType="TextBlock">
         <Setter Property="FontSize"  Value="12" />

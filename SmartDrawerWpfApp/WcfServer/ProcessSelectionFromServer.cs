@@ -725,6 +725,9 @@ namespace SmartDrawerWpfApp.WcfServer
         }
         #endregion
         #region sku tiffany
+
+
+
         public static async Task<JsonSku> GetSkuInfo(string skuQueried)
         {
             try
@@ -761,6 +764,75 @@ namespace SmartDrawerWpfApp.WcfServer
                 return null;
             }
         }
+
+        public class typeData
+        {
+            public static string refNumber = "refNumber";
+            public static string woNumber = "woNumber";
+            public static string itemNumber = "itemNumber";
+            public static string rfidNumber = "rfidNumber";
+
+            public static string GetFromDisplayedValue(string data)
+            {
+                switch (data)
+                {
+                    case "Serial No.": return typeData.refNumber; break;
+                    case "Work Order No.": return typeData.woNumber; break;
+                    case "Item No.": return typeData.itemNumber;  break;
+                    case "RFID No.": return typeData.rfidNumber; break;
+                }    
+                return typeData.refNumber;
+            }
+        }    
+
+        public static async Task<JsonSku> GetSkuInfoPerType(string typevalue , string numberToSearch)
+        {
+            try
+            {
+                Properties.Settings.Default.Reload();
+                string serverIP = Properties.Settings.Default.ServerIp;
+                int serverPort = Properties.Settings.Default.ServerPort;
+
+                serverIP = "34.93.2.146";
+
+                string urlServer = "http://" + serverIP + ":" + serverPort;
+                var client = new RestClient(urlServer);
+                client.Authenticator = new HttpBasicAuthenticator(privateApiLogin, privateApiMdp);
+                var request = new RestRequest("sku", Method.GET);
+                client.Timeout = timeout;
+                client.ReadWriteTimeout = timeout;
+                request.Timeout = timeout;
+                request.ReadWriteTimeout = timeout;
+
+                string dataType = typeData.GetFromDisplayedValue(typevalue);
+                request.AddParameter("type", dataType);
+                request.AddParameter("number", numberToSearch);
+                var response = await client.ExecuteTaskAsync(request);
+                if (response.IsSuccessful)
+                {
+                    //if (response.Content.StartsWith("{\"status\":false"))
+                   // {
+                   // }
+                   // else 
+                   // {
+                        var skuInfo = JsonSku.DeserializedJsonAlone(response.Content);
+                        if (skuInfo != null)
+                            return skuInfo;
+                   // }
+                    return null;
+                }
+                else
+                    return null;
+
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error in Get sku");
+                exp.ShowDialog();
+                return null;
+            }
+        }
+
         #endregion
     }
 }

@@ -317,7 +317,7 @@
                 </Style>
             </TabControl.Resources>
             <!-- Selection Mode -->
-            <TabItem  x:Name="tiSelectionMode" Header="Selection Mode" Width="200" Height="44"  Visibility="Visible">
+            <TabItem  x:Name="tiSelectionMode" Header="Selection Mode" Width="200" Height="44"  Visibility="Collapsed">
                 <Grid Grid.Row="1"  Margin="10,30,0,0" >
                     <Grid.RowDefinitions>
                         <RowDefinition Height="75"></RowDefinition>
@@ -443,25 +443,33 @@
                 </Grid>
             </TabItem>
             <!-- Barcode selection -->
-            <TabItem x:Name="tiBarcodeMode" Header="Barcode Mode" Width="200" Height="44" Visibility="Collapsed">
+            <TabItem x:Name="tiBarcodeMode" Header="Barcode Mode" Width="200" Height="44" Visibility="Visible">
                 <Grid Grid.Row="1" >
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="150*"/>                       
+                        <ColumnDefinition Width="150*"/>
                         <ColumnDefinition Width="300*"/>
                     </Grid.ColumnDefinitions>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="75"></RowDefinition>
                         <RowDefinition Height="75"></RowDefinition>
-                        <RowDefinition Height="30"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <!--RowDefinition Height="75"></>
                         <RowDefinition Height="75"></RowDefinition>
                         <RowDefinition Height="75"></RowDefinition>
                         <RowDefinition Height="75"></RowDefinition>
                         <RowDefinition Height="75"></RowDefinition>
                         <RowDefinition Height="75"></RowDefinition>
-                        <RowDefinition Height="75"></RowDefinition>                       
                         <RowDefinition Height="5"></RowDefinition>
-                        <RowDefinition Height="75"></RowDefinition>
+                        <RowDefinition Height="75"></RowDefinition-->
                     </Grid.RowDefinitions>
+
+                    <ComboBox x:Name="cbxTypeToSearch" Grid.Row="1" Grid.Column="0"  Margin="0,0,20,0"  Width="450"  Height="70"
+                                  VerticalAlignment="Top" 
+                                  HorizontalAlignment="Right"  VerticalContentAlignment="Center" 
+                                  ItemsSource="{Binding listOfDataType}"
+                                  SelectedItem="{Binding selectedDataType}" 
+                                  Style="{StaticResource cbxStyle}"
+                                  FontSize="35"></ComboBox>
 
                     <TextBox  Grid.Row="1" Grid.ColumnSpan="2" x:Name="TxtBarcodeCtrl" Margin="0,0,0,0"                           
                                   Text="{Binding txtBarcode,Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
@@ -473,7 +481,57 @@
                             <KeyBinding Key="Enter" Command="{Binding searchTxtBarcodeCR}"/>
                         </TextBox.InputBindings>
                     </TextBox>
-                    <TextBlock Grid.Row="3" Grid.Column="0" Text="Status :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="30"/>
+
+                    <syncfusion:SfDataGrid Name="dgSelection" Grid.Row="2"  Grid.Column="0" Grid.ColumnSpan="2"
+                                                        HeaderRowHeight="80"
+                                       RowHeight="60"
+                                       VerticalAlignment="Stretch"  
+                                       HorizontalAlignment="Stretch"
+                                       AutoGenerateColumns="False"                                                                             
+                                       SelectionMode="Single"   
+                                       SelectionUnit="Row"                                      
+                                       AllowDraggingColumns="False"                                           
+                                       AllowEditing="False"
+                                       AllowFiltering="False"
+                                       AllowGrouping="False"  
+                                       ShowGroupDropArea="False" 
+                                       EnableDataVirtualization="True"
+                                       NavigationMode="Row"  
+                                       ShowBusyIndicator="True"
+                                       FontFamily="./Fonts/Roboto-Regular.ttf" 
+                                       FontSize="18" 
+                                       Foreground="#000000"
+                                       RowSelectionBrush="#1A33BCBA"
+                                       SelectionForegroundBrush="#000000"                               
+                                       AlternatingRowStyle="{StaticResource alternatingRowStyle}" 
+                                       AlternationCount="2"
+                                       HeaderStyle="{StaticResource headerStyle}" ColumnSizer="Star"
+                                       ItemsSource="{Binding SkuSelection}"
+                                       >
+                        <syncfusion:SfDataGrid.Columns>
+                            <syncfusion:GridTextColumn  x:Name="RefNumber"
+                                                        HeaderText="Serial No."
+                                                        MappingName="RefNumber" TextAlignment="Center" ColumnSizer="Star"  />
+                            <syncfusion:GridTextColumn  x:Name="woNumber"
+                                                        HeaderText="Work Order No."
+                                                        MappingName="woNumber" TextAlignment="Center" ColumnSizer="Star"/>
+                            <syncfusion:GridTextColumn  x:Name="itemNumber"
+                                                        HeaderText="Item No."
+                                                        MappingName="itemNumber" TextAlignment="Center" ColumnSizer="Star"/>
+                            <syncfusion:GridTextColumn  x:Name="serial_num"
+                                                        HeaderText="Device"
+                                                        MappingName="serial_num" TextAlignment="Center" ColumnSizer="Star"/>
+                            <syncfusion:GridTextColumn  x:Name="drawer"
+                                                        HeaderText="Drawer"
+                                                        MappingName="drawer" TextAlignment="Center" ColumnSizer="Star"/>
+                            <syncfusion:GridTextColumn  x:Name="rfidNumber"
+                                                        HeaderText="Tag ID"
+                                                        MappingName="rfidNumber" TextAlignment="Center" ColumnSizer="Star"/>
+                        </syncfusion:SfDataGrid.Columns>
+                    </syncfusion:SfDataGrid>
+
+
+                    <!--TextBlock Grid.Row="3" Grid.Column="0" Text="Status :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="30"/>
                     <TextBlock Grid.Row="3" Grid.Column="1"  Margin="10" Text="{Binding txtStatus}" FontSize="30" FontWeight="Bold" VerticalAlignment="Center" Foreground="Black" />
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="Reference Number :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="30"/>
                     <TextBlock Grid.Row="4" Grid.Column="1"  Margin="10" Text="{Binding txtRefNumber}" FontSize="30" FontWeight="Bold" VerticalAlignment="Center" Foreground="Black" />
@@ -484,7 +542,7 @@
                     <TextBlock Grid.Row="7" Grid.Column="0" Text="Drawer :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="30"/>
                     <TextBlock Grid.Row="7" Grid.Column="1"  Margin="10" Text="{Binding txtDrawer}" FontSize="30" FontWeight="Bold" VerticalAlignment="Center" Foreground="Black"/>
                     <TextBlock Grid.Row="8" Grid.Column="0" Text="Date :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="30"/>
-                    <TextBlock Grid.Row="8" Grid.Column="1"  Margin="10" Text="{Binding txtLastDate}" FontSize="30" FontWeight="Bold" VerticalAlignment="Center" Foreground="Black" />
+                    <TextBlock Grid.Row="8" Grid.Column="1"  Margin="10" Text="{Binding txtLastDate}" FontSize="30" FontWeight="Bold" VerticalAlignment="Center" Foreground="Black" /-->
 
                     <TextBlock Grid.Row="10" Grid.Column="0" Text="Debug :" Style="{StaticResource itemTextBlock}" VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="30" Visibility="Hidden"/>
                     <StackPanel Grid.Row="10" Grid.Column="1" Orientation="Horizontal" Visibility="Hidden">
@@ -496,7 +554,7 @@
                         <Button  Grid.Row="10" Grid.Column="1"   Margin="10,0,0,0" Content="Scan 6" Width="80" Height="30" HorizontalAlignment="Left" Click="Button_Click_6"></Button>
                         <Button  Grid.Row="10" Grid.Column="1"   Margin="10,0,0,0" Content="Scan 7" Width="80" Height="30" HorizontalAlignment="Left" Click="Button_Click_7"></Button>
                     </StackPanel>
-                   
+
                 </Grid>
             </TabItem>
             <!-- Inventory Mode -->

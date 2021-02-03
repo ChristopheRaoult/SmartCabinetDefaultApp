@@ -222,6 +222,7 @@
     <Compile Include="StaticHelpers\WaitHandler.cs" />
     <Compile Include="ViewModel\MainViewModel.cs" />
     <Compile Include="ViewModel\SelectionViewModel.cs" />
+    <Compile Include="ViewModel\SkuInfoViewModel.cs" />
     <Compile Include="ViewModel\UsersViewModel.cs" />
     <Compile Include="ViewModel\ViewModelLocator.cs" />
     <Compile Include="View\MainWindow2.xaml.cs">

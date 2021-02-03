@@ -1,4 +1,4 @@
-//#define IsTiffany
+#define IsTiffany
 
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Command;
@@ -598,8 +598,18 @@ namespace SmartDrawerWpfApp.ViewModel
                 RaisePropertyChanged("txtLastDate");
             }
         }
+        private ObservableCollection<SkuInfoViewModel> _SkuSelection = new ObservableCollection<SkuInfoViewModel>();
+        public ObservableCollection<SkuInfoViewModel> SkuSelection
+        {
+            get { return _SkuSelection;  }
+            set
+            {
+                _SkuSelection = value;
+                RaisePropertyChanged("SkuSelection");
 
-        
+            }
+        }
+
         string _descDrawer1;
         public string descDrawer1
         {
@@ -923,6 +933,43 @@ namespace SmartDrawerWpfApp.ViewModel
                 RaisePropertyChanged(() => IsInPutItemFastMode);
                }
         }
+
+        private ObservableCollection<string> _listOfDataType;
+        public ObservableCollection<string> listOfDataType
+        {
+            get { return _listOfDataType; }
+            set
+            {
+                _listOfDataType = value;
+                RaisePropertyChanged(() => listOfDataType);
+            }
+        }
+        private string _selectedDataType;
+        public string selectedDataType
+        {
+            get { return _selectedDataType; }
+            set
+            {
+                _selectedDataType = value;
+                RaisePropertyChanged(() => selectedDataType);
+            }
+        }
+
+        public void PopulateDataType()
+        {
+            listOfDataType = new ObservableCollection<string>();
+            listOfDataType.Add("Serial No.");
+            listOfDataType.Add("Work Order No.");
+            listOfDataType.Add("Item No.");
+            listOfDataType.Add("RFID No.");
+
+            selectedDataType = listOfDataType[0];
+
+
+        }
+
+
+
 
         private bool PendingFastModeOperation = false;
 
@@ -2248,47 +2295,126 @@ namespace SmartDrawerWpfApp.ViewModel
         }
 
         public RelayCommand searchTxtBarcodeCR { get; set; }
+        /* async void searchTxtBarcodeCRfn()
+         {            
+
+             if (!string.IsNullOrEmpty(txtBarcode))
+             {               
+                 JsonSku mySku = await ProcessSelectionFromServer.GetSkuInfo(txtBarcode);
+                 if (mySku != null)
+                 {
+                     if (!mySku.status) // error
+                     {
+                         txtStatus = string.Format("Error : Code {0} - {1}", mySku.errors.code, mySku.errors.msg);
+                         txtRefNumber = string.Empty;
+                         txtTagId = string.Empty;
+                         txtDrawer = string.Empty;
+                         txtDevice = string.Empty;
+                         txtLastDate = string.Empty;
+                     }
+                     else
+                     {
+                         txtStatus = mySku.data.status;
+                         txtRefNumber = mySku.data.refNumber;
+                         txtTagId = mySku.data.rfidNumber;
+                         if (txtStatus == "Present" || txtStatus == "Added")
+                         {
+                             txtDevice = WallName;
+                             txtDrawer = mySku.data.drawer;
+                             txtLastDate = mySku.data.updatedAt.ToShortDateString() + " " + mySku.data.updatedAt.ToLongTimeString();
+                         }
+                         else
+                         {
+                             txtDrawer = string.Empty;
+                             txtDevice = string.Empty;
+                             txtLastDate = string.Empty;
+                         }
+                     }
+                     SelectionLifeTimeTimer.IsEnabled = true;
+                     SelectionLifeTimeTimer.Stop();
+                     SelectionLifeTimeTimer.Start();
+                     LightBarcodeTag(txtTagId);
+                 }
+             } 
+             mainview0.TxtBarcodeCtrl.SelectAll();
+             mainview0.TxtBarcodeCtrl.Focus();
+         }*/
+
+
+       
+       
         async void searchTxtBarcodeCRfn()
-        {            
-           
+        {
             if (!string.IsNullOrEmpty(txtBarcode))
-            {               
-                JsonSku mySku = await ProcessSelectionFromServer.GetSkuInfo(txtBarcode);
+            {
+                SkuSelection = null;
+
+                ObservableCollection<SkuInfoViewModel> tmpsku = new ObservableCollection<SkuInfoViewModel>();
+                List<string> TagInSelection = new List<string>();
+                JsonSku mySku = await ProcessSelectionFromServer.GetSkuInfoPerType( selectedDataType , txtBarcode);
                 if (mySku != null)
                 {
                     if (!mySku.status) // error
                     {
                         txtStatus = string.Format("Error : Code {0} - {1}", mySku.errors.code, mySku.errors.msg);
-                        txtRefNumber = string.Empty;
-                        txtTagId = string.Empty;
-                        txtDrawer = string.Empty;
-                        txtDevice = string.Empty;
-                        txtLastDate = string.Empty;
+                        /* txtRefNumber = string.Empty;
+                         txtTagId = string.Empty;
+                         txtDrawer = string.Empty;
+                         txtDevice = string.Empty;
+                         txtLastDate = string.Empty;*/
+                        await mainview0.ShowMessageAsync("Error", txtStatus);
                     }
                     else
                     {
-                        txtStatus = mySku.data.status;
-                        txtRefNumber = mySku.data.refNumber;
-                        txtTagId = mySku.data.rfidNumber;
-                        if (txtStatus == "Present" || txtStatus == "Added")
-                        {
-                            txtDevice = WallName;
-                            txtDrawer = mySku.data.drawer;
-                            txtLastDate = mySku.data.updatedAt.ToShortDateString() + " " + mySku.data.updatedAt.ToLongTimeString();
-                        }
-                        else
-                        {
-                            txtDrawer = string.Empty;
-                            txtDevice = string.Empty;
-                            txtLastDate = string.Empty;
+                        /* txtStatus = mySku.data.status;
+                         txtRefNumber = mySku.data.refNumber;
+                         txtTagId = mySku.data.rfidNumber;
+                         if (txtStatus == "Present" || txtStatus == "Added")
+                         {
+                             txtDevice = WallName;
+                             txtDrawer = mySku.data.drawer;
+                             txtLastDate = mySku.data.updatedAt.ToShortDateString() + " " + mySku.data.updatedAt.ToLongTimeString();
+                         }
+                         else
+                         {
+                             txtDrawer = string.Empty;
+                             txtDevice = string.Empty;
+                             txtLastDate = string.Empty;
+                         }*/
+                      
+                       if ((mySku.data_array != null) && (mySku.data_array.Count() > 0))
+                       {
+                            foreach (var item in mySku.data_array)
+                            {
+                                TagInSelection.Add(item.rfidNumber);
+                                SkuInfoViewModel skm = new SkuInfoViewModel()
+                                {
+                                    RefNumber = item.refNumber,
+                                    itemNumber = item.itemNumber,
+                                    woNumber = item.woNumber,
+                                    serial_num = item.serial_num,
+                                    drawer = item.drawer,
+                                    rfidNumber = item.rfidNumber,
+                                };
+                                tmpsku.Add(skm);
+                            }
+
+                            SkuSelection = tmpsku;
+                            SelectionLifeTimeTimer.IsEnabled = true;
+                            SelectionLifeTimeTimer.Stop();
+                            SelectionLifeTimeTimer.Start();
+                            LightBarcodeTag(TagInSelection);
+
                         }
                     }
-                    SelectionLifeTimeTimer.IsEnabled = true;
-                    SelectionLifeTimeTimer.Stop();
-                    SelectionLifeTimeTimer.Start();
-                    LightBarcodeTag(txtTagId);
+                   
                 }
-            } 
+                else
+                {
+                    string txtInfo = string.Format("No information found for {0} : {1}", selectedDataType, txtBarcode);
+                    await mainview0.ShowMessageAsync("Info", txtInfo);
+                }
+            }
             mainview0.TxtBarcodeCtrl.SelectAll();
             mainview0.TxtBarcodeCtrl.Focus();
         }
@@ -2412,8 +2538,136 @@ namespace SmartDrawerWpfApp.ViewModel
                 {
                     IsFlyoutCassettePositionOpen = false;
                     _InLightProcess = false;
+                }  
+            }
+            catch (Exception error)
+            {
+                ExceptionMessageBox exp = new ExceptionMessageBox(error, "Error selection");
+                exp.ShowDialog();
+            }
+        }
+
+        void LightBarcodeTag(List<string> tagIds)
+        {
+            try
+            {
+                IsInPutItemFastMode = false;
+                if (RfidStatus == false)
+                {
+                    IsFlyoutCassettePositionOpen = false;
+                    return;
                 }
-               
+                CassettesSelection tmpCassette = new CassettesSelection();
+                _SelectedBaseObjects = new List<BaseObject>();
+                tmpCassette.ListControlNumber = new List<string>();
+
+                for (int loop = 0; loop < 8; loop++)
+                    tmpCassette.TagToLight[loop] = new List<string>();
+
+
+                List<string> TmpListCtrlPerDrawer1 = new List<string>(DevicesHandler.GetTagFromDictionnary(1, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer2 = new List<string>(DevicesHandler.GetTagFromDictionnary(2, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer3 = new List<string>(DevicesHandler.GetTagFromDictionnary(3, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer4 = new List<string>(DevicesHandler.GetTagFromDictionnary(4, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer5 = new List<string>(DevicesHandler.GetTagFromDictionnary(5, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer6 = new List<string>(DevicesHandler.GetTagFromDictionnary(6, DevicesHandler.ListTagPerDrawer));
+                List<string> TmpListCtrlPerDrawer7 = new List<string>(DevicesHandler.GetTagFromDictionnary(7, DevicesHandler.ListTagPerDrawer));
+
+                foreach (string tagId in tagIds)
+                if (!string.IsNullOrEmpty(tagId))
+                {
+                    string uid = tagId;
+                    BaseObject theBo = (from c in Data
+                                        where c.Productinfo.RfidTag.TagUid.Equals(uid)
+                                        select c).SingleOrDefault<BaseObject>();
+
+                    if (theBo != null)
+                    {
+                        _SelectedBaseObjects.Add(theBo);
+                        if (!tmpCassette.ListControlNumber.Contains(theBo.Productinfo.RfidTag.TagUid))
+                        {
+                            switch (theBo.drawerId)
+                            {
+                                case 1:
+                                    if (TmpListCtrlPerDrawer1.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[1].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 2:
+                                    if (TmpListCtrlPerDrawer2.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[2].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 3:
+                                    if (TmpListCtrlPerDrawer3.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[3].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 4:
+                                    if (TmpListCtrlPerDrawer4.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[4].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 5:
+                                    if (TmpListCtrlPerDrawer5.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[5].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 6:
+                                    if (TmpListCtrlPerDrawer6.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[6].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+                                case 7:
+                                    if (TmpListCtrlPerDrawer7.Contains(theBo.Productinfo.RfidTag.TagUid))
+                                    {
+                                        tmpCassette.TagToLight[7].Add(theBo.Productinfo.RfidTag.TagUid);
+                                        tmpCassette.ListControlNumber.Add(theBo.Productinfo.RfidTag.TagUid);
+                                    }
+                                    break;
+
+                            }
+                        }
+                    }
+                }
+
+
+                tmpCassette.CassetteDrawer1Number = tmpCassette.TagToLight[1].Count.ToString(); ;
+                tmpCassette.CassetteDrawer2Number = tmpCassette.TagToLight[2].Count.ToString(); ;
+                tmpCassette.CassetteDrawer3Number = tmpCassette.TagToLight[3].Count.ToString(); ;
+                tmpCassette.CassetteDrawer4Number = tmpCassette.TagToLight[4].Count.ToString(); ;
+                tmpCassette.CassetteDrawer5Number = tmpCassette.TagToLight[5].Count.ToString(); ;
+                tmpCassette.CassetteDrawer6Number = tmpCassette.TagToLight[6].Count.ToString(); ;
+                tmpCassette.CassetteDrawer7Number = tmpCassette.TagToLight[7].Count.ToString(); ;
+                tmpCassette.CassetteSelectionTotalNumber = tmpCassette.ListControlNumber.Count;
+
+                if (_SelectedBaseObjects.Count > 0)
+                {
+                    SelectedCassette = tmpCassette;
+                    _previousSelectedCassettes = SelectedCassette;
+                    TotalCassettesToPull = SelectedCassette.CassetteSelectionTotalNumber;
+                    TotalCassettesPulled = 0;
+                    IsFlyoutCassettePositionOpen = true;
+
+                }
+                else
+                {
+                    IsFlyoutCassettePositionOpen = false;
+                    _InLightProcess = false;
+                }
+
 
             }
             catch (Exception error)
@@ -4318,6 +4572,8 @@ namespace SmartDrawerWpfApp.ViewModel
             ScanTimer.Start();
 
             LastDeviceActionTime = DateTime.Now;
+
+            
         }  
         private void CountTotalStones()
         {
@@ -4556,6 +4812,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 mainview0.tiDrawerMode.Visibility = Visibility.Collapsed;
                 mainview0.tiSelectionMode.Visibility = Visibility.Collapsed;
                 mainview0.tiInventoryMode.Visibility = Visibility.Collapsed;
+                PopulateDataType();
             }
 #else
             {

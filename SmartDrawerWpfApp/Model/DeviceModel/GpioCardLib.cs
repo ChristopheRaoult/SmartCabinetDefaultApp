@@ -123,6 +123,7 @@ namespace SmartDrawerWpfApp.Model.DeviceModel
         {
             try
             {
+                if (serialPort == null) return true;
                 serialPort.DataReceived -= new SerialDataReceivedEventHandler(OnDataReceived);
 
                 if (serialPort.IsOpen)
