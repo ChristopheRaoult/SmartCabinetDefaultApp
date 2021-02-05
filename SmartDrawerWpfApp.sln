@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27004.2009
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30225.117
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SmartDrawerWpfApp", "SmartDrawerWpfApp\SmartDrawerWpfApp.csproj", "{881BB30F-C534-4F30-A18F-361C1D7229B9}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -18,7 +18,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AddHTTP", "AddHTTP\AddHTTP.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClientRandomRequest", "ClientRandomRequest\ClientRandomRequest.csproj", "{9708775E-858D-4CE4-89B7-6F639B86CE76}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDK_SC_RfidReader", "..\..\GIA Project\WallPanelWpfApp-GIATest\SDK_SC_RfidReader\SDK_SC_RfidReader.csproj", "{143F8391-CD57-426C-8E65-B8BBF51CDE39}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SDK_SC_RfidReader", "SDK_SC_RfidReader\SDK_SC_RfidReader.csproj", "{143F8391-CD57-426C-8E65-B8BBF51CDE39}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
