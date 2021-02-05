@@ -508,6 +508,7 @@ namespace SmartDrawerWpfApp.ViewModel
                 _txtBarcode = value;
                 if (_txtBarcode.Length == 0)
                 {
+                    SkuSelection = null;
                     cancelLighting();
                     SelectionSelected = null;
                     SelectedCassette = null;
@@ -847,6 +848,17 @@ namespace SmartDrawerWpfApp.ViewModel
             }
         }
 
+       
+        Visibility _cbxDataTypeVisibility = Visibility.Hidden;
+        public Visibility cbxDataTypeVisibility
+        {
+            get { return _cbxDataTypeVisibility; }
+            set
+            {
+                _cbxDataTypeVisibility = value;
+                RaisePropertyChanged(() => cbxDataTypeVisibility);
+            }
+        }
         bool _IsUser;
         public bool IsUser { get { return _IsUser; } set { _IsUser = value; RaisePropertyChanged(() => IsUser); } }
 
@@ -2348,42 +2360,29 @@ namespace SmartDrawerWpfApp.ViewModel
             if (!string.IsNullOrEmpty(txtBarcode))
             {
                 SkuSelection = null;
+                bool buseParam = false;
+                if (cbxDataTypeVisibility == Visibility.Visible) buseParam = true;
 
                 ObservableCollection<SkuInfoViewModel> tmpsku = new ObservableCollection<SkuInfoViewModel>();
                 List<string> TagInSelection = new List<string>();
-                JsonSku mySku = await ProcessSelectionFromServer.GetSkuInfoPerType( selectedDataType , txtBarcode);
+                JsonSku mySku = await ProcessSelectionFromServer.GetSkuInfoPerType(buseParam , selectedDataType , txtBarcode);
                 if (mySku != null)
                 {
                     if (!mySku.status) // error
                     {
                         txtStatus = string.Format("Error : Code {0} - {1}", mySku.errors.code, mySku.errors.msg);
-                        /* txtRefNumber = string.Empty;
-                         txtTagId = string.Empty;
-                         txtDrawer = string.Empty;
-                         txtDevice = string.Empty;
-                         txtLastDate = string.Empty;*/
+                        if (mySku.errors.code == "E9009")
+                            cbxDataTypeVisibility = Visibility.Visible;
+                        else
+                            cbxDataTypeVisibility = Visibility.Hidden;
+                         
                         await mainview0.ShowMessageAsync("Error", txtStatus);
                     }
                     else
-                    {
-                        /* txtStatus = mySku.data.status;
-                         txtRefNumber = mySku.data.refNumber;
-                         txtTagId = mySku.data.rfidNumber;
-                         if (txtStatus == "Present" || txtStatus == "Added")
-                         {
-                             txtDevice = WallName;
-                             txtDrawer = mySku.data.drawer;
-                             txtLastDate = mySku.data.updatedAt.ToShortDateString() + " " + mySku.data.updatedAt.ToLongTimeString();
-                         }
-                         else
-                         {
-                             txtDrawer = string.Empty;
-                             txtDevice = string.Empty;
-                             txtLastDate = string.Empty;
-                         }*/
-                      
+                    {                      
                        if ((mySku.data_array != null) && (mySku.data_array.Count() > 0))
                        {
+                            cbxDataTypeVisibility = Visibility.Hidden;
                             foreach (var item in mySku.data_array)
                             {
                                 TagInSelection.Add(item.rfidNumber);
@@ -2406,11 +2405,18 @@ namespace SmartDrawerWpfApp.ViewModel
                             LightBarcodeTag(TagInSelection);
 
                         }
+                        else
+                        {
+                            cbxDataTypeVisibility = Visibility.Hidden;
+                            string txtInfo = string.Format("No information found for {0} : {1}", selectedDataType, txtBarcode);
+                            await mainview0.ShowMessageAsync("Info", txtInfo);
+                        }                    
                     }
                    
                 }
                 else
                 {
+                    cbxDataTypeVisibility = Visibility.Hidden;
                     string txtInfo = string.Format("No information found for {0} : {1}", selectedDataType, txtBarcode);
                     await mainview0.ShowMessageAsync("Info", txtInfo);
                 }
@@ -4535,6 +4541,8 @@ namespace SmartDrawerWpfApp.ViewModel
 
         private void InitValue()
         {
+
+            cbxDataTypeVisibility = Visibility.Hidden;
 
             ReadDrawerDescription();
 

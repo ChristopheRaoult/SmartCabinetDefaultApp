@@ -726,8 +726,6 @@ namespace SmartDrawerWpfApp.WcfServer
         #endregion
         #region sku tiffany
 
-
-
         public static async Task<JsonSku> GetSkuInfo(string skuQueried)
         {
             try
@@ -785,7 +783,7 @@ namespace SmartDrawerWpfApp.WcfServer
             }
         }    
 
-        public static async Task<JsonSku> GetSkuInfoPerType(string typevalue , string numberToSearch)
+        public static async Task<JsonSku> GetSkuInfoPerType(bool buseTypeParameter , string typevalue , string numberToSearch)
         {
             try
             {
@@ -803,9 +801,11 @@ namespace SmartDrawerWpfApp.WcfServer
                 client.ReadWriteTimeout = timeout;
                 request.Timeout = timeout;
                 request.ReadWriteTimeout = timeout;
-
-                string dataType = typeData.GetFromDisplayedValue(typevalue);
-                request.AddParameter("type", dataType);
+                if (buseTypeParameter)
+                {
+                    string dataType = typeData.GetFromDisplayedValue(typevalue);
+                    request.AddParameter("type", dataType);
+                }
                 request.AddParameter("number", numberToSearch);
                 var response = await client.ExecuteTaskAsync(request);
                 if (response.IsSuccessful)

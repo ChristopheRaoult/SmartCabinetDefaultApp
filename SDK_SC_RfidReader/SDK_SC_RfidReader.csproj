@@ -1,0 +1,197 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{143F8391-CD57-426C-8E65-B8BBF51CDE39}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>SDK_SC_RfidReader</RootNamespace>
+    <AssemblyName>SDK_SC_RfidReader</AssemblyName>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <SignAssembly>false</SignAssembly>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <UpgradeBackupLocation>
+    </UpgradeBackupLocation>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <SccProjectName>SAK</SccProjectName>
+    <SccLocalPath>SAK</SccLocalPath>
+    <SccAuxPath>SAK</SccAuxPath>
+    <SccProvider>SAK</SccProvider>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>true</MapFileExtensions>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>false</UseApplicationTrust>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Debug\SDK_SC_RfidReader.XML</DocumentationFile>
+    <RegisterForComInterop>false</RegisterForComInterop>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Prefer32Bit>false</Prefer32Bit>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DeviceBase\DiscoverDevices.cs" />
+    <Compile Include="DeviceBase\HexLoader.cs" />
+    <Compile Include="FileZip.cs" />
+    <Compile Include="IRfidReader.cs" />
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <DependentUpon>Settings.settings</DependentUpon>
+    </Compile>
+    <Compile Include="RfidReader.cs">
+    </Compile>
+    <Compile Include="DeviceBase\CRC.cs" />
+    <Compile Include="DeviceBase\DefRfidClass.cs" />
+    <Compile Include="DeviceBase\DeviceRfidBoard.cs" />
+    <Compile Include="DeviceBase\EventThread.cs" />
+    <Compile Include="DeviceBase\IDeviceChannel.cs" />
+    <Compile Include="DeviceBase\IDeviceRFIDBoard.cs" />
+    <Compile Include="DeviceBase\MyDebug.cs" />
+    <Compile Include="DeviceBase\RS232.cs" />
+    <Compile Include="DeviceBase\RS232DeviceChannel.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="rfidReaderData.cs" />
+    <Compile Include="SerializeHelper.cs" />
+    <Compile Include="StatusForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="StatusForm.Designer.cs">
+      <DependentUpon>StatusForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="USBWatcher.cs" />
+    <Compile Include="UtilsWindows\CalibrationGraphDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UtilsWindows\CalibrationGraphDialog.Designer.cs">
+      <DependentUpon>CalibrationGraphDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UtilsWindows\ConversionsDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UtilsWindows\ConversionsDialog.Designer.cs">
+      <DependentUpon>ConversionsDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UtilsWindows\DoorAndLightDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UtilsWindows\DoorAndLightDialog.Designer.cs">
+      <DependentUpon>DoorAndLightDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UtilsWindows\FindThresholdDialog.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UtilsWindows\FindThresholdDialog.Designer.cs">
+      <DependentUpon>FindThresholdDialog.cs</DependentUpon>
+    </Compile>
+    <Compile Include="UtilsWindows\TagSets.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="UtilsWindows\TagSets.designer.cs">
+      <DependentUpon>TagSets.cs</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1 Client Profile</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Windows.Installer.3.1">
+      <Visible>False</Visible>
+      <ProductName>Windows Installer 3.1</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="StatusForm.resx">
+      <DependentUpon>StatusForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UtilsWindows\CalibrationGraphDialog.resx">
+      <DependentUpon>CalibrationGraphDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UtilsWindows\ConversionsDialog.resx">
+      <DependentUpon>ConversionsDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UtilsWindows\DoorAndLightDialog.resx">
+      <DependentUpon>DoorAndLightDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UtilsWindows\FindThresholdDialog.resx">
+      <DependentUpon>FindThresholdDialog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="UtilsWindows\TagSets.resx">
+      <DependentUpon>TagSets.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties BuildVersion_AssemblyInfoFilename="Properties\AssemblyInfo.cs" BuildVersion_UpdateFileVersion="True" BuildVersion_UpdateAssemblyVersion="True" BuildVersion_UseGlobalSettings="True" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

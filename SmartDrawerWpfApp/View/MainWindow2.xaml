@@ -468,6 +468,7 @@
                                   HorizontalAlignment="Right"  VerticalContentAlignment="Center" 
                                   ItemsSource="{Binding listOfDataType}"
                                   SelectedItem="{Binding selectedDataType}" 
+                                  Visibility="{Binding cbxDataTypeVisibility}"
                                   Style="{StaticResource cbxStyle}"
                                   FontSize="35"></ComboBox>
 
@@ -476,7 +477,7 @@
                                   Width="500"  Height="70"
                                   VerticalAlignment="Top" 
                                   HorizontalAlignment="Center"  VerticalContentAlignment="Center"  Focusable="True" IsEnabled="true"  FontSize="35"  MaxLength="15" 
-                                  Controls:TextBoxHelper.Watermark="Scan/ Enter Reference No." Controls:TextBoxHelper.ClearTextButton="True" AcceptsReturn="True"  >
+                                  Controls:TextBoxHelper.Watermark="Scan/ Enter No." Controls:TextBoxHelper.ClearTextButton="True" AcceptsReturn="True"  >
                         <TextBox.InputBindings>
                             <KeyBinding Key="Enter" Command="{Binding searchTxtBarcodeCR}"/>
                         </TextBox.InputBindings>
