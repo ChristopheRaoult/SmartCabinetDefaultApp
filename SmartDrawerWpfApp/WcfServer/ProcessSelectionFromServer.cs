@@ -791,7 +791,7 @@ namespace SmartDrawerWpfApp.WcfServer
                 string serverIP = Properties.Settings.Default.ServerIp;
                 int serverPort = Properties.Settings.Default.ServerPort;
 
-                serverIP = "34.93.2.146";
+                //serverIP = "34.93.2.146";
 
                 string urlServer = "http://" + serverIP + ":" + serverPort;
                 var client = new RestClient(urlServer);
@@ -807,7 +807,13 @@ namespace SmartDrawerWpfApp.WcfServer
                     request.AddParameter("type", dataType);
                 }
                 request.AddParameter("number", numberToSearch);
+
+                LogToFile.LogMessageToFile("--------Get SKU -----------");
+                LogToFile.LogMessageToFile("Send :" + client.BuildUri(request));
+
                 var response = await client.ExecuteTaskAsync(request);
+                LogToFile.LogMessageToFile("Received : " + response.Content);
+                LogToFile.LogMessageToFile("--------End Get SKU -----------");
                 if (response.IsSuccessful)
                 {
                     //if (response.Content.StartsWith("{\"status\":false"))
